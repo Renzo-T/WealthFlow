@@ -23,3 +23,6 @@ _tmpbuild/
 .DS_Store
 Thumbs.db
 ui-shots/
+
+# Downloadable build (npm run package) and the Node it bundles
+release/

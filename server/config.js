@@ -4,10 +4,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 
-// Where everything is kept: the database, backups and config.json. WEALTHFLOW_DATA_DIR moves it (the desktop app
-// uses the user's app-data folder).
-export const dataDir = path.resolve(process.env.WEALTHFLOW_DATA_DIR || 'data');
+// Where everything is kept: the database, backups and config.json. From the code: data/ in the project. The
+// downloadable copy (a PORTABLE file next to it) uses your user's app-data folder instead, so replacing the app with
+// a newer version never touches your data. WEALTHFLOW_DATA_DIR overrides both.
+export const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+export const portable = fs.existsSync(path.join(appRoot, 'PORTABLE'));
+export const userDataDir = () => (process.platform === 'win32' ? path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'WealthFlow')
+  : process.platform === 'darwin' ? path.join(os.homedir(), 'Library', 'Application Support', 'WealthFlow')
+    : path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'WealthFlow'));
+export const dataDir = path.resolve(process.env.WEALTHFLOW_DATA_DIR || (portable ? userDataDir() : path.join(appRoot, 'data')));
 const FILE = path.join(dataDir, 'config.json');
 const KEYS = ['PLAID_CLIENT_ID', 'PLAID_SECRET', 'PLAID_ENV', 'PLAID_REDIRECT_URI', 'ENCRYPTION_KEY'];
 

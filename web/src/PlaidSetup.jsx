@@ -65,7 +65,7 @@ export function FirstRun({ onDone }) {
 // Settings: which keys are in use, and changing them.
 export function PlaidKeys({ banks = 0, onChange }) {
   const [s, setS] = useState(null), [edit, setEdit] = useState(false);
-  const load = () => api('/link/setup').then(setS);
+  const load = () => api('/link/setup').then(setS).catch(() => {}); // shown once the server answers
   useEffect(() => { load(); }, []);
   if (!s) return null;
   const env = s.env === 'production' ? 'Production' : 'Sandbox';

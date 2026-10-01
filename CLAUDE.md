@@ -1,11 +1,26 @@
 # WealthFlow
 
-Local, single-user personal finance dashboard on Plaid. Express + better-sqlite3 API (`server/`, port 4000) and a
-React + Vite UI (`web/`, port 3000, proxies `/api`). Everything runs on the user's machine; data lives in
-`data/wealthflow.db`. See README.md for setup.
+Local, single-user personal finance dashboard on Plaid. Express API on Node's built-in SQLite (`node:sqlite`, wrapped
+in `server/db.js` with `transaction()` and `backup()`; no compiled add-ons) in `server/`, and a React + Vite UI in
+`web/`. Everything runs on the user's machine. The data folder (`server/config.js` `dataDir`: `data/` from the code,
+the user's app-data folder for the download, `WEALTHFLOW_DATA_DIR` overrides) holds `wealthflow.db`, `backups/`,
+`app.log` and `config.json` (Plaid keys saved by the first-run screen, and the `ENCRYPTION_KEY` generated on first
+start; `.env`/environment variables override it). See README.md for setup.
+
+## Setup and Plaid Link
+- First run (no keys): `FirstRun` in `web/src/PlaidSetup.jsx`; `POST /api/link/setup` checks the keys with Plaid
+  (creates a link token) before `saveConfig()` and `resetPlaid()` (`server/plaid.js` rebuilds its client lazily).
+- Connecting/reconnecting uses **Hosted Link**: the token is created with `hosted_link: {}`, `Connect.jsx` opens
+  `hosted_link_url` in a new tab and polls `GET /api/link/status/:token` (`linkTokenGet` → `sessionResult()`); a new
+  bank's public token is exchanged there, once. No https or redirect URI needed. Embedded Link (`?hosted=0`, with
+  `PLAID_REDIRECT_URI` and `/oauth`) is only a fallback.
+- `npm run package` builds the Windows download (`release/`, gitignored): official Node from nodejs.org
+  (checksum-verified), server + runtime deps only (page libraries are devDependencies), the built page, a `PORTABLE`
+  marker (→ app-data folder) and `WealthFlow.cmd` (`app.mjs --background --open`).
 
 ## Run
-- `npm start`: API (`node --watch`) and Vite 8 together. Node 22.12+ (Vite 8's minimum; better-sqlite3 v12 supports 22 and 24).
+- `npm start`: API (`node --watch`, port 4000) and Vite 8 (port 3000, proxies `/api`) together. Node 22.13+ (`node:sqlite`
+  without a flag; `server/env-check.js` refuses older).
 - `npm run app`: everyday use. `scripts/app.mjs` builds `web/dist` when sources are newer, then runs the server with
   `WEALTHFLOW_APP=1`: page + API together on 3000 (https with `certs/`). Installable (manifest, icons, `web/public/sw.js`,
   which only shows a built-in "isn't running" page when the server is down; nothing is cached). Settings > App:
@@ -31,14 +46,14 @@ React + Vite UI (`web/`, port 3000, proxies `/api`). Everything runs on the user
   It's the git pre-commit hook (`.githooks/`, enabled by `npm install` via `prepare`); don't bypass it.
 
 ## Never commit
-`.env` (Plaid keys + `ENCRYPTION_KEY`), `certs/`, `data/` (database and backups). All are gitignored. Bank access
-tokens in the DB are AES-GCM encrypted with `ENCRYPTION_KEY` (`server/crypto.js`).
+`.env` (Plaid keys + `ENCRYPTION_KEY`), `certs/`, `data/` (database, backups, `config.json` with keys), `release/`.
+All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENCRYPTION_KEY` (`server/crypto.js`).
 
 ## Data flow
 1. **Sync** (`server/sync.js`): `syncAll()` runs on startup (if none in the last hour), every 6 h, and from the Refresh
    button; one at a time. Per bank: transactions (`/transactions/sync` cursor), accounts + daily balance snapshot,
    consent check (`/item/get`), holdings, card statements (Liabilities), Plaid recurring streams. Then `classify()`.
-   The first sync each day also writes `data/backups/auto-YYYY-MM-DD.db` (`server/backup.js`, keeps 14).
+   The first sync each day also writes `backups/auto-YYYY-MM-DD.db` in the data folder (`server/backup.js`, keeps 14).
 2. **Categorize** (`server/categories.js`, `classify()` recomputes every transaction). Two levels: budget **groups**
    (`GROUPS`) and subcategories; `transactions.category` is the subcategory, `grp` its group. Precedence:
    one-off user choice > user rules (`category_rules`, newest first) > matched transfer > card cash back >
