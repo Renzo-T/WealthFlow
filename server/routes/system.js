@@ -8,15 +8,19 @@ import { decrypt } from '../crypto.js';
 import { classify } from '../categories.js';
 import { listBackups } from '../backup.js';
 import { assignTrips } from '../trips.js';
-import { startupStatus, setStartup } from '../startup.js';
+import { startupStatus, setStartup, launcherStatus, setLauncher } from '../startup.js';
 const router = Router();
 
 // How this copy is running ('app' = npm run app / started at sign-in; 'dev' = npm start), and starting at sign-in.
 const appMode = () => process.env.WEALTHFLOW_APP === '1';
-router.get('/app', (_req, res) => res.json({ mode: appMode() ? 'app' : 'dev', startup: startupStatus() }));
+// launcher = the Start button on the "isn't running" page (a wealthflow:// link).
+const appState = () => ({ mode: appMode() ? 'app' : 'dev', startup: startupStatus(), launcher: launcherStatus() });
+router.get('/app', (_req, res) => res.json(appState()));
 router.put('/app/startup', (req, res) => {
-  try { res.json({ mode: appMode() ? 'app' : 'dev', startup: setStartup(!!req.body.enabled) }); }
-  catch (e) { res.status(400).json({ error_message: e.message }); }
+  try { setStartup(!!req.body.enabled); res.json(appState()); } catch (e) { res.status(400).json({ error_message: e.message }); }
+});
+router.put('/app/launcher', (req, res) => {
+  try { setLauncher(!!req.body.enabled); res.json(appState()); } catch (e) { res.status(400).json({ error_message: e.message }); }
 });
 // Stop the background copy (app mode only; in development, stop npm start instead).
 router.post('/app/quit', (_req, res) => {

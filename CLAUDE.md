@@ -24,8 +24,10 @@ start; `.env`/environment variables override it). See README.md for setup.
 - `npm run app`: everyday use. `scripts/app.mjs` builds `web/dist` when sources are newer, then runs the server with
   `WEALTHFLOW_APP=1`: page + API together on 3000 (https with `certs/`). Installable (manifest, icons, `web/public/sw.js`,
   which only shows a built-in "isn't running" page when the server is down; nothing is cached). Settings > App:
-  install prompt, "Start when I sign in" (`server/startup.js`, an HKCU Run entry; Windows only), Stop (`/api/app/quit`,
-  app mode only). Vite uses `strictPort`, so `npm start` fails clearly while the app holds 3000.
+  install prompt, "Start when I sign in" (`server/startup.js`, an HKCU Run entry; Windows only), "Let the app window
+  start WealthFlow" (a `wealthflow://` link under HKCU\Software\Classes that runs the same hidden command and ignores
+  the address; the offline page's Start button opens it, and the page reloads once `/api/app` answers), Stop
+  (`/api/app/quit`, app mode only). Vite uses `strictPort`, so `npm start` fails clearly while the app holds 3000.
 - `npm test`: node:test suites in `tests/` against an in-memory database (`WEALTHFLOW_DB=':memory:'`, set by
   `tests/helpers.js`), so they never touch `data/`. They cover categorization (transfer pairing, rules, sweeps,
   dividends, cash back) and bills (holidays, schedule rules, detection, card statements, your edits). When fixing a

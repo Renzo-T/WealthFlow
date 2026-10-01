@@ -16,6 +16,7 @@ Start
 In Settings > App you can:
 - Install WealthFlow, so it opens in its own window from the Start menu or taskbar (Chrome or Edge).
 - Start WealthFlow when I sign in, so it opens straight away and keeps your banks up to date in the background.
+- Let the app window start WealthFlow, so the installed app's shortcut shows a Start button when WealthFlow isn't running.
 - Stop WealthFlow.
 
 Update to a newer version
@@ -31,7 +32,7 @@ connections are encrypted with.
 
 Remove
 ------
-Turn off "Start WealthFlow when I sign in", stop WealthFlow, then delete this folder and %LOCALAPPDATA%\WealthFlow.
+Turn off "Start WealthFlow when I sign in" and "Let the app window start WealthFlow", stop WealthFlow, then delete this folder and %LOCALAPPDATA%\WealthFlow.
 
 If something goes wrong
 -----------------------

@@ -31,9 +31,9 @@ function AppSetting() {
   useEffect(() => { const f = () => setCanInstall(!!window.installPrompt); window.addEventListener('installable', f); return () => window.removeEventListener('installable', f); }, []);
   if (!a) return null;
   const install = async () => { const p = window.installPrompt; if (!p) return; p.prompt(); await p.userChoice; window.installPrompt = null; setCanInstall(false); };
-  const startup = async (enabled) => {
+  const change = async (what, enabled) => {
     setErr('');
-    const r = await api('/app/startup', { method: 'PUT', body: JSON.stringify({ enabled }) });
+    const r = await api(`/app/${what}`, { method: 'PUT', body: JSON.stringify({ enabled }) });
     if (r.error_message) setErr(r.error_message); else setA(r);
   };
   const quit = async () => {
@@ -51,11 +51,16 @@ function AppSetting() {
       <p className="small muted">Installed, WealthFlow opens in its own window from the Start menu or taskbar, like any other app. Your data stays in
         WealthFlow's folder on this computer either way.</p>
       {a.startup.supported ? <>
-        <label className="check mt"><input type="checkbox" checked={a.startup.enabled} onChange={(e) => startup(e.target.checked)} />
+        <label className="check mt"><input type="checkbox" checked={a.startup.enabled} onChange={(e) => change('startup', e.target.checked)} />
           Start WealthFlow when I sign in</label>
         <p className="small muted">Runs it in the background from sign-in, so the app opens straight away and your banks update every few hours
           even when the window is closed (that's also what builds your day-by-day balance history).
           {a.startup.enabled && !a.startup.here && ' It currently starts a copy in another folder; turn this off and on to use this one.'}</p>
+        <label className="check mt"><input type="checkbox" checked={a.launcher.enabled} onChange={(e) => change('launcher', e.target.checked)} />
+          Let the app window start WealthFlow</label>
+        <p className="small muted">When WealthFlow isn't running, the window shows a Start button instead of only saying so. Your browser asks
+          before starting it the first time (you can let it always allow).
+          {a.launcher.enabled && !a.launcher.here && ' It currently starts a copy in another folder; turn this off and on to use this one.'}</p>
       </> : <p className="small muted">Starting at sign-in is only set up for Windows so far. Run <code>npm run app</code> to start it.</p>}
       {err && <p className="err">{err}</p>}
       <div className="row wraprow mid">

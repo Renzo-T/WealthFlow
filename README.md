@@ -66,8 +66,11 @@ connection when you finish there.
 - **Settings > App > Start WealthFlow when I sign in** (Windows) starts it in the background whenever you sign in, so
   the window opens straight away and your banks keep updating (every 6 hours) with the window closed. That's also what
   builds your day-by-day balance history, which Plaid can't fill in later.
-- **Settings > App > Stop WealthFlow** stops the background copy. If WealthFlow isn't running, the installed window
-  says so and how to start it.
+- **Settings > App > Let the app window start WealthFlow** (Windows): if WealthFlow isn't running, the window shows a
+  **Start WealthFlow** button, so the Start-menu or taskbar shortcut always works. Your browser asks before starting it
+  the first time ("Open WealthFlow?"); it can always allow. Without it, the window says WealthFlow isn't running and
+  how to start it.
+- **Settings > App > Stop WealthFlow** stops the background copy.
 
 ## Your data
 Everything stays on your computer, in WealthFlow's data folder:
@@ -80,7 +83,8 @@ copy of `config.json` with it, since without that key every bank has to be conne
 restore, stop WealthFlow, put the backup in place of `wealthflow.db`, and start it again.
 
 **Updating:** stop WealthFlow, then replace the folder with the new download (or `git pull` and `npm install`), and
-start it again. If "Start when I sign in" was on and the folder moved, turn it off and on.
+start it again. If "Start when I sign in" or "Let the app window start WealthFlow" was on and the folder moved, turn
+it off and on.
 
 **Sharing:** each person needs their own copy with their own Plaid account and keys. Never send someone your data
 folder, `config.json` or `.env`: your keys would use your 10 slots and put their bank connections in your database.

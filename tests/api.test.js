@@ -415,3 +415,9 @@ test('Hosted Link: a session is open, connected a bank, finished an update, or w
   assert.deepEqual(sessionResult({ link_sessions: [{ finished_at: 'a', exit: {} }, { finished_at: 'b', results: { item_add_results: [{ public_token: 'public-3' }] } }] }),
     { done: true, public_token: 'public-3', institution: null });
 });
+
+test('app: the Start button\'s link is reported alongside starting at sign-in', async () => {
+  const r = (await get('/app')).body;
+  assert.deepEqual(Object.keys(r.launcher).sort(), ['enabled', 'here', 'supported']);
+  assert.equal(typeof r.launcher.enabled, 'boolean');
+});
