@@ -116,3 +116,6 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
   For pay, answer "How often are you paid?".
 - **A bank's history starts recently:** some banks only share a few weeks or months. Months before every bank's
   history starts are marked partial, and comparisons wait until there's a full month.
+
+## License
+MIT, see [LICENSE](LICENSE). Bundled Node.js in the Windows download is under its own license (`NODE-LICENSE.txt`).

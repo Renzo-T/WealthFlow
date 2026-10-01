@@ -29,7 +29,7 @@ const title = (s) => (s ?? '').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCa
 // Where a purchase happened: Plaid's location when it has one, otherwise the end of the card description
 // ("... PORTLAND OR", "LAWSON TOKYO JPN"). Only purchases made in person have a meaningful place.
 export function locate(t) {
-  // Online and other purchases carry the company's address (Amazon and Expedia: Seattle), not where you were.
+  // Online and other purchases carry the company's address (e.g. Amazon: Seattle), not where you were.
   if (t.channel !== 'in store') return null;
   if (t.region || t.country || t.lat != null) {
     return { city: t.city, region: t.region, country: t.country && t.country !== 'US' ? t.country : t.country ? 'US' : t.region ? 'US' : null,
