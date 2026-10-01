@@ -31,12 +31,26 @@ Documents) and double-click `WealthFlow.cmd`. It opens WealthFlow in your browse
 from an unknown publisher (it isn't code-signed); choose **More info > Run anyway**. To make the zip yourself from
 the code, run `npm run package`.
 
-**Any system, from the code:** install [Node](https://nodejs.org) 22.13 or newer, then:
+**Any system, from the code:** you need Node 22.13 or newer (see [Installing Node](#installing-node)), then in the
+WealthFlow folder:
 ```
 npm install
 npm run app
 ```
 and open http://localhost:3000.
+
+### Installing Node
+Check what you have with `node -v` in a terminal. Anything from `v22.13.0` up works; if it's older or missing, install
+the current **LTS** ("long-term support") version:
+- **Windows:** `winget install OpenJS.NodeJS.LTS`, or the Windows installer from [nodejs.org](https://nodejs.org).
+  Open a new terminal afterwards so it's found.
+- **Mac:** the macOS installer from [nodejs.org](https://nodejs.org), or `brew install node` with Homebrew.
+- **Linux:** your distribution's package is often too old; use [nvm](https://github.com/nvm-sh/nvm) or
+  [fnm](https://github.com/Schniz/fnm) instead.
+
+If you already use nvm or fnm, `nvm use` (or `fnm use`) in the WealthFlow folder picks the version in `.nvmrc`. After
+changing Node, run `npm install` again. WealthFlow says so plainly if your Node is too old, and the Windows download
+brings its own Node, so none of this applies to it.
 
 On first run WealthFlow asks for your Plaid **client ID** and **secret** (Plaid dashboard > Developers > Keys) and checks
 them with Plaid. Then click **Connect a bank**: Plaid's sign-in page opens in a new tab, and WealthFlow picks up the
@@ -91,7 +105,7 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
   running. Use that one, or stop it first.
 - **"Plaid didn't accept those keys":** copy the whole client ID, and the secret for the environment you picked
   (Sandbox and Production secrets differ).
-- **"Needs Node 22.13 or newer":** update Node from nodejs.org (or use the download, which brings its own).
+- **"Needs Node 22.13 or newer":** see [Installing Node](#installing-node) (or use the Windows download, which brings its own).
 - **A bank needs you to sign in again:** click **Reconnect**. Plaid's page opens in a new tab; finish there.
 - **"Add holdings" banner:** your bank has investment accounts. Click it once to grant access to holdings.
 - **Upcoming bills empty:** recurring items need a few occurrences to be detected; add one yourself on the Bills page.

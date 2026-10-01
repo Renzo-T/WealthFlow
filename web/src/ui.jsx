@@ -18,6 +18,10 @@ export function PageHeader({ title, sub, children }) {
 }
 
 // A dollar figure that "Hide amounts" can blur. Use for amounts outside the usual amount classes.
+// Hide amounts is on (for text that can't be blurred, like a native tooltip).
+export const amountsHidden = () => document.body.classList.contains('privacy');
+// Text for a native tooltip (title=): with Hide amounts on, dollar amounts become "$•••".
+export const tipText = (s) => (s && amountsHidden() ? s.replace(/[+−-]?\$\s?[\d,]+(\.\d+)?/g, '$•••') : s);
 export const Amt = ({ children, className = '' }) => <span className={`amt ${className}`.trim()}>{children}</span>;
 
 // ---- Loading placeholders: grey shapes in the real layout, so nothing jumps when data arrives.

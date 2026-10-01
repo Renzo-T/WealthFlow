@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { api } from './api.js';
 import { usd, usd2, allocColor } from './format.js';
-import { Panel, EmptyState, Hover, TipList } from './ui.jsx';
+import { Panel, EmptyState, Hover, TipList, tipText } from './ui.jsx';
 const monthName = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'long' });
 import CategoryIcon from './CategoryIcon.jsx';
 
-const list = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`);
+// "A, B and C" from strings or elements (so amounts inside can carry the amt class that Hide amounts blurs).
+const list = (xs) => xs.map((x, i) => <Fragment key={i}>{i === 0 ? '' : i === xs.length - 1 ? ' and ' : ', '}{x}</Fragment>);
 
 // One line at the top of the dashboard: how this month compares with last (everyday spending, bills excluded),
 // plus anything waiting for a decision in Transactions.
@@ -15,13 +16,13 @@ export function InsightStrip({ changed, todo = [] }) {
   let text = null;
   if (changed?.ready && !changed.flat) {
     const more = changed.diff > 0;
-    const drivers = changed.drivers.map((d) => `${d.category} (${d.diff > 0 ? '+' : '−'}${usd(Math.abs(d.diff))})`);
+    const drivers = changed.drivers.map((d) => <>{d.category} (<span className="amt">{d.diff > 0 ? '+' : '−'}{usd(Math.abs(d.diff))}</span>)</>);
     text = <>You've spent <b className={`amt ${more ? 'bad' : 'good'}`}>{usd(Math.abs(changed.diff))} {more ? 'more' : 'less'}</b> than this time last month
       {drivers.length ? <>, mostly {list(drivers)}</> : null}.</>;
   } else if (changed?.ready && changed.flat) {
     text = <>Your everyday spending is about the same as this time last month.</>;
   } else if (changed?.reason === 'early' && changed.last?.total > 0) {
-    const top = changed.last.top.map((t) => `${t.category} (${usd(t.total)})`);
+    const top = changed.last.top.map((t) => <>{t.category} (<span className="amt">{usd(t.total)}</span>)</>);
     text = <>In {monthName(changed.last.month)} you spent <b className="amt">{usd(changed.last.total)}</b> on everyday things{top.length ? <>, most on {list(top)}</> : null}.
       <span className="muted"> This month's comparison starts on the 5th.</span></>;
   }
@@ -46,7 +47,7 @@ export function FrequentPanel({ items, early }) {
         <div className="trow" key={f.merchant}>
           <span className="rowicon"><span className="avatar sm">{f.merchant[0]}</span>
             <span className="tmain"><b>{f.merchant}</b>
-              <span className="small muted">{f.lastMonth ? `${f.count} visits` : `${f.count} visits vs ${f.prevCount} by now last month`} · {usd2(f.avg)} on average</span></span></span>
+              <span className="small muted">{f.lastMonth ? `${f.count} visits` : `${f.count} visits vs ${f.prevCount} by now last month`} · <span className="amt">{usd2(f.avg)}</span> on average</span></span></span>
           <b className="amt">{usd2(f.total)}</b>
         </div>
       ))}
@@ -193,7 +194,7 @@ export function InvestmentsCard({ d }) {
           {d.gain >= 0 ? '+' : '−'}{usd(Math.abs(d.gain))} ({Math.round(d.gainPct)}%)</span></Hover>}</div>
       <p className="small muted mt-0">{d.positions} positions · {Math.round((d.taxAdvantaged / d.total) * 100)}% in retirement & HSA accounts</p>
       <div className="splitbar">{d.kinds.filter((k) => k.value / d.total >= 0.002).map((k) => (
-        <i key={k.name} style={{ width: `${(k.value / d.total) * 100}%`, background: allocColor(k.name) }} title={`${k.name}: ${usd(k.value)}`} />))}</div>
+        <i key={k.name} style={{ width: `${(k.value / d.total) * 100}%`, background: allocColor(k.name) }} title={tipText(`${k.name}: ${usd(k.value)}`)} />))}</div>
       <ul className="legend2 compact">{d.kinds.slice(0, 4).map((k) => (
         <li key={k.name}><span><i className="dot" style={{ background: allocColor(k.name) }} />{k.name}</span><span className="amt muted">{Math.round((k.value / d.total) * 100)}%</span></li>))}</ul>
     </Panel>

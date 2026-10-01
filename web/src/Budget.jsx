@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { api } from './api.js';
 import Progress from './Progress.jsx';
 import { usd, label, usd2 } from './format.js';
-import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, amountsHidden } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 
 export function BudgetsPanel({ items, suggestions }) {
@@ -16,7 +16,7 @@ export function BudgetsPanel({ items, suggestions }) {
         </EmptyState>)}
       {top.map((b) => (
         <div className="cat" key={b.category}>
-          <div className="row base"><span>{label(b.category)}</span><span className="small muted">{usd(b.spent)} of {usd(b.amount)}</span></div>
+          <div className="row base"><span>{label(b.category)}</span><span className="small muted"><span className="amt">{usd(b.spent)}</span> of <span className="amt">{usd(b.amount)}</span></span></div>
           <Progress value={b.spent} max={b.amount} warn />
         </div>
       ))}
@@ -44,7 +44,7 @@ function BudgetInput({ c, save }) {
   const commit = () => { const n = v === '' ? null : Math.round(Number(v)); if (n !== (c.budget ?? null)) save(c, n); };
   return (
     <input className={`binput${v === '' && c.suggested ? ' sugg' : ''}`} type="number" min="0" step="1" value={v} placeholder={c.suggested ? `≈ ${c.suggested}` : '—'}
-      title={c.suggested ? `Suggested ${usd(c.suggested)} from ${c.basis}` : undefined}
+      title={c.suggested ? `Suggested${amountsHidden() ? '' : ` ${usd(c.suggested)}`} from ${c.basis}` : undefined}
       onChange={(e) => setV(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} aria-label={`Budget for ${c.category}`} />
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from './api.js';
 import { usd, usd2, label, SERIES, NEUTRAL, shortDate } from './format.js';
-import { Panel, PageHeader, PageSkeleton, Hover, TipList } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, Hover, TipList, tipText } from './ui.jsx';
 import NetWorthChart from './NetWorthChart.jsx';
 
 // Rename in place: saves on Enter or when the field loses focus. Empty restores the bank's name.
@@ -167,7 +167,7 @@ function Summary({ accounts, manual }) {
     return (
       <div className="nwblock">
         <div className="row base"><b>{title}</b><b className="amt">{usd(total)}</b></div>
-        {total > 0 && <div className="splitbar">{rows.map(([n, v, c]) => <i key={n} style={{ width: `${(v / total) * 100}%`, background: c }} title={`${n}: ${usd(v)}`} />)}</div>}
+        {total > 0 && <div className="splitbar">{rows.map(([n, v, c]) => <i key={n} style={{ width: `${(v / total) * 100}%`, background: c }} title={tipText(`${n}: ${usd(v)}`)} />)}</div>}
         <ul className="legend2">{rows.map(([n, v, c]) => <li key={n}><span><i className="dot" style={{ background: c }} />
           <Hover className="quiet" tip={behind(n).length ? <TipList title={n} rows={behind(n)} /> : null}>{n}</Hover></span>
           <b className="amt">{pct ? `${((v / total) * 100).toFixed(1)}%` : usd(v)}</b></li>)}</ul>

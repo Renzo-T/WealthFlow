@@ -82,7 +82,7 @@ function GoalCard({ g, accounts, reload, compact }) {
     <div className={`card goal${done ? ' done' : ''}`}>
       <div className="row base"><b>{g.name}</b>{done ? <span className="donepill">Reached ✓</span> : <span className="small muted">{pct(g)}%</span>}</div>
       <div className="big amt">{usd(g.saved)}</div>
-      <div className="small muted">of {usd(g.target)}{g.account ? ` · follows ${g.account}` : ''}</div>
+      <div className="small muted">of <span className="amt">{usd(g.target)}</span>{g.account ? ` · follows ${g.account}` : ''}</div>
       <Progress value={g.saved} max={g.target} />
       <div className="small"><span className={`amt ${done ? 'good' : 'muted'}`}>{done ? `${usd(g.saved - g.target)} past the target` : `${usd(g.target - g.saved)} to go`}</span></div>
       {!compact && <div className="goalplan small">
@@ -117,7 +117,7 @@ export function GoalsPanel({ items }) {
 // Ideas for new goals, sized from your own spending and trips.
 function Ideas({ ideas, start }) {
   const list = [
-    ideas.emergency3 && ['Emergency fund', ideas.emergency3, `3 months of your spending (about ${usd(ideas.monthlySpend)} a month)`],
+    ideas.emergency3 && ['Emergency fund', ideas.emergency3, <>3 months of your spending (about <span className="amt">{usd(ideas.monthlySpend)}</span> a month)</>],
     ideas.emergency6 && ['Emergency fund', ideas.emergency6, '6 months of spending: the usual advice if your income varies'],
     ideas.travelYear && ['Travel fund', ideas.travelYear, `What your ${ideas.trips} trip${ideas.trips > 1 ? 's' : ''} in the last year cost`],
     ['House down payment', null, 'Often 10–20% of the price'],
@@ -163,7 +163,7 @@ export default function Goals() {
         <button className="btn primary" onClick={() => setAdding(adding ? null : {})}>{adding ? 'Cancel' : 'Add a goal'}</button>
       </PageHeader>
       {goals.length > 0 && <div className="cards goalcards">
-        <div className="card"><h3>Saved toward goals</h3><div className="big amt">{usd(saved)}</div><div className="small muted">of {usd(target)} across {goals.length} goal{goals.length > 1 ? 's' : ''}</div></div>
+        <div className="card"><h3>Saved toward goals</h3><div className="big amt">{usd(saved)}</div><div className="small muted">of <span className="amt">{usd(target)}</span> across {goals.length} goal{goals.length > 1 ? 's' : ''}</div></div>
         <div className="card"><h3>Reached</h3><div className="big">{reached} of {goals.length}</div><div className="small muted">{reached === goals.length ? 'All done. Time for a new one?' : `${goals.length - reached} in progress`}</div></div>
         <div className="card"><h3>Needed each month</h3><div className="big amt">{monthly ? usd(monthly) : '—'}</div>
           <div className="small muted">{monthly ? 'To reach goals with a date on time' : 'Add a date to a goal to see this'}</div></div>

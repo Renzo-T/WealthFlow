@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import { api } from './api.js';
 import { usd2, usd as usd0, allocColor } from './format.js';
-import { Panel, PageHeader, PageSkeleton, Hover, TipList } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, Hover, TipList, tipText } from './ui.jsx';
 const pct = (n, d = 1) => `${n.toFixed(d)}%`;
 const signed = (n) => `${n >= 0 ? '+' : '-'}${usd0(Math.abs(n))}`;
 // 401(k) plan funds come with internal codes ("SP.500.INDEX.PL.CL.C"), not tickers; only show real-looking ones.
@@ -27,7 +27,7 @@ function Split({ title, parts, total, detail }) {
       <h3>{title}</h3>
       <div className="splitbar" role="img" aria-label={`${title}: ${parts.map((p) => `${p.name} ${pct((p.value / total) * 100, 0)}`).join(', ')}`}>
         {parts.filter((p) => p.value / total >= 0.002).map((p) => (
-          <i key={p.name} style={{ width: `${(p.value / total) * 100}%`, background: COLORS[p.name] }} title={`${p.name}: ${usd0(p.value)} (${pct((p.value / total) * 100)})`} />
+          <i key={p.name} style={{ width: `${(p.value / total) * 100}%`, background: COLORS[p.name] }} title={tipText(`${p.name}: ${usd0(p.value)} (${pct((p.value / total) * 100)})`)} />
         ))}
       </div>
       <ul className="legend2">
@@ -152,7 +152,7 @@ export default function Investments() {
           </table>
           <p className="small muted foot">
             Values are as of each provider's last price update. Gain is value minus what you paid, where the provider reports it
-            (401(k) plans usually don't). Cash balances under $1 are hidden.</p>
+            (401(k) plans usually don't). Cash balances under a dollar are hidden.</p>
         </Panel>
       </>}
     </>

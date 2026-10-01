@@ -52,7 +52,10 @@ export default function App() {
   const [extra, setExtra] = useState(null);
   const [busy, setBusy] = useState(false);
   const [synced, setSynced] = useState('');
-  const [hide, setHide] = useState(() => store.get(HIDE_KEY) === '1');
+  // Hide amounts. The body class is set before rendering (not only in the effect below), so text that checks it while
+  // rendering (amountsHidden) is right straight away.
+  const [hide, setHideState] = useState(() => { const h = store.get(HIDE_KEY) === '1'; document.body.classList.toggle('privacy', h); return h; });
+  const setHide = (h) => { document.body.classList.toggle('privacy', h); setHideState(h); };
   const [setup, setSetup] = useState(null); // Plaid keys saved yet? Until they are, the first-run screen shows.
   useEffect(() => { api('/link/setup').then(setSetup).catch(() => setSetup({ configured: true })); }, []);
   // Theme: follows the system unless you pick one; picking the system's own choice goes back to following it.

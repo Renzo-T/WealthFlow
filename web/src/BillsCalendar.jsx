@@ -3,7 +3,7 @@ import { api } from './api.js';
 import { INCOME, SPENDING } from './format.js';
 import CategoryIcon from './CategoryIcon.jsx';
 import { billAmount } from './Bills.jsx';
-import { Panel } from './ui.jsx';
+import { Panel, tipText } from './ui.jsx';
 
 const ymd = (d) => d.toLocaleDateString('en-CA');
 const shift = (m, k) => { const [y, mo] = m.split('-').map(Number); return ymd(new Date(y, mo - 1 + k, 1)).slice(0, 7); };
@@ -44,7 +44,7 @@ export default function BillsCalendar({ compact = false, onDay, selected }) {
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <span key={i} className="calhead">{d}</span>)}
         {cells.map((d, i) => d ? (
           <button key={d} className={`calday${d === today ? ' today' : ''}${d === day ? ' sel' : ''}${by[d] ? ' has' : ''}`} onClick={() => pick(d)}
-            title={by[d]?.map((x) => `${x.name} ${billAmount(x)}`).join('\n')}>
+            title={tipText(by[d]?.map((x) => `${x.name} ${billAmount(x)}`).join('\n'))}>
             {+d.slice(8)}
             {by[d] && <i className="caldots">{by[d].slice(0, 3).map((x, k) => <i key={k} style={{ background: x.direction === 'in' ? INCOME : SPENDING }} />)}</i>}
           </button>

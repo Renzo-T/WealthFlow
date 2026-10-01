@@ -63,6 +63,26 @@ await send('Emulation.setDeviceMetricsOverride', { width: WIDTH, height: 1000, d
 // Is the app up?
 try { await fetch(`${BASE}/api/items`); } catch { /* self-signed certificates make Node's fetch fail; the browser below is the real check */ }
 
+// Runs in the page: turns Hide amounts on (the body class), lists visible text with a dollar amount that nothing blurs,
+// and turns it off again. Native tooltips go through tipText() and aren't checked here.
+function unblurredAmounts() {
+  const was = document.body.classList.contains('privacy');
+  document.body.classList.add('privacy');
+  const blurred = (el) => { for (let e = el; e && e.nodeType === 1; e = e.parentElement) if (getComputedStyle(e).filter.includes('blur')) return true; return false; };
+  const out = [], seen = new Set();
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = walk.nextNode());) {
+    const text = n.textContent.trim(), el = n.parentElement;
+    if (!/[$]\s?\d/.test(text) || !el || el.closest('script,style,option')) continue;
+    const box = el.getBoundingClientRect();
+    if (!box.width || !box.height || blurred(el)) continue;
+    const where = [el, el.parentElement].filter(Boolean).map((e) => e.tagName.toLowerCase() + (e.classList.length ? `.${[...e.classList].join('.')}` : '')).reverse().join(' > ');
+    if (!seen.has(where)) { seen.add(where); out.push({ text: text.slice(0, 60), where }); }
+  }
+  if (!was) document.body.classList.remove('privacy');
+  return out;
+}
+
 mkdirSync('ui-shots', { recursive: true });
 const problems = [];
 for (const scheme of ['light', 'dark']) {
@@ -100,6 +120,11 @@ for (const scheme of ['light', 'dark']) {
       if (r.sideways > 2) fail(`scrolls sideways by ${r.sideways}px at ${WIDTH}px wide`);
       const shot = await send('Page.captureScreenshot', { format: 'png' });
       writeFileSync(`ui-shots/${page}-${scheme}.png`, Buffer.from(shot.data, 'base64'));
+      // Hide amounts: with it on, no dollar amount may be readable (each needs the amt class or a blurred parent).
+      if (scheme === 'light') {
+        const leaks = (await send('Runtime.evaluate', { returnByValue: true, expression: `(${unblurredAmounts})()` })).result.value ?? [];
+        for (const l of leaks) fail(`readable with Hide amounts on: "${l.text}" (${l.where})`);
+      }
       process.stdout.write(`${problems.some((p) => p.startsWith(`${page} (${scheme})`)) ? '✖' : '✔'} ${page} (${scheme}) ${r.title ? `— ${r.title}` : ''}\n`);
     } catch (e) { problems.push(`${page} (${scheme}): ${e.message}`); console.log(`✖ ${page} (${scheme}) — ${e.message}`); }
   }
