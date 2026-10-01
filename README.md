@@ -35,6 +35,19 @@ your first bank connection), since older history tends to have gaps.
 
 Sandbox uses fake banks. Log in with `user_good` / `pass_good` (2FA code `1234`).
 
+## Using it as an app
+`npm start` is for working on the code. For everyday use:
+1. `npm run app` builds the page (only when it has changed) and runs WealthFlow as one program at the same address,
+   https://localhost:3000.
+2. **Settings > App > Install WealthFlow** (Chrome or Edge) installs it with its own window, Start-menu entry and
+   taskbar icon.
+3. **Settings > App > Start WealthFlow when I sign in** (Windows) starts it hidden whenever you sign in, so the window
+   opens straight away and your banks keep updating with the window closed. Its output goes to `data/app.log`.
+   **Stop WealthFlow** in the same panel shuts down the background copy.
+
+If WealthFlow isn't running, the installed window says so instead of showing a browser error. `npm start` and the app
+both use port 3000, so stop one before starting the other.
+
 ## Connecting real banks
 1. In `.env`: `PLAID_ENV=production`, your **Production** secret (a different secret from Sandbox), and `PLAID_REDIRECT_URI=https://localhost:3000/oauth`.
 2. In Plaid Dashboard > Team Settings > API > Allowed redirect URIs, add exactly that URI.

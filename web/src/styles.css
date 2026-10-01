@@ -725,3 +725,8 @@ p.btrips { display: block; text-align: center; margin-top: .25rem; }
 .wmbar i { display: block; height: 100%; border-radius: 5px; }
 .wmbar i.saved { background: var(--green); } .wmbar i.market { background: var(--blue); } .wmbar i.neg { background: var(--red); }
 @media (max-width: 900px) { .wm { grid-template-columns: 1fr; } .wmtotal { grid-row: auto; } }
+
+/* Settings › App */
+.row.mid { align-items: center; }
+.err { color: var(--red); font-size: .9rem; margin: .5rem 0 0; }
+p code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: .05rem .35rem; font-size: .85em; }

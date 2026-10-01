@@ -7,6 +7,8 @@
     "start": "npm run dev",
     "dev": "concurrently -n api,web \"node --watch server/index.js\" \"vite web\"",
     "server": "node server/index.js",
+    "app": "node scripts/app.mjs",
+    "build": "vite build web",
     "test": "node --test \"tests/*.test.js\"",
     "check:ui": "node scripts/check-ui.mjs",
     "verify": "node scripts/verify.mjs",

@@ -6,6 +6,11 @@ React + Vite UI (`web/`, port 3000, proxies `/api`). Everything runs on the user
 
 ## Run
 - `npm start`: API (`node --watch`) and Vite 8 together. Node 22.12+ (Vite 8's minimum; better-sqlite3 v12 supports 22 and 24).
+- `npm run app`: everyday use. `scripts/app.mjs` builds `web/dist` when sources are newer, then runs the server with
+  `WEALTHFLOW_APP=1`: page + API together on 3000 (https with `certs/`). Installable (manifest, icons, `web/public/sw.js`,
+  which only shows a built-in "isn't running" page when the server is down; nothing is cached). Settings > App:
+  install prompt, "Start when I sign in" (`server/startup.js`, an HKCU Run entry; Windows only), Stop (`/api/app/quit`,
+  app mode only). Vite uses `strictPort`, so `npm start` fails clearly while the app holds 3000.
 - `npm test`: node:test suites in `tests/` against an in-memory database (`WEALTHFLOW_DB=':memory:'`, set by
   `tests/helpers.js`), so they never touch `data/`. They cover categorization (transfer pairing, rules, sweeps,
   dividends, cash back) and bills (holidays, schedule rules, detection, card statements, your edits). When fixing a

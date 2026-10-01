@@ -21,6 +21,50 @@ function HistorySetting() {
   );
 }
 
+// The app: installing it as its own window (Chrome/Edge), and starting it when you sign in (Windows).
+const standalone = () => window.matchMedia('(display-mode: standalone)').matches;
+function AppSetting() {
+  const [a, setA] = useState(null), [err, setErr] = useState('');
+  const [canInstall, setCanInstall] = useState(() => !!window.installPrompt);
+  useEffect(() => { api('/app').then(setA); }, []);
+  useEffect(() => { const f = () => setCanInstall(!!window.installPrompt); window.addEventListener('installable', f); return () => window.removeEventListener('installable', f); }, []);
+  if (!a) return null;
+  const install = async () => { const p = window.installPrompt; if (!p) return; p.prompt(); await p.userChoice; window.installPrompt = null; setCanInstall(false); };
+  const startup = async (enabled) => {
+    setErr('');
+    const r = await api('/app/startup', { method: 'PUT', body: JSON.stringify({ enabled }) });
+    if (r.error_message) setErr(r.error_message); else setA(r);
+  };
+  const quit = async () => {
+    if (!window.confirm('Stop WealthFlow?\n\nIt stops updating until it starts again (when you next sign in, or with npm run app). This window will show that it isn\'t running.')) return;
+    await api('/app/quit', { method: 'POST' });
+    setTimeout(() => window.location.reload(), 800);
+  };
+  return (
+    <Panel className="mt" title="App">
+      <div className="row wraprow mid">
+        {standalone() ? <span className="small muted">You're using the installed app.</span>
+          : canInstall ? <button className="btn primary" onClick={install}>Install WealthFlow</button>
+            : <span className="small muted">To install it, use Chrome or Edge's Install button at the right of the address bar.</span>}
+      </div>
+      <p className="small muted">Installed, WealthFlow opens in its own window from the Start menu or taskbar, like any other app. Your data stays in
+        WealthFlow's folder on this computer either way.</p>
+      {a.startup.supported ? <>
+        <label className="check mt"><input type="checkbox" checked={a.startup.enabled} onChange={(e) => startup(e.target.checked)} />
+          Start WealthFlow when I sign in</label>
+        <p className="small muted">Runs it in the background from sign-in, so the app opens straight away and your banks update every few hours
+          even when the window is closed (that's also what builds your day-by-day balance history).
+          {a.startup.enabled && !a.startup.here && ' It currently starts a copy in another folder; turn this off and on to use this one.'}</p>
+      </> : <p className="small muted">Starting at sign-in is only set up for Windows so far. Run <code>npm run app</code> to start it.</p>}
+      {err && <p className="err">{err}</p>}
+      <div className="row wraprow mid">
+        <span className="small muted">{a.mode === 'app' ? 'Running in the background.' : 'Running from npm start (development).'}</span>
+        {a.mode === 'app' && <button className="btn" onClick={quit}>Stop WealthFlow</button>}
+      </div>
+    </Panel>
+  );
+}
+
 export default function Settings({ onChange }) {
   const [sys, setSys] = useState(null);
   const [meta, setMeta] = useState(null);
@@ -71,6 +115,7 @@ export default function Settings({ onChange }) {
         })}
         <p className="small muted foot">To hide a single account without disconnecting its bank, untick it on the Net worth page.</p>
       </Panel>
+      <AppSetting />
       <HistorySetting />
       <Panel className="mt" title="Category rules">
         <p className="small muted">Created when you change a category for every transaction with the same description, or choose "Always for" a person. Newer rules win.</p>

@@ -8,5 +8,5 @@ const https = fs.existsSync(cert) ? { cert: fs.readFileSync(cert), key: fs.readF
 
 export default defineConfig({
   plugins: [react()],
-  server: { port: 3000, https, proxy: { '/api': 'http://127.0.0.1:4000' } },
+  server: { port: 3000, strictPort: true, https, proxy: { '/api': 'http://127.0.0.1:4000' } },
 });

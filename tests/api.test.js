@@ -367,3 +367,20 @@ test('charts and reports start 3 months before the first connection unless you t
   assert.equal((await months()).length, 12);
   await put('/settings/history', { capped: true });
 });
+
+// ---------- The app: how it's running, starting at sign-in ----------
+test('app: reports the mode, and Stop only works for the background copy', async () => {
+  const r = await get('/app');
+  assert.equal(r.body.mode, 'dev');
+  assert.equal(typeof r.body.startup.supported, 'boolean');
+  assert.equal((await post('/app/quit')).status, 400); // in development it must not exit the server
+});
+
+test('app: the sign-in command starts this folder\'s app hidden, with paths quoted for PowerShell', async () => {
+  const { startupCommand } = await import('../server/startup.js');
+  const cmd = startupCommand(String.raw`C:\Users\Alex O'Neil\WealthFlow`, String.raw`C:\Program Files\nodejs\node.exe`);
+  assert.match(cmd, /^powershell\.exe -NoProfile -WindowStyle Hidden -Command "/);
+  assert.ok(cmd.includes(String.raw`Set-Location -LiteralPath 'C:\Users\Alex O''Neil\WealthFlow'`), cmd); // ' doubled inside '…'
+  assert.ok(cmd.includes(String.raw`& 'C:\Program Files\nodejs\node.exe' 'C:\Users\Alex O''Neil\WealthFlow\scripts\app.mjs' --log`), cmd);
+  assert.equal(cmd.split('"').length, 3); // one quoted -Command argument, nothing breaking out of it
+});
