@@ -1,13 +1,51 @@
-import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 import { dataDir } from './config.js';
 
+// The database is Node's built-in SQLite (node:sqlite), so there's no compiled add-on to install or rebuild when Node
+// changes. Node still labels it experimental and says so on every start; that one warning is hidden.
+const emitWarning = process.emitWarning;
+process.emitWarning = (w, ...rest) => (/SQLite/.test(String(w)) ? undefined : emitWarning.call(process, w, ...rest));
+const { DatabaseSync } = await import('node:sqlite');
+process.emitWarning = emitWarning;
+
 // WEALTHFLOW_DB points elsewhere for tests (':memory:'), so they never touch your real data.
 const file = process.env.WEALTHFLOW_DB || path.join(dataDir, 'wealthflow.db');
 if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
-const db = new Database(file);
-if (file !== ':memory:') db.pragma('journal_mode = WAL');
+const sqlite = new DatabaseSync(file);
+if (file !== ':memory:') sqlite.exec('PRAGMA journal_mode = WAL');
+
+// The same small interface the code was written against (prepare → run/get/all, exec, transaction, backup).
+// Rows come back as plain objects (node:sqlite's have no prototype, which surprises deepEqual and JSON helpers).
+const plain = (r) => (r === undefined ? r : { ...r });
+let depth = 0;
+const db = {
+  prepare(sql) {
+    const st = sqlite.prepare(sql);
+    return { run: (...a) => st.run(...a), get: (...a) => plain(st.get(...a)), all: (...a) => st.all(...a).map(plain) };
+  },
+  exec: (sql) => sqlite.exec(sql),
+  // transaction(fn) returns a function that runs fn in one transaction: all of it is saved, or none of it if it
+  // throws. Nested calls become savepoints, so a helper that uses a transaction can be called inside another.
+  transaction: (fn) => (...args) => {
+    const sp = `sp${depth}`;
+    sqlite.exec(depth ? `SAVEPOINT ${sp}` : 'BEGIN');
+    depth++;
+    try {
+      const out = fn(...args);
+      depth--;
+      sqlite.exec(depth ? `RELEASE ${sp}` : 'COMMIT');
+      return out;
+    } catch (e) {
+      depth--;
+      sqlite.exec(depth ? `ROLLBACK TO ${sp}; RELEASE ${sp}` : 'ROLLBACK');
+      throw e;
+    }
+  },
+  // A consistent copy of the whole database, safe while the app is running.
+  backup: async (dest) => sqlite.exec(`VACUUM INTO '${dest.replace(/'/g, "''")}'`),
+  close: () => sqlite.close(),
+};
 db.exec(`
 CREATE TABLE IF NOT EXISTS items (
   id TEXT PRIMARY KEY, institution TEXT, access_token TEXT NOT NULL,

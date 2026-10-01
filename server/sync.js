@@ -26,8 +26,7 @@ export function carryPending(oldId, newId) {
     db.prepare('UPDATE transactions SET id = ?, split_of = ? WHERE id = ?').run(`${newId}${p.id.slice(oldId.length)}`, newId, p.id);
   return true;
 }
-// A transaction Plaid removed (e.g. a pending charge that posted) takes its split parts with it. Named parameter:
-// better-sqlite3 rejects a numbered one (?1) used twice.
+// A transaction Plaid removed (e.g. a pending charge that posted) takes its split parts with it.
 const deleteTx = db.prepare('DELETE FROM transactions WHERE id = @id OR split_of = @id');
 export const removeTx = (id) => deleteTx.run({ id });
 // A type the user chose (type_overridden) survives syncs; the bank's own type is kept in plaid_type/plaid_subtype.
