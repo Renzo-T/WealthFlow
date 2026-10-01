@@ -1,0 +1,11 @@
+# Keep text files with LF line endings everywhere (they already are), so git doesn't convert them on Windows
+# and doesn't warn about it on every commit.
+* text=auto eol=lf
+
+# Never touch binary files
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.db binary
