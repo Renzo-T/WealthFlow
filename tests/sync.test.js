@@ -2,7 +2,7 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { db, reset, bank, account, tx, row } from './helpers.js';
 
-const { carryPending } = await import('../server/sync.js');
+const { carryPending, removeTx } = await import('../server/sync.js');
 
 beforeEach(() => { reset(); bank('b1'); account('card', { type: 'credit', subtype: 'credit card' }); bank('v', 'Venmo - Personal'); account('ven', { item: 'v' }); });
 
@@ -15,7 +15,8 @@ test('when a pending charge posts, your category, trip choice, split and paid-ba
   db.prepare("UPDATE transactions SET reimburses = 'pend1' WHERE id = ?").run(back);
   const posted = tx('card', '2026-10-04', 150, 'WAREHOUSE CLUB', { id: 'post1' });
   assert.equal(carryPending(pending, posted), true);
-  db.prepare("DELETE FROM transactions WHERE id = 'pend1' OR split_of = 'pend1'").run(); // what sync does next
+  removeTx('pend1'); // what sync does next (this statement once threw, which stopped the bank's sync)
+  assert.equal(db.prepare("SELECT COUNT(*) n FROM transactions WHERE id = 'pend1' OR split_of = 'pend1'").get().n, 0);
   const p = row('post1');
   assert.deepEqual([p.user_category, p.trip_override, p.is_split], ['Groceries', 'none', 1]);
   assert.deepEqual(db.prepare("SELECT id, category FROM transactions WHERE split_of = 'post1' ORDER BY id").all().map((r) => r.id), ['post1:1', 'post1:2']);
