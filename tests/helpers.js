@@ -1,6 +1,8 @@
 // Shared setup for tests: an in-memory database (never your real data) and small seeding helpers.
 // Import this before any server module, so db.js opens ':memory:'.
 process.env.WEALTHFLOW_DB = ':memory:';
+// config.json (and backups) go to a throwaway folder, never data/.
+process.env.WEALTHFLOW_DATA_DIR ??= (await import('node:fs')).mkdtempSync((await import('node:path')).join((await import('node:os')).tmpdir(), 'wealthflow-test-'));
 process.env.ENCRYPTION_KEY ??= '0'.repeat(64);
 
 export const { default: db } = await import('../server/db.js');

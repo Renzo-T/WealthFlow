@@ -13,6 +13,7 @@ import Flow from './Flow.jsx';
 import Bills from './Bills.jsx';
 import NavIcon from './NavIcon.jsx';
 import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
+import { FirstRun } from './PlaidSetup.jsx';
 import { api } from './api.js';
 import { PageHeader, DashboardSkeleton, PageBoundary } from './ui.jsx';
 
@@ -52,6 +53,8 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [synced, setSynced] = useState('');
   const [hide, setHide] = useState(() => store.get(HIDE_KEY) === '1');
+  const [setup, setSetup] = useState(null); // Plaid keys saved yet? Until they are, the first-run screen shows.
+  useEffect(() => { api('/link/setup').then(setSetup).catch(() => setSetup({ configured: true })); }, []);
   // Theme: follows the system unless you pick one; picking the system's own choice goes back to following it.
   const [theme, setTheme] = useState(() => store.get(THEME_KEY)); // 'light' | 'dark' | null (system)
   const dark = theme ? theme === 'dark' : systemDark();
@@ -88,6 +91,7 @@ export default function App() {
   const attention = meta.items.filter((i) => i.status !== 'ok' || missing(i).products).length;
 
   if (resume) return <main className="main"><ConnectBank resume /></main>;
+  if (setup && !setup.configured) return <FirstRun onDone={() => window.location.reload()} />;
   return (
     <div className="shell">
       <aside className="side">

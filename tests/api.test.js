@@ -7,12 +7,14 @@ import { db, reset, bank, account, tx, row } from './helpers.js';
 const express = (await import('express')).default;
 const routers = await Promise.all(['data', 'plan', 'system', 'trips', 'reports'].map((r) => import(`../server/routes/${r}.js`)));
 const { classify } = await import('../server/categories.js');
+const link = await import('../server/routes/link.js');
 
 let server, base;
 before(async () => {
   const app = express();
   app.use(express.json());
   for (const r of routers) app.use('/api', r.default);
+  app.use('/api/link', link.default);
   await new Promise((ok) => { server = app.listen(0, ok); });
   base = `http://127.0.0.1:${server.address().port}/api`;
 });
@@ -383,4 +385,33 @@ test('app: the sign-in command starts this folder\'s app hidden, with paths quot
   assert.ok(cmd.includes(String.raw`Set-Location -LiteralPath 'C:\Users\Alex O''Neil\WealthFlow'`), cmd); // ' doubled inside '…'
   assert.ok(cmd.includes(String.raw`& 'C:\Program Files\nodejs\node.exe' 'C:\Users\Alex O''Neil\WealthFlow\scripts\app.mjs' --log`), cmd);
   assert.equal(cmd.split('"').length, 3); // one quoted -Command argument, nothing breaking out of it
+});
+
+// ---------- First run: Plaid keys, and Hosted Link ----------
+test('setup: no keys yet means the first-run screen; saving needs both keys and never echoes the secret', async () => {
+  const s = (await get('/link/setup')).body;
+  assert.equal(s.configured, false);
+  assert.equal(s.env, 'sandbox');
+  assert.ok(!('secret' in s));
+  for (const body of [{}, { client_id: 'abc' }, { client_id: ' ', secret: 'x' }]) {
+    const r = await post('/link/setup', body);
+    assert.equal(r.status, 400);
+    assert.match(r.body.error_message, /client ID and the secret/);
+  }
+});
+
+test('Hosted Link: a session is open, connected a bank, finished an update, or was left', () => {
+  const { sessionResult } = link;
+  assert.deepEqual(sessionResult({}), { done: false });
+  assert.deepEqual(sessionResult({ link_sessions: [{ started_at: 'x' }] }), { done: false }); // still on Plaid's page
+  assert.deepEqual(sessionResult({ link_sessions: [{ finished_at: 'x', results: { item_add_results: [{ public_token: 'public-1', institution: { name: 'Acme Bank' } }] } }] }),
+    { done: true, public_token: 'public-1', institution: 'Acme Bank' });
+  assert.deepEqual(sessionResult({ link_sessions: [{ finished_at: 'x', on_success: { public_token: 'public-2', metadata: { institution: { name: 'Acme Credit Union' } } } }] }),
+    { done: true, public_token: 'public-2', institution: 'Acme Credit Union' });
+  assert.deepEqual(sessionResult({ link_sessions: [{ finished_at: 'x', results: { item_update_results: [{ item_id: 'i' }] } }] }), { done: true });
+  assert.deepEqual(sessionResult({ link_sessions: [{ finished_at: 'x', exit: { error: { display_message: 'The bank is down' } } }] }),
+    { done: true, cancelled: true, error: 'The bank is down' });
+  // Several attempts in one session: the last finished one counts.
+  assert.deepEqual(sessionResult({ link_sessions: [{ finished_at: 'a', exit: {} }, { finished_at: 'b', results: { item_add_results: [{ public_token: 'public-3' }] } }] }),
+    { done: true, public_token: 'public-3', institution: null });
 });

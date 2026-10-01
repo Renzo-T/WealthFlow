@@ -1,9 +1,11 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
+import path from 'node:path';
+import { dataDir } from './config.js';
 
 // WEALTHFLOW_DB points elsewhere for tests (':memory:'), so they never touch your real data.
-const file = process.env.WEALTHFLOW_DB || 'data/wealthflow.db';
-if (file !== ':memory:') fs.mkdirSync('data', { recursive: true });
+const file = process.env.WEALTHFLOW_DB || path.join(dataDir, 'wealthflow.db');
+if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
 const db = new Database(file);
 if (file !== ':memory:') db.pragma('journal_mode = WAL');
 db.exec(`

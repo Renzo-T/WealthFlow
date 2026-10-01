@@ -1,8 +1,12 @@
-// Runs before the database opens, so a missing setting exits cleanly with a readable message.
-const problems = [];
-for (const k of ['PLAID_CLIENT_ID', 'PLAID_SECRET']) if (!process.env[k]) problems.push(`${k} is empty`);
-if (Buffer.from(process.env.ENCRYPTION_KEY || '', 'hex').length !== 32) problems.push('ENCRYPTION_KEY is missing or not 32 bytes of hex');
-if (problems.length) {
-  console.error(`\nSetup incomplete:\n - ${problems.join('\n - ')}\nEdit .env (run "npm run setup" first if you have no .env yet).\n`);
+// Runs before the database opens. The encryption key is created on first start if needed; Plaid keys are entered in
+// the app's setup screen, so missing ones don't stop the app any more.
+import path from 'node:path';
+import { ensureEncryptionKey, plaidConfigured, dataDir } from './config.js';
+
+try {
+  if (ensureEncryptionKey()) console.log(`Created a new encryption key in ${path.join(dataDir, 'config.json')} (keep it with your data).`);
+} catch (e) {
+  console.error(`\nSetup problem: ${e.message}\n`);
   process.exit(1);
 }
+if (!plaidConfigured()) console.log('No Plaid keys yet: open the app to finish setup.');

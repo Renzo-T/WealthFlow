@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
+import { config } from './config.js';
 
 const key = () => {
-  const k = Buffer.from(process.env.ENCRYPTION_KEY || '', 'hex');
+  const k = Buffer.from(config().ENCRYPTION_KEY || '', 'hex');
   if (k.length !== 32) throw new Error('ENCRYPTION_KEY must be 32 bytes of hex');
   return k;
 };

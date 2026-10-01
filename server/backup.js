@@ -1,12 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { dataDir } from './config.js';
 import db from './db.js';
 
 // Daily automatic backups. Net worth history accumulates one real point per day and can't be recreated later
 // (Plaid doesn't provide past investment values), so after the first sync of each day we keep a copy of the
 // database: data/backups/auto-YYYY-MM-DD.db, newest KEEP kept. Manual downloads (wealthflow-*.db) are separate.
 // Backups contain the bank tokens encrypted with ENCRYPTION_KEY from .env; restoring needs that same .env.
-const DIR = path.resolve('data', 'backups');
+const DIR = path.join(dataDir, 'backups');
 const KEEP = 14;
 
 export async function autoBackup(today = new Date().toLocaleDateString('en-CA')) {

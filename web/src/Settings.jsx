@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from './api.js';
 import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
 import { Panel, PageHeader } from './ui.jsx';
+import { PlaidKeys } from './PlaidSetup.jsx';
 
 // Where charts and reports start: 3 months before the first bank connection (default), or all history.
 function HistorySetting() {
@@ -91,7 +92,6 @@ export default function Settings({ onChange }) {
       <PageHeader title="Settings" sub="Connections and backups for this copy of WealthFlow." />
       <Panel className="mt" title={<>Connections <span className="badge">{sys?.plaidEnv ?? '…'}</span></>}
         actions={meta && meta.items.length < meta.max && <ConnectBank />}>
-        {sys?.plaidEnv === 'sandbox' && <p className="small muted">Sandbox shows test data only. Set PLAID_ENV=production in .env to link real banks.</p>}
         {meta && <p className="small muted">{meta.items.length} of {meta.max} Plaid connections used. On the Trial plan, removing a connection does not free a slot.</p>}
         {meta && <p className="small muted">WealthFlow updates from Plaid when it starts and every {meta.autoSyncHours} hours while it's running{meta.lastSync ? ` (last: ${new Date(meta.lastSync).toLocaleString()})` : ''}.
           Plaid gets new data from each bank on its own schedule, usually a few times a day for transactions and about once a day for investments.
@@ -115,6 +115,7 @@ export default function Settings({ onChange }) {
         })}
         <p className="small muted foot">To hide a single account without disconnecting its bank, untick it on the Net worth page.</p>
       </Panel>
+      <PlaidKeys banks={meta?.items.length ?? 0} onChange={() => api('/system').then(setSys)} />
       <AppSetting />
       <HistorySetting />
       <Panel className="mt" title="Category rules">
@@ -143,7 +144,8 @@ export default function Settings({ onChange }) {
           {(() => { const last = backups.find((b) => b.auto); return last ? ` Latest: ${last.name.slice(5, 15)}.` : ' The first one is saved after the next sync.'; })()}
           {' '}Your daily net worth history can't be re-downloaded from Plaid later, so these are worth keeping.</p>
         <p className="small muted">Download backup saves a copy now, to your computer (the five newest downloads are also kept in <code>data/backups</code>).</p>
-        <p className="small muted">Bank connections are stored encrypted, and the key is in your <code>.env</code> file. To restore on another machine you need both the backup and that <code>.env</code>. Forecast assumptions live in your browser and aren't included.</p>
+        <p className="small muted">Bank connections are stored encrypted, and the key is {sys?.keyInEnv ? <>in your <code>.env</code> file</> : <>in <code>config.json</code> in WealthFlow's data folder{sys?.dataDir && <> (<code>{sys.dataDir}</code>)</>}</>}.
+          Keep a copy of it with your backups: restoring a backup without that key means connecting every bank again. Forecast assumptions live in your browser and aren't included.</p>
         <a className="btn primary linkbtn-solid" href="/api/backup/download">Download backup</a>
       </Panel>
     </>

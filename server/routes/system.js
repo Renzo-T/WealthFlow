@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
+import { dataDir, config, fromEnv } from '../config.js';
 import db from '../db.js';
 import plaid from '../plaid.js';
 import { decrypt } from '../crypto.js';
 import { classify } from '../categories.js';
 import { listBackups } from '../backup.js';
-
 import { assignTrips } from '../trips.js';
 import { startupStatus, setStartup } from '../startup.js';
 const router = Router();
@@ -25,8 +25,10 @@ router.post('/app/quit', (_req, res) => {
   setTimeout(() => process.exit(0), 200);
 });
 
-router.get('/system', (_req, res) =>
-  res.json({ plaidEnv: process.env.PLAID_ENV || 'sandbox', redirectUri: process.env.PLAID_REDIRECT_URI || null }));
+router.get('/system', (_req, res) => {
+  const c = config();
+  res.json({ plaidEnv: c.PLAID_ENV || 'sandbox', redirectUri: c.PLAID_REDIRECT_URI || null, dataDir, keyInEnv: fromEnv('ENCRYPTION_KEY') });
+});
 
 // Consistent snapshot of the database (safe while the app is running). Keeps the 5 newest copies on disk.
 router.get('/backups', (_req, res) => res.json(listBackups()));
@@ -46,7 +48,7 @@ router.put('/settings/dashboard', (req, res) => {
 
 router.get('/backup/download', async (_req, res) => {
   try {
-    const dir = path.resolve('data', 'backups');
+    const dir = path.join(dataDir, 'backups');
     fs.mkdirSync(dir, { recursive: true });
     const stamp = new Date().toLocaleString('sv').replace(/[: ]/g, '-').slice(0, 16);
     const file = path.join(dir, `wealthflow-${stamp}.db`);

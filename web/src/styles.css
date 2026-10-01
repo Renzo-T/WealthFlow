@@ -730,3 +730,16 @@ p.btrips { display: block; text-align: center; margin-top: .25rem; }
 .row.mid { align-items: center; }
 .err { color: var(--red); font-size: .9rem; margin: .5rem 0 0; }
 p code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: .05rem .35rem; font-size: .85em; }
+
+/* First run (no Plaid keys yet) and Settings › Plaid keys */
+.firstrun { min-height: 100vh; display: grid; place-items: center; padding: 2rem 1rem; }
+.firstrun .card { max-width: 36rem; width: 100%; padding: 2rem; }
+.firstrun .logo { padding: 0; color: var(--blue); }
+.firstrun h2 { margin: .5rem 0 .4rem; font-size: 1.35rem; }
+.howto { padding-left: 1.2rem; line-height: 1.55; margin: .75rem 0 1rem; }
+.howto li + li { margin-top: .35rem; }
+.keys { display: grid; gap: .8rem; max-width: 30rem; }
+.keys > label { display: grid; gap: .3rem; font-size: .9rem; font-weight: 600; }
+.keys > label input { font-weight: 400; }
+.envpick { border: 0; padding: 0; margin: 0; display: grid; gap: .35rem; font-size: .9rem; }
+.envpick legend { font-weight: 600; margin-bottom: .3rem; padding: 0; }

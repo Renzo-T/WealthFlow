@@ -26,8 +26,9 @@ app.use('/api', reports);
 const listening = (url) => () => console.log(`WealthFlow on ${url}`);
 if (process.env.WEALTHFLOW_APP === '1') {
   const port = +(process.env.WEALTHFLOW_PORT || 3000);
-  app.use(express.static('web/dist', { index: false }));
-  app.get(/^(?!\/api\/).*/, (_req, res) => res.sendFile('index.html', { root: 'web/dist' })); // e.g. /oauth after a bank's sign-in
+  const web = process.env.WEALTHFLOW_WEB_DIR || 'web/dist'; // the built page
+  app.use(express.static(web, { index: false }));
+  app.get(/^(?!\/api\/).*/, (_req, res) => res.sendFile('index.html', { root: web })); // e.g. /oauth after a bank's sign-in
   const cert = 'certs/localhost.pem', key = 'certs/localhost-key.pem';
   const server = fs.existsSync(cert)
     ? https.createServer({ cert: fs.readFileSync(cert), key: fs.readFileSync(key) }, app).listen(port, '127.0.0.1', listening(`https://localhost:${port}`))
