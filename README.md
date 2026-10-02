@@ -74,6 +74,8 @@ connection when you finish there.
   how to start it.
 - **Settings > App > Stop WealthFlow** stops the background copy.
 
+On Mac and Linux, start it with `npm run app`; starting at sign-in and the Start button are Windows-only for now.
+
 ## Your data
 Everything stays on your computer, in WealthFlow's data folder:
 - **Download:** `%LOCALAPPDATA%\WealthFlow`, so replacing the app folder with a newer version keeps your data.
@@ -86,8 +88,8 @@ restore, stop WealthFlow, put the backup in place of `wealthflow.db`, and start 
 
 **Updating:** when a new version is out, WealthFlow says so in the top bar and in **Settings > Updates** (it checks
 GitHub's releases about once a day; you can turn that off there). Stop WealthFlow, then replace the folder with the
-new download (or `git pull` and `npm install`), and start it again. If "Start when I sign in" or "Let the app window start WealthFlow" was on and the folder moved, turn
-it off and on.
+new download (or `git pull` and `npm install`), and start it again. If "Start when I sign in" or "Let the app window
+start WealthFlow" was on and the folder moved, turn it off and on.
 
 **Sharing:** each person needs their own copy with their own Plaid account and keys. Never send someone your data
 folder, `config.json` or `.env`: your keys would use your 10 slots and put their bank connections in your database.
@@ -117,9 +119,10 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
 - `npm run verify`: everything above plus a production build and a scan that refuses secrets. It runs automatically
   before every commit (`npm install` turns the hook on).
 - `npm run package`: the Windows download in `release/` (bundles the official Node from nodejs.org).
-- `npm run release [patch|minor|major]`: publishes a version. It bumps `package.json`, tags and pushes; GitHub then
-  runs the checks, builds the download on Windows and publishes the release (`.github/workflows/release.yml`).
-  Copies with update checks on see it within a day.
+- `npm run release [patch|minor|major]`: publishes a version from a clean, up-to-date `main`. It bumps
+  `package.json`, commits through the usual checks (a few minutes; stopping it or a failed check undoes the bump),
+  tags and pushes; GitHub then builds the download on Windows and publishes the release
+  (`.github/workflows/release.yml`). Copies with update checks on see it within a day.
 - `.env` (see `.env.example`) overrides `config.json`, handy for development. `certs/localhost.pem` and
   `certs/localhost-key.pem` (e.g. from mkcert) make the app use https; only the embedded-Link fallback needs that.
 - `CLAUDE.md` describes the architecture, the data flow and the Plaid quirks handled.
@@ -132,7 +135,11 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
 - **"Plaid didn't accept those keys":** copy the whole client ID, and the secret for the environment you picked
   (Sandbox and Production secrets differ).
 - **"Needs Node 22.13 or newer":** see [Installing Node](#installing-node) (or use the Windows download, which brings its own).
-- **A bank needs you to sign in again:** click **Reconnect**. Plaid's page opens in a new tab; finish there.
+- **A bank needs you to sign in again** (red banner): click **Reconnect**. Plaid's page opens in a new tab; finish
+  there.
+- **"Couldn't update" a bank** (amber banner): the bank or Plaid was unavailable, or the internet was down. Nothing to
+  do: WealthFlow tries again at the next sync (and when it starts), or click **Try again**. Don't reconnect for this;
+  it would only use up a connection slot. If it keeps happening, the reason in the banner and `app.log` say why.
 - **"Add holdings" banner:** your bank has investment accounts. Click it once to grant access to holdings.
 - **Upcoming bills empty:** recurring items need a few occurrences to be detected; add one yourself on the Bills page.
   For pay, answer "How often are you paid?".
