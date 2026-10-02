@@ -33,7 +33,7 @@ const recall = (k, d) => { try { return JSON.parse(localStorage.getItem(`wf.budg
 // Remaining as a pill: green = room left (or income still to come), red = over, grey = exactly on budget.
 function Remaining({ value, income }) {
   const v = Math.round(value);
-  const cls = v === 0 ? 'zero' : (income ? v > 0 : v > 0) ? 'ok' : 'over';
+  const cls = v === 0 ? 'zero' : income || v > 0 ? 'ok' : 'over'; // income above budget is good news, not "over"
   return <span className={`pill amt ${cls}`}>{v < 0 ? '−' : ''}{usd(Math.abs(v))}</span>;
 }
 
@@ -237,6 +237,8 @@ Budgets apply to every month, so this clears them everywhere. Suggestions stay, 
   };
   const left = b.leftToBudget;
   const none = !b.totals.income && !b.totals.expenses;
+  // Spending budgeted but no income: "left to budget" would just be minus the spending, shown as "over budget".
+  const noIncome = !b.totals.income && b.totals.expenses > 0;
   const pickView = (v) => { setView(v); remember('view', v); };
   const cards = view === 'kind'
     ? KINDS.map(([k, title]) => ({ id: `k.${k}`, title, rows: b.expenses.flatMap(lines).filter((c) => kindOf(c) === k) }))
@@ -271,11 +273,15 @@ Budgets apply to every month, so this clears them everywhere. Suggestions stay, 
           <Total title="Total spending & saving" budget={b.totals.expenses} actual={b.totals.expensesActual} />
         </div>
         <aside className="bside">
-          <section className={`card leftcard ${left < 0 ? 'neg' : none ? 'none' : ''}`}>
+          {noIncome ? <section className="card leftcard none">
+            <div className="big amt">{usd(b.totals.expenses)}</div>
+            <div>budgeted for spending & saving</div>
+            <div className="small muted">Add your income above to see what's left to budget.</div>
+          </section> : <section className={`card leftcard ${left < 0 ? 'neg' : none ? 'none' : ''}`}>
             <div className="big amt">{left < 0 ? '−' : ''}{usd(Math.abs(left))}</div>
             <div><Hover tip={<TipList title="Left to budget" rows={[['Income budgeted', usd(b.totals.income)], ['Spending & saving budgeted', `−${usd(b.totals.expenses)}`]]}
               note="Give every dollar of expected income a job: aim for $0 left." />}>{left < 0 ? 'Over budget' : none ? 'Nothing budgeted yet' : 'Left to budget'}</Hover></div>
-          </section>
+          </section>}
           <SidePanel b={b} />
           <label className="check small btrips"><input type="checkbox" checked={b.trips.counted} onChange={async (e) => {
             await api('/settings/budget-trips', { method: 'PUT', body: JSON.stringify({ on: e.target.checked }) }); load(); }} />

@@ -18,6 +18,8 @@ start; `.env`/environment variables override it). See README.md for setup.
   `.github/workflows/release.yml` checks, builds the zip on Windows and publishes a GitHub Release. The update notice
   (`server/updates.js`, `/api/update`) asks GitHub for the latest release of package.json's `repository` at most daily
   (off in Settings › Updates; `WEALTHFLOW_UPDATE_CHECKS=0` in tests) and shows it in the top bar and Settings.
+- `npm run demo -- <folder>` (`scripts/demo.mjs`): a seeded, invented household in a new data folder, used for the README
+  screenshots (`docs/screenshots/`); never put real data in screenshots.
 - `npm run package` builds the Windows download (`release/`, gitignored): official Node from nodejs.org
   (checksum-verified), server + runtime deps only (page libraries are devDependencies), the built page, a `PORTABLE`
   marker (→ app-data folder) and `WealthFlow.cmd` (`app.mjs --background --open`).

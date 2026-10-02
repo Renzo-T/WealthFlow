@@ -2,6 +2,13 @@
 
 A local, single-user finance dashboard on Plaid's free Trial plan: net worth, spending, budgets, goals, holdings, and a projection. Everything runs on your machine, and your data stays in a local SQLite file.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dashboard-dark.png">
+  <img alt="The WealthFlow dashboard: net worth, this month's income and spending, upcoming bills, asset allocation and cash flow" src="docs/screenshots/dashboard.png">
+</picture>
+
+<sub>Screenshots use an invented household (`npm run demo`), not real data.</sub>
+
 ## What it does
 - **Dashboard:** net worth, this month's income and spending, what changed vs last month, upcoming bills and income,
   Free to spend (what's left this month after bills, card balances and a cushion), a watchlist, goals and a projection.
@@ -18,6 +25,15 @@ A local, single-user finance dashboard on Plaid's free Trial plan: net worth, sp
   budget categories (optional) but are left out of month-to-month comparisons.
 - **Money flow, Net worth, Investments, Forecast, Goals:** where money went, every account's balance and trend,
   holdings and allocation, a long-term projection, and savings goals with target dates.
+
+| | |
+|---|---|
+| ![Budget: income and spending by group against the month's budget](docs/screenshots/budget.png) | ![Money flow: where income went, by budget group](docs/screenshots/flow.png) |
+| **Budget** | **Money flow** |
+| ![Transactions with categories and a summary](docs/screenshots/transactions.png) | ![Net worth over time, by account](docs/screenshots/networth.png) |
+| **Transactions** | **Net worth** |
+| ![Reports: spending month by month](docs/screenshots/reports.png) | ![Trips: a trip's spending by category](docs/screenshots/trips.png) |
+| **Reports** | **Trips** |
 
 Your data only changes when you change it. WealthFlow only asks you to sort recent transactions (from 3 months before
 your first bank connection), since older history tends to have gaps.
@@ -121,6 +137,9 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
   errors, failed requests or broken layouts; screenshots go to `ui-shots/`.
 - `npm run verify`: everything above plus a production build and a scan that refuses secrets. It runs automatically
   before every commit (`npm install` turns the hook on).
+- `npm run demo -- <empty folder>`: fills a new data folder with an invented household (five months of pay, bills,
+  spending, savings, investments and a trip), for trying WealthFlow without a bank or retaking the screenshots. Run it
+  with `WEALTHFLOW_DATA_DIR=<folder> WEALTHFLOW_PORT=3100 node scripts/app.mjs`; it can't sync, since the banks are made up.
 - `npm run package`: the Windows download in `release/` (bundles the official Node from nodejs.org).
 - `npm run release [patch|minor|major]`: publishes a version from a clean, up-to-date `main`. It bumps
   `package.json`, commits through the usual checks (a few minutes; stopping it or a failed check undoes the bump),

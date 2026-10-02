@@ -80,9 +80,9 @@ function TripCard({ trip, reload }) {
       </div>
       <CategoryBar cats={trip.categories} total={trip.total} />
       <Suggest title="Booked before the trip?" items={trip.bookings} trip={trip} onTrip={onTrip} reload={reload}
-        label={(b) => <>{b.name} {usd2(b.amount)} <span className="muted">{shortDate(b.date)}</span></>} />
+        label={(b) => <>{b.name} <span className="amt">{usd2(b.amount)}</span> <span className="muted">{shortDate(b.date)}</span></>} />
       <Suggest title="Settling up?" items={trip.settleUps ?? []} trip={trip} onTrip={onTrip} reload={reload}
-        label={(b) => <>{b.name} {b.amount < 0 ? '−' : ''}{usd2(Math.abs(b.amount))} <span className="muted">{shortDate(b.date)}</span></>} />
+        label={(b) => <>{b.name} <span className="amt">{b.amount < 0 ? '−' : ''}{usd2(Math.abs(b.amount))}</span> <span className="muted">{shortDate(b.date)}</span></>} />
       <button className="linkbtn foot" onClick={() => setOpen(!open)}>{open ? 'Hide' : 'Show'} the {trip.count} purchase{trip.count === 1 ? '' : 's'}</button>
       {open && trip.items.map((t) => (
         <div className="trow small" key={t.id}>
