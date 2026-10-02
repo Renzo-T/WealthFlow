@@ -225,6 +225,13 @@ function detect(today) {
     let c = null, run = 0;
     for (let k = Math.min(gaps.length, 6); k >= min - 1 && !c; k--) { c = cadence(gaps.slice(-k)); run = k + 1; }
     if (!c || (run === 2 && c.name !== 'MONTHLY')) continue; // two points only prove a monthly bill
+    // Everyday spending (a shop, a restaurant) only counts with steady amounts: a few grocery runs that happen to fall
+    // two weeks apart aren't a bill, while autoship or a membership charges the same each time. Bills, subscriptions
+    // and pay keep the looser rule (electricity and hourly pay vary).
+    if (!billy && last.grp !== 'Income') {
+      const runAmts = byDate.slice(-run).map((t) => Math.abs(t.amount));
+      if (Math.max(...runAmts) / Math.min(...runAmts) > 1.25) continue;
+    }
     const amts = byDate.slice(-6).map((t) => Math.abs(t.amount));
     const median = [...amts].sort((a, b) => a - b)[Math.floor(amts.length / 2)];
     out.push({

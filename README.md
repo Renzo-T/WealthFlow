@@ -170,8 +170,8 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
   do: WealthFlow tries again at the next sync (and when it starts), or click **Try again**. Don't reconnect for this;
   it would only use up a connection slot. If it keeps happening, the reason in the banner and `app.log` say why.
 - **"Add holdings" banner:** your bank has investment accounts. Click it once to grant access to holdings.
-- **A shop shows up as a bill:** visiting the same place on a regular rhythm can look like a schedule. Hide it on the
-  Bills page; it stays hidden.
+- **A shop shows up as a bill:** shops only count when they charge about the same amount each time (autoship, a
+  membership). If one still isn't a bill, hide it on the Bills page; it stays hidden.
 - **Upcoming bills empty:** recurring items need a few occurrences to be detected; add one yourself on the Bills page.
   For pay, answer "How often are you paid?".
 - **A bank's history starts recently:** some banks only share a few weeks or months. Months before every bank's

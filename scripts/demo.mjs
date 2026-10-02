@@ -19,7 +19,6 @@ await import('../server/env-check.js');
 const { default: db } = await import('../server/db.js');
 const { classify } = await import('../server/categories.js');
 const { refreshTrips, assignTrips } = await import('../server/trips.js');
-const { bills } = await import('../server/recurring.js');
 
 // Seeded random numbers, so screenshots come out the same each time.
 let seed = 20261002;
@@ -155,9 +154,6 @@ classify();
 refreshTrips();
 db.prepare("UPDATE trips SET status = 'confirmed' WHERE status = 'suggested'").run();
 assignTrips();
-// Random shopping can look like a schedule (the same shop two weeks apart, twice): hide those "bills", as a user would.
-for (const b of bills().filter((b) => b.direction === 'out' && ['Groceries', 'Restaurants', 'Coffee', 'Rideshare & transit', 'Shopping'].includes(b.category)))
-  db.prepare('INSERT INTO bill_settings (key, hidden) VALUES (?, 1) ON CONFLICT(key) DO UPDATE SET hidden = 1').run(b.key);
 const count = (sql) => db.prepare(sql).get().n;
 console.log(`Demo household in ${target}: ${count('SELECT COUNT(*) n FROM transactions')} transactions, ${count('SELECT COUNT(*) n FROM trips')} trip(s).`);
 console.log(`Run it: WEALTHFLOW_DATA_DIR="${target}" WEALTHFLOW_PORT=3100 node scripts/app.mjs`);

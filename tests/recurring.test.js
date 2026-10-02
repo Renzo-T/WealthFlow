@@ -193,3 +193,19 @@ test('a single paycheck is offered for "how often are you paid?" until answered'
   markPaycheckHandled(c.key);
   assert.equal(paycheckCandidates('2026-10-01').length, 0);
 });
+
+test('a shop visited every two weeks by chance is not a bill; a steady charge from a shop is', () => {
+  // Groceries about 14 days apart, but amounts all over the place: shopping, not a schedule.
+  for (const [d, a] of [['2026-08-20', 48.1], ['2026-09-03', 96.4], ['2026-09-17', 138.2]])
+    tx('chk', d, a, 'SAFEWAY #123', { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_GROCERIES', merchant: 'Safeway' });
+  // Pet food on autoship: the same amount every 4 weeks.
+  for (const d of ['2026-07-10', '2026-08-07', '2026-09-04'])
+    tx('chk', d, 54.99, 'CHEWY.COM', { primary: 'GENERAL_MERCHANDISE', detailed: 'GENERAL_MERCHANDISE_PET_SUPPLIES', merchant: 'Chewy' });
+  // Hourly pay varies a lot, and is still income on a schedule.
+  for (const [d, a] of [['2026-08-21', -1650], ['2026-09-04', -2310], ['2026-09-18', -1420]])
+    tx('chk', d, a, 'ACME CORP PAYROLL', { primary: 'INCOME', detailed: 'INCOME_WAGES', merchant: 'Acme Corp' });
+  classify();
+  assert.equal(find('Safeway'), undefined);
+  assert.ok(find('Chewy'), 'a steady charge from a shop is still a bill');
+  assert.ok(find('Acme Corp'), 'varying pay is still detected');
+});
