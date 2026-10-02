@@ -9,6 +9,7 @@ import { classify } from '../categories.js';
 import { listBackups } from '../backup.js';
 import { assignTrips } from '../trips.js';
 import { startupStatus, setStartup, launcherStatus, setLauncher } from '../startup.js';
+import { updateStatus, refreshUpdate, setChecks } from '../updates.js';
 const router = Router();
 
 // How this copy is running ('app' = npm run app / started at sign-in; 'dev' = npm start), and starting at sign-in.
@@ -22,6 +23,11 @@ router.put('/app/startup', (req, res) => {
 router.put('/app/launcher', (req, res) => {
   try { setLauncher(!!req.body.enabled); res.json(appState()); } catch (e) { res.status(400).json({ error_message: e.message }); }
 });
+// Update notice: this copy's version and the newest release (checked about once a day; see updates.js).
+router.get('/update', (_req, res) => { refreshUpdate().catch(() => {}); res.json(updateStatus()); }); // refreshes in the background when due
+router.post('/update/check', async (_req, res) => { await refreshUpdate({ force: true }); res.json(updateStatus()); });
+router.put('/update', (req, res) => { setChecks(!!req.body.enabled); res.json(updateStatus()); });
+
 // Stop the background copy (app mode only; in development, stop npm start instead).
 router.post('/app/quit', (_req, res) => {
   if (!appMode()) return res.status(400).json({ error_message: 'WealthFlow is running from npm start; stop it there.' });

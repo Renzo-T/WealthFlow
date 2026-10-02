@@ -430,3 +430,11 @@ test('banks list says whether a problem needs you (sign in) or not (error, with 
   assert.equal(items.v.state, 'error');
   assert.match(items.v.reason, /bank isn't available/);
 });
+
+test('update notice: reports this version and never asks GitHub from tests', async () => {
+  const u = (await get('/update')).body;
+  assert.match(u.version, /^\d+\.\d+\.\d+$/);
+  assert.equal(u.enabled, false); // WEALTHFLOW_UPDATE_CHECKS=0 in tests/helpers.js
+  assert.equal(u.available, false);
+  assert.equal((await post('/update/check')).status, 200);
+});

@@ -272,6 +272,9 @@ tr.dim td { opacity: .6; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .chip-link { font-size: .8rem; color: var(--warn-ink); background: var(--warn-bg); border-radius: 99px; padding: .3rem .7rem; text-decoration: none; margin-right: auto; }
 .chip-link::before { content: '●'; margin-right: .35rem; color: var(--warn-dot); }
+.chip-link.info { color: var(--note-ink); background: var(--soft); } /* news, not a problem (e.g. a new version) */
+.chip-link.info::before { color: var(--blue); }
+.chip-link:has(+ .chip-link) { margin-right: .5rem; } /* two chips: only the last pushes the buttons right */
 
 /* ---------- Hide amounts (screen sharing) ---------- */
 body.privacy .big, body.privacy .tamt, body.privacy td.r, body.privacy .legend2 b, body.privacy .chart text,

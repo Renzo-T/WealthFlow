@@ -4,6 +4,7 @@ process.env.WEALTHFLOW_DB = ':memory:';
 // config.json (and backups) go to a throwaway folder, never data/.
 process.env.WEALTHFLOW_DATA_DIR ??= (await import('node:fs')).mkdtempSync((await import('node:path')).join((await import('node:os')).tmpdir(), 'wealthflow-test-'));
 process.env.ENCRYPTION_KEY ??= '0'.repeat(64);
+process.env.WEALTHFLOW_UPDATE_CHECKS = '0'; // never ask GitHub from tests (updates.test.js uses a fake one)
 
 export const { default: db } = await import('../server/db.js');
 

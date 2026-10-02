@@ -1,0 +1,41 @@
+# Publishing a version: `npm run release` pushes a tag like v0.2.0; this builds the Windows download from that tag on
+# GitHub's Windows machine (after the same checks as CI) and publishes a GitHub Release with the zip attached and
+# notes from the commits since the last release. The app's update notice reads these releases.
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # the notes need the previous tag
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: The tag matches package.json
+        shell: bash
+        run: |
+          v=$(node -p "require('./package.json').version")
+          [ "v$v" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME doesn't match package.json version $v"; exit 1; }
+      - run: npm run verify
+      - run: npm run package
+      - name: Publish the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          zip=$(ls release/WealthFlow-*-win-x64.zip)
+          cat > notes.md <<'EOF'
+          **Download** the zip below, then right-click it › Properties › tick **Unblock** › OK before extracting (otherwise
+          Windows may ask before the first run). New here? Unzip it somewhere permanent and double-click `WealthFlow.cmd`.
+          Updating? Stop WealthFlow (Settings › App), replace the old WealthFlow folder with the new one and start it again:
+          your data and settings are kept.
+          EOF
+          gh release create "$GITHUB_REF_NAME" "$zip" --title "WealthFlow $GITHUB_REF_NAME" --notes-file notes.md --generate-notes

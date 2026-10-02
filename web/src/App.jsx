@@ -56,6 +56,8 @@ export default function App() {
   // rendering (amountsHidden) is right straight away.
   const [hide, setHideState] = useState(() => { const h = store.get(HIDE_KEY) === '1'; document.body.classList.toggle('privacy', h); return h; });
   const setHide = (h) => { document.body.classList.toggle('privacy', h); setHideState(h); };
+  const [update, setUpdate] = useState(null); // a newer release? (Settings › Updates)
+  useEffect(() => { api('/update').then(setUpdate).catch(() => {}); }, []);
   const [setup, setSetup] = useState(null); // Plaid keys saved yet? Until they are, the first-run screen shows.
   useEffect(() => { api('/link/setup').then(setSetup).catch(() => setSetup({ configured: true })); }, []);
   // Theme: follows the system unless you pick one; picking the system's own choice goes back to following it.
@@ -108,6 +110,7 @@ export default function App() {
       </aside>
       <main className="main">
         <div className="topbar">
+          {update?.available && <a className="chip-link info" href="#/settings" title={`You have version ${update.version}. See Settings › Updates.`}>Version {update.latest} is available</a>}
           {attention > 0 && <a className="chip-link" href="#/settings" title="See Settings › Connections">
             {attention} bank{attention > 1 ? 's' : ''} need{attention > 1 ? '' : 's'} attention</a>}
           {meta.lastSync && (

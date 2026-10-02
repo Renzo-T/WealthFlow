@@ -71,6 +71,37 @@ function AppSetting() {
   );
 }
 
+// Updates: this copy's version, and a notice when a newer release is out (also in the top bar).
+function UpdateSetting() {
+  const [u, setU] = useState(null), [busy, setBusy] = useState(false);
+  useEffect(() => { api('/update').then(setU).catch(() => {}); }, []);
+  if (!u) return null;
+  const day = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const check = async () => { setBusy(true); setU(await api('/update/check', { method: 'POST' })); setBusy(false); };
+  const toggle = async (enabled) => setU(await api('/update', { method: 'PUT', body: JSON.stringify({ enabled }) }));
+  const status = !u.enabled ? 'Update checks are off.'
+    : !u.checked ? 'Not checked yet.'
+      : `${u.latest ? 'Up to date' : 'No releases published yet'} (checked ${day(u.checked)}).${u.error ? ` The last check didn't work: ${u.error}.` : ''}`;
+  return (
+    <Panel className="mt" title="Updates" actions={u.enabled && u.repo && !u.available && <button className="btn" onClick={check} disabled={busy}>{busy ? 'Checking…' : 'Check now'}</button>}>
+      {u.available ? <div className="note"><span><b>Version {u.latest} is available</b>{u.published && ` (released ${day(u.published)})`}. You have {u.version}.</span>
+        <span className="btnrow">
+          {u.how === 'download' && u.download && <a className="btn primary linkbtn-solid" href={u.download}>Download</a>}
+          {u.page && <a className="btn linkbtn-solid" href={u.page} target="_blank" rel="noreferrer">What's new</a>}
+        </span></div>
+        : <p className="small muted">Version {u.version}. {status}</p>}
+      {u.available && <p className="small muted">{u.how === 'download'
+        ? <>To update: stop WealthFlow (Settings › App), replace the WealthFlow folder with the one in the new download, and start it again with
+          WealthFlow.cmd. Your data and settings stay: they're kept in your app-data folder, not in the WealthFlow folder.</>
+        : <>To update: in the WealthFlow folder run <code>git pull</code> and <code>npm install</code>, then restart it.</>}</p>}
+      {u.repo ? <>
+        <label className="check mt"><input type="checkbox" checked={u.enabled} onChange={(e) => toggle(e.target.checked)} /> Check for new versions</label>
+        <p className="small muted">About once a day WealthFlow asks GitHub for the newest release of {u.repo}. Nothing about you or your data is sent.</p>
+      </> : <p className="small muted">This copy doesn't say where its releases are published, so it can't check for new versions.</p>}
+    </Panel>
+  );
+}
+
 export default function Settings({ onChange }) {
   const [sys, setSys] = useState(null);
   const [meta, setMeta] = useState(null);
@@ -123,6 +154,7 @@ export default function Settings({ onChange }) {
       </Panel>
       <PlaidKeys banks={meta?.items.length ?? 0} onChange={() => api('/system').then(setSys)} />
       <AppSetting />
+      <UpdateSetting />
       <HistorySetting />
       <Panel className="mt" title="Category rules">
         <p className="small muted">Created when you change a category for every transaction with the same description, or choose "Always for" a person. Newer rules win.</p>

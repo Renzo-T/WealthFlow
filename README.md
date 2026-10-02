@@ -26,10 +26,12 @@ your first bank connection), since older history tends to have gaps.
 You need a free [Plaid](https://dashboard.plaid.com/signup) account (US/Canada). Plaid is the service that connects to
 your banks; your data comes straight to your computer. Then pick one:
 
-**Windows, nothing to install:** download `WealthFlow-<version>-win-x64.zip`, unzip it somewhere permanent (e.g.
-Documents) and double-click `WealthFlow.cmd`. It opens WealthFlow in your browser. Windows may warn that the file is
-from an unknown publisher (it isn't code-signed); choose **More info > Run anyway**. To make the zip yourself from
-the code, run `npm run package`.
+**Windows, nothing to install:** download `WealthFlow-<version>-win-x64.zip` from the
+[latest release](https://github.com/Renzo-T/WealthFlow/releases/latest). Before unzipping, right-click the zip ›
+**Properties** › tick **Unblock** › OK, so Windows doesn't question the first run. (If you skip that, it may say
+"Windows protected your PC": choose **More info > Run anyway**. The download has no code-signing certificate; the Node
+inside it is Node's own signed build.) Unzip it somewhere permanent (e.g. Documents) and double-click
+`WealthFlow.cmd`. It opens WealthFlow in your browser. To make the zip yourself from the code, run `npm run package`.
 
 **Any system, from the code:** you need Node 22.13 or newer (see [Installing Node](#installing-node)), then in the
 WealthFlow folder:
@@ -82,8 +84,9 @@ keys and the key that encrypts your bank connections. **Settings > Backup** down
 copy of `config.json` with it, since without that key every bank has to be connected again (using new slots). To
 restore, stop WealthFlow, put the backup in place of `wealthflow.db`, and start it again.
 
-**Updating:** stop WealthFlow, then replace the folder with the new download (or `git pull` and `npm install`), and
-start it again. If "Start when I sign in" or "Let the app window start WealthFlow" was on and the folder moved, turn
+**Updating:** when a new version is out, WealthFlow says so in the top bar and in **Settings > Updates** (it checks
+GitHub's releases about once a day; you can turn that off there). Stop WealthFlow, then replace the folder with the
+new download (or `git pull` and `npm install`), and start it again. If "Start when I sign in" or "Let the app window start WealthFlow" was on and the folder moved, turn
 it off and on.
 
 **Sharing:** each person needs their own copy with their own Plaid account and keys. Never send someone your data
@@ -94,7 +97,8 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
   (`localhost`), so other devices on your network can't open it.
 - **What goes over the internet:** WealthFlow's requests to Plaid (your transactions, balances, holdings and card
   statements come back), Plaid's sign-in page when you connect a bank, and merchant logos, which load from addresses
-  Plaid provides. Nothing else; even the font is bundled.
+  Plaid provides. About once a day it also asks GitHub whether a newer version is out (an anonymous request; turn it
+  off in Settings > Updates). Nothing else; even the font is bundled.
 - **Your bank passwords never reach WealthFlow.** You sign in on Plaid's page; WealthFlow only gets a Plaid access
   token per bank.
 - **Encrypted:** those access tokens, with AES-256-GCM, using the key in `config.json` (created on first run). The
@@ -113,6 +117,9 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
 - `npm run verify`: everything above plus a production build and a scan that refuses secrets. It runs automatically
   before every commit (`npm install` turns the hook on).
 - `npm run package`: the Windows download in `release/` (bundles the official Node from nodejs.org).
+- `npm run release [patch|minor|major]`: publishes a version. It bumps `package.json`, tags and pushes; GitHub then
+  runs the checks, builds the download on Windows and publishes the release (`.github/workflows/release.yml`).
+  Copies with update checks on see it within a day.
 - `.env` (see `.env.example`) overrides `config.json`, handy for development. `certs/localhost.pem` and
   `certs/localhost-key.pem` (e.g. from mkcert) make the app use https; only the embedded-Link fallback needs that.
 - `CLAUDE.md` describes the architecture, the data flow and the Plaid quirks handled.

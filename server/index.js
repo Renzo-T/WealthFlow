@@ -11,6 +11,7 @@ import system from './routes/system.js';
 import trips from './routes/trips.js';
 import reports from './routes/reports.js';
 import { syncAll, lastSync, AUTO_SYNC_HOURS, anyFailing } from './sync.js';
+import { refreshUpdate } from './updates.js';
 
 const app = express();
 app.use(express.json());
@@ -33,6 +34,10 @@ const listening = (url) => () => {
   if (process.env.WEALTHFLOW_OPEN === '1') openInBrowser(url);
   if (Date.now() - Date.parse(lastSync() ?? 0) > 3600e3 || anyFailing()) autoSync(); // a bank that failed last time: try again now
   setInterval(autoSync, AUTO_SYNC_HOURS * 3600e3);
+  // Newer release? (at most once a day; nothing to do when turned off or there's no repository)
+  const checkUpdate = () => refreshUpdate().catch(() => {});
+  checkUpdate();
+  setInterval(checkUpdate, 6 * 3600e3);
 };
 // --open (WealthFlow.cmd in the download): show it in the default browser.
 const openInBrowser = (url) => {

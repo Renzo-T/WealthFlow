@@ -14,6 +14,10 @@ start; `.env`/environment variables override it). See README.md for setup.
   `hosted_link_url` in a new tab and polls `GET /api/link/status/:token` (`linkTokenGet` → `sessionResult()`); a new
   bank's public token is exchanged there, once. No https or redirect URI needed. Embedded Link (`?hosted=0`, with
   `PLAID_REDIRECT_URI` and `/oauth`) is only a fallback.
+- Releases: `npm run release` (`scripts/release.mjs`) bumps the version, tags `vX.Y.Z` and pushes;
+  `.github/workflows/release.yml` checks, builds the zip on Windows and publishes a GitHub Release. The update notice
+  (`server/updates.js`, `/api/update`) asks GitHub for the latest release of package.json's `repository` at most daily
+  (off in Settings › Updates; `WEALTHFLOW_UPDATE_CHECKS=0` in tests) and shows it in the top bar and Settings.
 - `npm run package` builds the Windows download (`release/`, gitignored): official Node from nodejs.org
   (checksum-verified), server + runtime deps only (page libraries are devDependencies), the built page, a `PORTABLE`
   marker (→ app-data folder) and `WealthFlow.cmd` (`app.mjs --background --open`).

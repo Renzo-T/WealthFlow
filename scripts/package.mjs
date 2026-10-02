@@ -48,8 +48,9 @@ step('Installing the server\'s packages (express, plaid, dotenv)');
 const npm = process.env.npm_execpath ? [process.execPath, [process.env.npm_execpath]] : ['npm', []];
 run(npm[0], [...npm[1], 'ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: out });
 // The copy only needs what it runs: no build tools, scripts or development packages listed.
-const { name: n, version, type, dependencies } = pkg;
-fs.writeFileSync(path.join(out, 'package.json'), JSON.stringify({ name: n, version, private: true, type, dependencies }, null, 2) + '\n');
+// (repository stays: the update notice asks it for newer releases.)
+const { name: n, version, license, repository, type, dependencies } = pkg;
+fs.writeFileSync(path.join(out, 'package.json'), JSON.stringify({ name: n, version, license, repository, private: true, type, dependencies }, null, 2) + '\n');
 fs.rmSync(path.join(out, 'package-lock.json'));
 
 step(`Adding Node ${nodeVersion} from nodejs.org`);

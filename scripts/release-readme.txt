@@ -8,8 +8,9 @@ Start
 -----
 1. Move this WealthFlow folder somewhere permanent, e.g. your Documents folder.
 2. Double-click WealthFlow.cmd. It opens WealthFlow in your browser.
-   If Windows asks whether to run it ("Windows protected your PC"), choose More info > Run anyway.
-   It's unsigned because signing costs money, not because anything is wrong.
+   If Windows asks whether to run it ("Windows protected your PC"), choose More info > Run anyway. Windows asks about
+   scripts from downloads that carry no publisher signature (WealthFlow.cmd is a script and can't carry one). To avoid
+   it next time, right-click the downloaded zip > Properties > tick Unblock > OK before unzipping.
 3. Paste your Plaid keys when asked. The screen explains how to get them (a free Plaid account).
 4. Connect your banks.
 
@@ -21,6 +22,7 @@ In Settings > App you can:
 
 Update to a newer version
 -------------------------
+WealthFlow tells you when a new version is out (top bar, and Settings > Updates, with a Download button).
 Settings > App > Stop WealthFlow, replace this folder with the new one, and double-click WealthFlow.cmd.
 Your data and keys are kept (they live in %LOCALAPPDATA%\WealthFlow). If "Start when I sign in" was on and the folder
 moved, turn it off and on again.
