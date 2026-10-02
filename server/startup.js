@@ -6,10 +6,14 @@ import path from 'node:path';
 const KEY = String.raw`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, NAME = 'WealthFlow';
 export const startupSupported = process.platform === 'win32';
 
-// PowerShell's -WindowStyle Hidden keeps a console window from opening; the app writes its own log (--log).
-const ps = (s) => s.replace(/'/g, "''");
+// No window, and nothing a closed window can take down: conhost --headless runs Node without a console window (Windows
+// 11 otherwise opens console programs in Windows Terminal, where a hidden window isn't reliably hidden, and closing it
+// stopped WealthFlow), and --background then starts WealthFlow as a detached process with no console at all.
+// app.mjs moves to its own folder and writes its log (--log). Windows paths can't contain ", so plain quoting is safe.
 export const startupCommand = (root = process.cwd(), node = process.execPath) =>
-  `powershell.exe -NoProfile -WindowStyle Hidden -Command "Set-Location -LiteralPath '${ps(root)}'; & '${ps(node)}' '${ps(path.win32.join(root, 'scripts', 'app.mjs'))}' --log"`;
+  `conhost.exe --headless "${node}" "${path.win32.join(root, 'scripts', 'app.mjs')}" --background --log`;
+// An entry for this folder made by an older version (a different command, same app.mjs): rewritten on start.
+const ours = (value, root = process.cwd()) => value.includes(path.win32.join(root, 'scripts', 'app.mjs'));
 
 const reg = (...args) => execFileSync('reg', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true });
 
@@ -49,4 +53,17 @@ export function setLauncher(on) {
     reg('add', `${PROTO}\\shell\\open\\command`, '/ve', '/d', startupCommand(), '/f');
   } else if (launcherStatus().enabled) reg('delete', PROTO, '/f');
   return launcherStatus();
+}
+
+// On start (app mode): entries for this folder written by an older version are brought up to date, so a fix to how
+// WealthFlow is started reaches people without them turning the options off and on.
+export function repairEntries() {
+  if (!startupSupported) return [];
+  const read = (args) => { try { return reg('query', ...args).split(/REG_SZ\s+/)[1]?.trim() ?? ''; } catch { return null; } };
+  const fixed = [];
+  const run = read([KEY, '/v', NAME]);
+  if (run && run !== startupCommand() && ours(run)) { setStartup(true); fixed.push('start at sign-in'); }
+  const link = read([`${PROTO}\\shell\\open\\command`, '/ve']);
+  if (link && link !== startupCommand() && ours(link)) { setLauncher(true); fixed.push('Start button'); }
+  return fixed;
 }

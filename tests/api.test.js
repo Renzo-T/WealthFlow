@@ -378,13 +378,11 @@ test('app: reports the mode, and Stop only works for the background copy', async
   assert.equal((await post('/app/quit')).status, 400); // in development it must not exit the server
 });
 
-test('app: the sign-in command starts this folder\'s app hidden, with paths quoted for PowerShell', async () => {
+test('app: the sign-in command starts this folder\'s app with no window, detached from any console', async () => {
   const { startupCommand } = await import('../server/startup.js');
   const cmd = startupCommand(String.raw`C:\Users\Alex O'Neil\WealthFlow`, String.raw`C:\Program Files\nodejs\node.exe`);
-  assert.match(cmd, /^powershell\.exe -NoProfile -WindowStyle Hidden -Command "/);
-  assert.ok(cmd.includes(String.raw`Set-Location -LiteralPath 'C:\Users\Alex O''Neil\WealthFlow'`), cmd); // ' doubled inside '…'
-  assert.ok(cmd.includes(String.raw`& 'C:\Program Files\nodejs\node.exe' 'C:\Users\Alex O''Neil\WealthFlow\scripts\app.mjs' --log`), cmd);
-  assert.equal(cmd.split('"').length, 3); // one quoted -Command argument, nothing breaking out of it
+  // No PowerShell window that Windows Terminal could show (and closing would stop WealthFlow).
+  assert.equal(cmd, String.raw`conhost.exe --headless "C:\Program Files\nodejs\node.exe" "C:\Users\Alex O'Neil\WealthFlow\scripts\app.mjs" --background --log`);
 });
 
 // ---------- First run: Plaid keys, and Hosted Link ----------

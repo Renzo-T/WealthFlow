@@ -12,6 +12,7 @@ import trips from './routes/trips.js';
 import reports from './routes/reports.js';
 import { syncAll, lastSync, AUTO_SYNC_HOURS, anyFailing } from './sync.js';
 import { refreshUpdate } from './updates.js';
+import { repairEntries } from './startup.js';
 
 const app = express();
 app.use(express.json());
@@ -32,6 +33,10 @@ const autoSync = () => syncAll().then((r) => console.log(`Auto-sync: ${r.reduce(
 const listening = (url) => () => {
   console.log(`WealthFlow on ${url}`);
   if (process.env.WEALTHFLOW_OPEN === '1') openInBrowser(url);
+  if (process.env.WEALTHFLOW_APP === '1') try {
+    const fixed = repairEntries();
+    if (fixed.length) console.log(`Updated how Windows starts WealthFlow (${fixed.join(', ')}).`);
+  } catch (e) { console.error(`Couldn't update the sign-in entry: ${e.message}`); }
   if (Date.now() - Date.parse(lastSync() ?? 0) > 3600e3 || anyFailing()) autoSync(); // a bank that failed last time: try again now
   setInterval(autoSync, AUTO_SYNC_HOURS * 3600e3);
   // Newer release? (at most once a day; nothing to do when turned off or there's no repository)
