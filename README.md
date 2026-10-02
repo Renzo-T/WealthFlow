@@ -40,17 +40,20 @@ your first bank connection), since older history tends to have gaps.
 
 ## Get started
 You need a free [Plaid](https://dashboard.plaid.com/signup) account (US/Canada). Plaid is the service that connects to
-your banks; your data comes straight to your computer. Then pick one:
+your banks; your data comes straight to your computer.
 
-**Windows, nothing to install:** download `WealthFlow-<version>-win-x64.zip` from the
-[latest release](https://github.com/Renzo-T/WealthFlow/releases/latest). Before unzipping, right-click the zip ›
-**Properties** › tick **Unblock** › OK, so Windows doesn't question the first run. (If you skip that, it may say
-"Windows protected your PC": choose **More info > Run anyway**. That's only the first time: once running, WealthFlow
-clears the mark Windows put on its launcher, and starting at sign-in never asks. `WealthFlow.cmd` is a script, which
-can't carry a publisher signature; the Node inside the download is Node's own signed build.) Unzip it somewhere permanent (e.g. Documents) and double-click
-`WealthFlow.cmd`. It opens WealthFlow in your browser. To make the zip yourself from the code, run `npm run package`.
+### Windows: download (nothing else to install)
+1. Download `WealthFlow-<version>-win-x64.zip` from the
+   [latest release](https://github.com/Renzo-T/WealthFlow/releases/latest). It brings everything it needs, Node included.
+2. Right-click the zip › **Properties** › tick **Unblock** › OK, then unzip it somewhere permanent (e.g. Documents).
+3. Double-click `WealthFlow.cmd`. It opens WealthFlow in your browser.
 
-**Any system, from the code:** you need Node 22.13 or newer (see [Installing Node](#installing-node)), then in the
+If you skipped Unblock, Windows may say "Windows protected your PC": choose **More info › Run anyway**. It only asks the
+first time (WealthFlow then clears the mark Windows put on its launcher), and starting at sign-in never asks.
+`WealthFlow.cmd` is a script, which can't carry a publisher signature; the Node inside is Node's own signed build.
+
+### Mac, Linux, or working on the code
+Not needed on Windows if you use the download. You need [Node](https://nodejs.org) 22.13 or newer, then in the
 WealthFlow folder:
 ```
 npm install
@@ -58,27 +61,30 @@ npm run app
 ```
 and open http://localhost:3000.
 
-### Installing Node
+<details>
+<summary>Installing or updating Node</summary>
+
 Check what you have with `node -v` in a terminal. Anything from `v22.13.0` up works; if it's older or missing, install
 the current **LTS** ("long-term support") version:
-- **Windows:** `winget install OpenJS.NodeJS.LTS`, or the Windows installer from [nodejs.org](https://nodejs.org).
-  Open a new terminal afterwards so it's found.
-- **Mac:** the macOS installer from [nodejs.org](https://nodejs.org), or `brew install node` with Homebrew.
+- **Windows:** `winget install OpenJS.NodeJS.LTS`, or the installer from [nodejs.org](https://nodejs.org). Open a new
+  terminal afterwards so it's found.
+- **Mac:** the installer from [nodejs.org](https://nodejs.org), or `brew install node` with Homebrew.
 - **Linux:** your distribution's package is often too old; use [nvm](https://github.com/nvm-sh/nvm) or
-  [fnm](https://github.com/Schniz/fnm) instead.
+  [fnm](https://github.com/Schniz/fnm) instead (`nvm use` in the WealthFlow folder picks the version in `.nvmrc`).
 
-If you already use nvm or fnm, `nvm use` (or `fnm use`) in the WealthFlow folder picks the version in `.nvmrc`. After
-changing Node, run `npm install` again. WealthFlow says so plainly if your Node is too old, and the Windows download
-brings its own Node, so none of this applies to it.
+After changing Node, run `npm install` again. WealthFlow says so plainly if your Node is too old.
+</details>
 
-On first run WealthFlow asks for your Plaid **client ID** and **secret** (Plaid dashboard > Developers > Keys) and checks
-them with Plaid. Then click **Connect a bank**: Plaid's sign-in page opens in a new tab, and WealthFlow picks up the
-connection when you finish there.
+### Then, in WealthFlow
+1. Paste your Plaid **client ID** and **secret** (Plaid dashboard › Developers › Keys). WealthFlow checks them with
+   Plaid before saving them.
+2. Click **Connect a bank**. Plaid's sign-in page opens in a new tab, and WealthFlow picks up the connection when you
+   finish there.
 
 - **Sandbox** keys work straight away with test banks (`user_good` / `pass_good`, code `1234`).
 - **Production** keys connect your real banks. Request Production access in the Plaid dashboard; the free **Trial plan**
   allows 10 bank connections, and removing one doesn't free its slot, so try things in Sandbox first. Sandbox and
-  Production have different secrets; switch in **Settings > Plaid keys**.
+  Production have different secrets; switch in **Settings › Plaid keys**.
 
 ## Everyday use
 - **Settings > App > Install WealthFlow** (Chrome or Edge) gives it its own window, Start-menu entry and taskbar icon.
@@ -156,13 +162,16 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
   running. Use that one, or stop it first.
 - **"Plaid didn't accept those keys":** copy the whole client ID, and the secret for the environment you picked
   (Sandbox and Production secrets differ).
-- **"Needs Node 22.13 or newer":** see [Installing Node](#installing-node) (or use the Windows download, which brings its own).
+- **"Needs Node 22.13 or newer":** update Node (see "Installing or updating Node" under [Get started](#get-started)),
+  or use the Windows download, which brings its own.
 - **A bank needs you to sign in again** (red banner): click **Reconnect**. Plaid's page opens in a new tab; finish
   there.
 - **"Couldn't update" a bank** (amber banner): the bank or Plaid was unavailable, or the internet was down. Nothing to
   do: WealthFlow tries again at the next sync (and when it starts), or click **Try again**. Don't reconnect for this;
   it would only use up a connection slot. If it keeps happening, the reason in the banner and `app.log` say why.
 - **"Add holdings" banner:** your bank has investment accounts. Click it once to grant access to holdings.
+- **A shop shows up as a bill:** visiting the same place on a regular rhythm can look like a schedule. Hide it on the
+  Bills page; it stays hidden.
 - **Upcoming bills empty:** recurring items need a few occurrences to be detected; add one yourself on the Bills page.
   For pay, answer "How often are you paid?".
 - **A bank's history starts recently:** some banks only share a few weeks or months. Months before every bank's
