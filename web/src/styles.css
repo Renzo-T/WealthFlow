@@ -30,7 +30,8 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); }
 .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
-.side { background: var(--card); border-right: 1px solid var(--line); padding: 1.25rem .9rem; }
+.side { background: var(--card); border-right: 1px solid var(--line); padding: 1.25rem .9rem;
+  position: sticky; top: 0; height: 100vh; box-sizing: border-box; overflow-y: auto; } /* stays put while the page scrolls */
 .logo { font-weight: 700; font-size: 1.15rem; padding: 0 .6rem; }
 .tag { color: var(--muted); font-size: .75rem; padding: 0 .6rem 1.25rem; }
 .nav { display: block; width: 100%; text-align: left; border: 0; background: none; font: inherit;
