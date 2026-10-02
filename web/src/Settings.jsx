@@ -53,9 +53,17 @@ function AppSetting() {
       {a.startup.supported ? <>
         <label className="check mt"><input type="checkbox" checked={a.startup.enabled} onChange={(e) => change('startup', e.target.checked)} />
           Start WealthFlow when I sign in</label>
-        <p className="small muted">Runs it in the background from sign-in, so the app opens straight away and your banks update every few hours
-          even when the window is closed (that's also what builds your day-by-day balance history).
-          {a.startup.enabled && !a.startup.here && ' It currently starts a copy in another folder; turn this off and on to use this one.'}</p>
+        <p className="small muted">Optional. WealthFlow runs quietly in the background (no window; about 90 MB of memory) and checks your
+          banks every 6 hours. What that adds:</p>
+        <ul className="small muted benefits">
+          <li><b>A complete balance history.</b> WealthFlow notes each account's balance once a day while it's running, and Plaid can't
+            supply past days later. Without it, net worth and investment charts have gaps on days you didn't open the app.</li>
+          <li><b>Daily backups</b> of your data, made automatically.</li>
+          <li><b>No wait</b> when you open the app: it's already up to date.</li>
+        </ul>
+        <p className="small muted">Without it, your transactions still catch up whenever you open WealthFlow; only those daily balances and
+          backups are skipped on days it isn't running.</p>
+        {a.startup.enabled && !a.startup.here && <p className="small muted">It currently starts a copy in another folder; turn this off and on to use this one.</p>}
         <label className="check mt"><input type="checkbox" checked={a.launcher.enabled} onChange={(e) => change('launcher', e.target.checked)} />
           Let the app window start WealthFlow</label>
         <p className="small muted">When WealthFlow isn't running, the window shows a Start button instead of only saying so. Your browser asks

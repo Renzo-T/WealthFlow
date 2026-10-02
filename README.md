@@ -66,9 +66,11 @@ connection when you finish there.
 
 ## Everyday use
 - **Settings > App > Install WealthFlow** (Chrome or Edge) gives it its own window, Start-menu entry and taskbar icon.
-- **Settings > App > Start WealthFlow when I sign in** (Windows) starts it in the background whenever you sign in, so
-  the window opens straight away and your banks keep updating (every 6 hours) with the window closed. That's also what
-  builds your day-by-day balance history, which Plaid can't fill in later.
+- **Settings > App > Start WealthFlow when I sign in** (Windows, optional, off until you turn it on) runs it in the
+  background with no window (about 90 MB of memory), checking your banks every 6 hours. What it adds: a complete
+  day-by-day balance history (WealthFlow records balances once a day while running, and Plaid can't supply past days,
+  so without it net worth and investment charts have gaps on days you didn't open it), daily automatic backups, and an
+  app that's already up to date when you open it. Without it, transactions still catch up whenever you open it.
 - **Settings > App > Let the app window start WealthFlow** (Windows): if WealthFlow isn't running, the window shows a
   **Start WealthFlow** button, so the Start-menu or taskbar shortcut always works. Your browser asks before starting it
   the first time ("Open WealthFlow?"); it can always allow. Without it, the window says WealthFlow isn't running and

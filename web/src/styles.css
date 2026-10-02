@@ -747,3 +747,5 @@ p code { background: var(--surface-2); border: 1px solid var(--line); border-rad
 .keys > label input { font-weight: 400; }
 .envpick { border: 0; padding: 0; margin: 0; display: grid; gap: .35rem; font-size: .9rem; }
 .envpick legend { font-weight: 600; margin-bottom: .3rem; padding: 0; }
+.benefits { margin: .35rem 0 .5rem; padding-left: 1.2rem; line-height: 1.5; }
+.benefits li + li { margin-top: .2rem; }
