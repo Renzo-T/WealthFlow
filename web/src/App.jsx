@@ -90,7 +90,8 @@ export default function App() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const loaded = !!(s && extra), ready = loaded && s.history.length > 0;
-  const broken = meta.items.filter((i) => i.status !== 'ok');
+  const broken = meta.items.filter((i) => i.state === 'sign-in'); // only you can fix these: reconnect
+  const failing = meta.items.filter((i) => i.state === 'error'); // the bank, Plaid or the connection: tried again automatically
   const attention = meta.items.filter((i) => i.status !== 'ok' || missing(i).products).length;
 
   if (resume) return <main className="main"><ConnectBank resume /></main>;
@@ -126,9 +127,14 @@ export default function App() {
               <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />{hide && <path d="M4 4l16 16" />}</svg>
           </button>
         </div>
-        {/* Signing in again is urgent (that bank's data has stopped), so it stays a banner on every page. */}
+        {/* Signing in again is urgent (that bank's data has stopped), so it stays a banner on every page. Other failures
+            aren't yours to fix: say why, and that it's tried again (at the next sync, or now with Try again). */}
         {broken.map((i) => (
-          <div key={i.id} className="alert"><span>{i.institution} needs you to sign in again ({i.status}).</span><UpdateLink item={i} label="Reconnect" /></div>
+          <div key={i.id} className="alert"><span title={i.status}>{i.institution} needs you to sign in again.</span><UpdateLink item={i} label="Reconnect" /></div>
+        ))}
+        {failing.map((i) => (
+          <div key={i.id} className="alert warn"><span title={i.status}>Couldn't update {i.institution}: {i.reason}. WealthFlow tries again on its own.</span>
+            <button className="btn" onClick={refresh} disabled={busy}>{busy ? 'Trying…' : 'Try again'}</button></div>
         ))}
         <PageBoundary key={page}>
         {page === 'transactions' ? <Transactions /> : page === 'budget' ? <Budget /> : page === 'goals' ? <Goals /> : page === 'trips' ? <Trips /> : page === 'reports' ? <Reports />

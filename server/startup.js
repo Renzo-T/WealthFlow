@@ -9,7 +9,7 @@ export const startupSupported = process.platform === 'win32';
 // PowerShell's -WindowStyle Hidden keeps a console window from opening; the app writes its own log (--log).
 const ps = (s) => s.replace(/'/g, "''");
 export const startupCommand = (root = process.cwd(), node = process.execPath) =>
-  `powershell.exe -NoProfile -WindowStyle Hidden -Command "Set-Location -LiteralPath '${ps(root)}'; & '${ps(node)}' '${ps(path.join(root, 'scripts', 'app.mjs'))}' --log"`;
+  `powershell.exe -NoProfile -WindowStyle Hidden -Command "Set-Location -LiteralPath '${ps(root)}'; & '${ps(node)}' '${ps(path.win32.join(root, 'scripts', 'app.mjs'))}' --log"`;
 
 const reg = (...args) => execFileSync('reg', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true });
 

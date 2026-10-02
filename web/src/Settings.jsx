@@ -107,11 +107,12 @@ export default function Settings({ onChange }) {
           return (
             <div className="trow" key={i.id}>
               <span className="tmain"><b>{i.institution}</b>
-                {i.status !== 'ok' ? <span className="small bad">Needs you to sign in again ({i.status})</span>
+                {i.state === 'sign-in' ? <span className="small bad" title={i.status}>Needs you to sign in again</span>
+                  : i.state === 'error' ? <span className="small hint" title={i.status}>Couldn't update: {i.reason}. Tried again at the next sync.</span>
                   : more.products ? <span className="small hint">Can also share {more.text}</span>
                     : <span className="small good">Connected</span>}</span>
               <span className="btnrow">
-                {i.status !== 'ok' && <UpdateLink item={i} label="Reconnect" className="btn primary" />}
+                {i.state === 'sign-in' && <UpdateLink item={i} label="Reconnect" className="btn primary" />}
                 {i.status === 'ok' && more.products && <UpdateLink item={i} label="Approve" products={more.products} onDone={reload} />}
                 <button className="linkbtn" onClick={() => remove(i)}>Remove</button>
               </span>

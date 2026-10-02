@@ -1,0 +1,30 @@
+# The same checks as the pre-commit hook (tests and a production build; the page check needs a running app with
+# data, so it stays local), on every push and pull request, on Windows and Linux with both supported Node versions.
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [22, 24]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - name: Nothing private is tracked
+        shell: bash
+        run: |
+          if git ls-files | grep -E '^(\.env$|certs/|data/|release/)|\.(db|pem|key)$'; then
+            echo "These files must never be committed."; exit 1
+          fi
+      - run: npm run verify

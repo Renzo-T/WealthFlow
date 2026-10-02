@@ -69,6 +69,7 @@ h1 { margin: 0; font-size: 1.9rem; letter-spacing: -.02em; }
 .chart .grid { stroke: var(--line); }
 .empty { text-align: center; padding: 2.5rem 1rem; color: var(--muted); }
 .alert { background: var(--alert-bg); color: var(--red); border-radius: 10px; padding: .6rem .9rem; margin-top: 1rem; }
+.alert.warn { background: var(--warn-bg); color: var(--warn-ink); } /* a problem that fixes itself, not one for you */
 @media (max-width: 1100px) { .cards { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 860px) { .main { padding: 1rem; } }
 @media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }

@@ -2,7 +2,7 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { db, reset, bank, account, tx, row } from './helpers.js';
 
-const { carryPending, removeTx } = await import('../server/sync.js');
+const { carryPending, removeTx, describeStatus, anyFailing } = await import('../server/sync.js');
 
 beforeEach(() => { reset(); bank('b1'); account('card', { type: 'credit', subtype: 'credit card' }); bank('v', 'Venmo - Personal'); account('ven', { item: 'v' }); });
 
@@ -31,4 +31,23 @@ test('your choice on the posted transaction is kept over the pending one', () =>
   carryPending('p2', 'q2');
   assert.equal(row('q2').user_category, 'Restaurants');
   assert.equal(carryPending('missing', 'q2'), false);
+});
+
+test('only real sign-in problems ask you to reconnect; other failures say why and are retried', () => {
+  assert.deepEqual(describeStatus('ok'), { state: 'ok', reason: null });
+  assert.deepEqual(describeStatus(null), { state: 'ok', reason: null });
+  for (const code of ['ITEM_LOGIN_REQUIRED', 'PENDING_EXPIRATION', 'INVALID_MFA']) assert.equal(describeStatus(code).state, 'sign-in');
+  assert.deepEqual(describeStatus('INSTITUTION_NOT_RESPONDING'), { state: 'error', reason: "the bank isn't responding right now" });
+  assert.match(describeStatus('getaddrinfo ENOTFOUND production.plaid.com').reason, /internet/);
+  assert.match(describeStatus('SOME_NEW_CODE').reason, /Plaid said SOME_NEW_CODE/);
+  // A bug in WealthFlow (like the one that once showed as "sign in again") must not send you to reconnect.
+  const bug = describeStatus('Too many parameter values were provided');
+  assert.equal(bug.state, 'error');
+  assert.match(bug.reason, /went wrong in WealthFlow/);
+});
+
+test('a bank whose last sync failed is noticed, so startup syncs again', () => {
+  assert.equal(anyFailing(), false);
+  db.prepare("UPDATE items SET status = 'INSTITUTION_DOWN' WHERE id = 'b1'").run();
+  assert.equal(anyFailing(), true);
 });

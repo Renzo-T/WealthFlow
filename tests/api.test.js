@@ -421,3 +421,12 @@ test('app: the Start button\'s link is reported alongside starting at sign-in', 
   assert.deepEqual(Object.keys(r.launcher).sort(), ['enabled', 'here', 'supported']);
   assert.equal(typeof r.launcher.enabled, 'boolean');
 });
+
+test('banks list says whether a problem needs you (sign in) or not (error, with a reason)', async () => {
+  db.prepare("UPDATE items SET status = 'ITEM_LOGIN_REQUIRED' WHERE id = 'b1'").run();
+  db.prepare("UPDATE items SET status = 'INSTITUTION_DOWN' WHERE id = 'v'").run();
+  const items = Object.fromEntries((await get('/items')).body.items.map((i) => [i.id, i]));
+  assert.equal(items.b1.state, 'sign-in');
+  assert.equal(items.v.state, 'error');
+  assert.match(items.v.reason, /bank isn't available/);
+});

@@ -89,6 +89,21 @@ it off and on.
 **Sharing:** each person needs their own copy with their own Plaid account and keys. Never send someone your data
 folder, `config.json` or `.env`: your keys would use your 10 slots and put their bank connections in your database.
 
+## Privacy and security
+- **No WealthFlow servers.** There's no account, sign-up or analytics. WealthFlow only listens on this computer
+  (`localhost`), so other devices on your network can't open it.
+- **What goes over the internet:** WealthFlow's requests to Plaid (your transactions, balances, holdings and card
+  statements come back), Plaid's sign-in page when you connect a bank, and merchant logos, which load from addresses
+  Plaid provides. Nothing else; even the font is bundled.
+- **Your bank passwords never reach WealthFlow.** You sign in on Plaid's page; WealthFlow only gets a Plaid access
+  token per bank.
+- **Encrypted:** those access tokens, with AES-256-GCM, using the key in `config.json` (created on first run). The
+  rest of the database (transactions, balances) is a plain file in your data folder, protected by your user account
+  like your other documents; anyone who can read your files can read it.
+- **Your own Plaid account:** your keys let whoever has them connect banks and read data through your Plaid account,
+  so keep `config.json` (and `.env`, if you use one) private, and don't share copies set up with your keys.
+- **Hide amounts** (the eye in the top bar) blurs every dollar figure, for screen sharing.
+
 ## For developers
 - `npm start`: the API (port 4000, restarts on changes) and Vite (port 3000, live reload) together. `npm run app` and
   `npm start` both use port 3000, so stop one before starting the other.

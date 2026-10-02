@@ -10,7 +10,7 @@ import plan from './routes/plan.js';
 import system from './routes/system.js';
 import trips from './routes/trips.js';
 import reports from './routes/reports.js';
-import { syncAll, lastSync, AUTO_SYNC_HOURS } from './sync.js';
+import { syncAll, lastSync, AUTO_SYNC_HOURS, anyFailing } from './sync.js';
 
 const app = express();
 app.use(express.json());
@@ -25,13 +25,13 @@ app.use('/api', reports);
 // App mode (npm run app, WEALTHFLOW_APP=1): the built page and the API together on 3000, https when certs/ has the
 // local certificate (the same address as development, so Plaid's redirect address and the installed app both work).
 // Automatic sync: once the server is up (a second copy that finds the port taken never syncs), unless one ran in the
-// last hour (so restarts don't hammer Plaid), then every AUTO_SYNC_HOURS while the app is running.
+// last hour (so restarts don't hammer Plaid) and every bank was fine, then every AUTO_SYNC_HOURS while it's running.
 const autoSync = () => syncAll().then((r) => console.log(`Auto-sync: ${r.reduce((s, x) => s + x.added, 0)} new transactions`))
   .catch((e) => console.error('Auto-sync failed:', e.message));
 const listening = (url) => () => {
   console.log(`WealthFlow on ${url}`);
   if (process.env.WEALTHFLOW_OPEN === '1') openInBrowser(url);
-  if (Date.now() - Date.parse(lastSync() ?? 0) > 3600e3) autoSync();
+  if (Date.now() - Date.parse(lastSync() ?? 0) > 3600e3 || anyFailing()) autoSync(); // a bank that failed last time: try again now
   setInterval(autoSync, AUTO_SYNC_HOURS * 3600e3);
 };
 // --open (WealthFlow.cmd in the download): show it in the default browser.

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import db from '../db.js';
-import { syncAll, lastSync, AUTO_SYNC_HOURS } from '../sync.js';
+import { syncAll, lastSync, AUTO_SYNC_HOURS, describeStatus } from '../sync.js';
 import { MAX_ITEMS } from './link.js';
 import { summary, netWorthBreakdown } from '../summary.js';
 import { cashFlow, topCategories, allocation, upcoming, flow, accountFlow, holdingKind, coverage, investmentSummary, ACCT } from '../insights.js';
@@ -22,7 +22,7 @@ router.get('/items', (_req, res) =>
      AND EXISTS (SELECT 1 FROM accounts a WHERE a.item_id = i.id AND a.type = 'investment')) AS holdings_pending,
     (NOT i.no_liabilities AND NOT i.liabilities_consented
      AND EXISTS (SELECT 1 FROM accounts a WHERE a.item_id = i.id AND a.type = 'credit')) AS needs_liabilities
-    FROM items i`).all(), lastSync: lastSync(), autoSyncHours: AUTO_SYNC_HOURS }));
+    FROM items i`).all().map((i) => ({ ...i, ...describeStatus(i.status) })), lastSync: lastSync(), autoSyncHours: AUTO_SYNC_HOURS }));
 
 // `name` is the nickname when set; `bank_name` is always what the bank calls it.
 router.get('/accounts', (_req, res) =>
