@@ -14,8 +14,11 @@ export function accountHistory(accounts = db.prepare('SELECT * FROM accounts').a
   const byAcct = {};
   for (const t of db.prepare('SELECT account_id, date, SUM(amount) s FROM transactions WHERE split_of IS NULL GROUP BY account_id, date').all())
     (byAcct[t.account_id] ??= {})[t.date] = t.s;
-  const first = db.prepare('SELECT MIN(date) d FROM transactions').get().d;
-  const days = first ? Math.min(maxDays, Math.round((Date.now() - new Date(first + 'T00:00')) / 864e5)) : 0;
+  // From the day before the first transaction (the balance before it) or the first snapshot, whichever is earlier.
+  // Counted in calendar days: from the current time, the count came out a day short in the mornings.
+  const first = db.prepare(`SELECT MIN(d) d FROM (SELECT date(MIN(date), '-1 day') d FROM transactions WHERE split_of IS NULL
+    UNION ALL SELECT MIN(date) FROM balance_snapshots)`).get().d;
+  const days = first ? Math.max(0, Math.min(maxDays, Math.round((new Date(`${iso(new Date())}T00:00`) - new Date(`${first}T00:00`)) / 864e5))) : 0;
   // Walking back from today, estimates start from the nearest later real value (a daily snapshot, or today's balance),
   // so they join up with real history instead of jumping back to today's level.
   const anchor = Object.fromEntries(accounts.map((a) => [a.id, a.balance]));
