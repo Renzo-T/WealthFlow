@@ -19,6 +19,12 @@ if (args.includes('--background')) {
   process.exit(0);
 }
 
+// The download on Windows: files unzipped from a downloaded zip carry Windows' "from the internet" mark, which can make
+// Windows ask before running WealthFlow.cmd. Once WealthFlow has run, take that mark off its own launcher (and Node),
+// so it asks at most once. (Starting at sign-in and the Start button never go through that check.)
+if (process.platform === 'win32' && fs.existsSync('PORTABLE'))
+  for (const f of ['WealthFlow.cmd', 'node.exe']) try { fs.unlinkSync(`${f}:Zone.Identifier`); } catch { /* not marked */ }
+
 const { dataDir } = await import('../server/config.js');
 if (args.includes('--log')) {
   // Appended (a second launch that finds WealthFlow already running mustn't wipe the running copy's log); past 1 MB

@@ -9,8 +9,8 @@ Start
 1. Move this WealthFlow folder somewhere permanent, e.g. your Documents folder.
 2. Double-click WealthFlow.cmd. It opens WealthFlow in your browser.
    If Windows asks whether to run it ("Windows protected your PC"), choose More info > Run anyway. Windows asks about
-   scripts from downloads that carry no publisher signature (WealthFlow.cmd is a script and can't carry one). To avoid
-   it next time, right-click the downloaded zip > Properties > tick Unblock > OK before unzipping.
+   scripts from downloads that carry no publisher signature (WealthFlow.cmd is a script and can't carry one). It only
+   asks the first time: once running, WealthFlow tells Windows it's fine, and starting at sign-in never asks.
 3. Paste your Plaid keys when asked. The screen explains how to get them (a free Plaid account).
 4. Connect your banks.
 

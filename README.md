@@ -29,8 +29,9 @@ your banks; your data comes straight to your computer. Then pick one:
 **Windows, nothing to install:** download `WealthFlow-<version>-win-x64.zip` from the
 [latest release](https://github.com/Renzo-T/WealthFlow/releases/latest). Before unzipping, right-click the zip ›
 **Properties** › tick **Unblock** › OK, so Windows doesn't question the first run. (If you skip that, it may say
-"Windows protected your PC": choose **More info > Run anyway**. The download has no code-signing certificate; the Node
-inside it is Node's own signed build.) Unzip it somewhere permanent (e.g. Documents) and double-click
+"Windows protected your PC": choose **More info > Run anyway**. That's only the first time: once running, WealthFlow
+clears the mark Windows put on its launcher, and starting at sign-in never asks. `WealthFlow.cmd` is a script, which
+can't carry a publisher signature; the Node inside the download is Node's own signed build.) Unzip it somewhere permanent (e.g. Documents) and double-click
 `WealthFlow.cmd`. It opens WealthFlow in your browser. To make the zip yourself from the code, run `npm run package`.
 
 **Any system, from the code:** you need Node 22.13 or newer (see [Installing Node](#installing-node)), then in the
