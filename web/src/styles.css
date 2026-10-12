@@ -3,7 +3,7 @@
    Dark mode follows the system unless the top-bar toggle sets data-theme on <html>; it is the same planner at night,
    its own validated steps, not an inversion. --blue is the accent (kept as a name so older rules follow the theme). */
 :root {
-  --bg: #f3f3ef; --card: #ffffff; --line: #e1e3df; --ink: #1b2030; --muted: #555c6e;
+  --bg: #f3f3ef; --card: #ffffff; --line: #e1e3df; --ink: #1b2030; --muted: #4c5365;
   --blue: #2d4a93; --accent: var(--blue); --soft: #e8ecf5; --green: #24724f; --amber: #9a6410; --red: #b4382a; --purple: #7a4e9c;
   --surface-2: #f7f7f4; --line-strong: #c8ccd2; --disabled: #8f96a5; --hub: #475066;
   --alert-bg: #f9ebe8; --note-ink: #2d4a93; --warn-bg: #f7efde; --warn-ink: #74500f; --warn-dot: #b5720f;
@@ -12,11 +12,11 @@
   --seal: #d9482e; --seal-ink: #fff6f2; --dot: #d6d9d3; --ink-dot: #26355c;
   --s1: #3554a8; --s2: #b5700e; --s3: #00909a; --s4: #9a3fa8; --neutral: #8a90a0; --neutral-light: #c5c9d2; --in: #24724f;
   color-scheme: light;
-  font-family: 'M PLUS 1p', 'Segoe UI', system-ui, sans-serif; color: var(--ink);
+  font-family: 'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif; color: var(--ink);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #11141c; --card: #181c27; --line: #282e3d; --ink: #e7e9ef; --muted: #a0a7b8;
+    --bg: #11141c; --card: #181c27; --line: #282e3d; --ink: #e7e9ef; --muted: #adb3c3;
     --blue: #9db2ea; --soft: #222a40; --green: #5cc193; --amber: #e0a84a; --red: #ee806e; --purple: #b48bd6;
     --surface-2: #1d2230; --line-strong: #3a4255; --disabled: #5f6779; --hub: #a3abbd;
     --alert-bg: #3a1e1c; --note-ink: #afc0ee; --warn-bg: #33281a; --warn-ink: #ebc27d; --warn-dot: #e0a84a;
@@ -28,7 +28,7 @@
   }
 }
 :root[data-theme="dark"] {
-  --bg: #11141c; --card: #181c27; --line: #282e3d; --ink: #e7e9ef; --muted: #a0a7b8;
+  --bg: #11141c; --card: #181c27; --line: #282e3d; --ink: #e7e9ef; --muted: #adb3c3;
   --blue: #9db2ea; --soft: #222a40; --green: #5cc193; --amber: #e0a84a; --red: #ee806e; --purple: #b48bd6;
   --surface-2: #1d2230; --line-strong: #3a4255; --disabled: #5f6779; --hub: #a3abbd;
   --alert-bg: #3a1e1c; --note-ink: #afc0ee; --warn-bg: #33281a; --warn-ink: #ebc27d; --warn-dot: #e0a84a;
@@ -781,9 +781,9 @@ p code { background: var(--surface-2); border: 1px solid var(--line); border-rad
 
 /* =====================================================================================================================
    Planner Page world. Everything above still works; this layer sets the type, the cover rail, ruled pages and the
-   month spread. One family (M PLUS 1p, equal-width figures) carries every level by size and weight.
+   month spread. One family (Atkinson Hyperlegible Next, tabular figures) carries every level by size and weight.
    ===================================================================================================================== */
-body { font-family: 'M PLUS 1p', 'Segoe UI', system-ui, sans-serif; line-height: 1.45; -webkit-font-smoothing: antialiased;
+body { font-family: 'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif; line-height: 1.45; -webkit-font-smoothing: antialiased;
   font-variant-numeric: tabular-nums; caret-color: var(--blue); accent-color: var(--blue); }
 ::selection { background: color-mix(in srgb, var(--blue) 24%, transparent); color: var(--ink); }
 * { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
@@ -957,3 +957,8 @@ input:hover, select:hover { border-color: var(--hub); }
 .t.holdings th, .t.holdings td { padding-left: .5rem; padding-right: .5rem; }
 .t.holdings th { letter-spacing: .05em; }
 .t.holdings .rangebar { width: 72px; }
+
+/* Readability (Atkinson Hyperlegible Next): small text a little larger, labels a little less tracked. */
+.small { font-size: .84rem; }
+.slabel, .panel h2, .card h3, .ghead h2, .t th { letter-spacing: .08em; }
+.snum { font-size: .76rem; }

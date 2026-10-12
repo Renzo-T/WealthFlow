@@ -125,7 +125,7 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
   `classify()` turns the bank side into a transfer so the spending isn't counted twice.
 
 ## UI conventions
-- The visual system is **DESIGN.md** (the "Planner Page" world: indigo cover rail, ruled paper, one typeface M PLUS 1p
+- The visual system is **DESIGN.md** (the "Planner Page" world: indigo cover rail, ruled paper, one typeface Atkinson Hyperlegible Next
   with equal-width figures, vermillion seal as the logo only) with tokens in `.impeccable/design.json`; PRODUCT.md holds
   product truth and `.impeccable/surfaces/` the dashboard's direction contract. Read DESIGN.md before UI work.
 - Building blocks in `web/src/ui.jsx`: `Panel` (card + header), `PageHeader`, `Amt` (amount that "Hide amounts"

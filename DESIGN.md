@@ -55,49 +55,49 @@ colors:
   night-series-4: "#a266cf"
 typography:
   display:
-    fontFamily: "'M PLUS 1p', 'Segoe UI', system-ui, sans-serif"
+    fontFamily: "'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif"
     fontSize: "3.1rem"
     fontWeight: 800
     lineHeight: 1.1
     letterSpacing: "-0.03em"
     fontFeature: "tnum"
   headline:
-    fontFamily: "'M PLUS 1p', 'Segoe UI', system-ui, sans-serif"
+    fontFamily: "'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif"
     fontSize: "2.15rem"
     fontWeight: 800
     lineHeight: 1.1
     letterSpacing: "-0.02em"
   figure:
-    fontFamily: "'M PLUS 1p', 'Segoe UI', system-ui, sans-serif"
+    fontFamily: "'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif"
     fontSize: "1.95rem"
     fontWeight: 800
     lineHeight: 1.1
     letterSpacing: "-0.02em"
     fontFeature: "tnum"
   title:
-    fontFamily: "'M PLUS 1p', 'Segoe UI', system-ui, sans-serif"
+    fontFamily: "'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif"
     fontSize: "1.05rem"
     fontWeight: 600
     lineHeight: 1.45
   body:
-    fontFamily: "'M PLUS 1p', 'Segoe UI', system-ui, sans-serif"
+    fontFamily: "'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.45
     fontFeature: "tnum"
   small:
-    fontFamily: "'M PLUS 1p', 'Segoe UI', system-ui, sans-serif"
+    fontFamily: "'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif"
     fontSize: "0.8rem"
     fontWeight: 400
     lineHeight: 1.45
   label:
-    fontFamily: "'M PLUS 1p', 'Segoe UI', system-ui, sans-serif"
+    fontFamily: "'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif"
     fontSize: "0.74rem"
     fontWeight: 800
     lineHeight: 1.45
     letterSpacing: "0.12em"
   column-head:
-    fontFamily: "'M PLUS 1p', 'Segoe UI', system-ui, sans-serif"
+    fontFamily: "'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif"
     fontSize: "0.7rem"
     fontWeight: 800
     lineHeight: 1.45
@@ -189,7 +189,7 @@ The world refuses the category default of a white card grid with a blue accent, 
 
 **Key Characteristics:**
 - An indigo cover rail holds the seal and the navigation; the page beside it is quiet paper with a 22px dot grid.
-- One gothic family (M PLUS 1p) at four weights carries every level; figures are tabular everywhere.
+- One family (Atkinson Hyperlegible Next, chosen for legibility at small sizes) at four weights carries every level; figures are tabular everywhere.
 - Hairline rules instead of shadows; 6px corners on every sheet and control.
 - Tracked uppercase labels name panels and figures; they are the titles, never a line above one.
 - The month spread: one ink dot per day on a fixed size ramp, bills and paydays stamped on their dates.
@@ -232,9 +232,9 @@ An ink-and-indigo planner palette on warm paper: nearly all of every screen is n
 
 ## Typography
 
-**Display Font:** M PLUS 1p (with Segoe UI, system-ui, sans-serif)
-**Body Font:** M PLUS 1p
-**Label Font:** M PLUS 1p
+**Display Font:** Atkinson Hyperlegible Next (with Segoe UI, system-ui, sans-serif)
+**Body Font:** Atkinson Hyperlegible Next
+**Label Font:** Atkinson Hyperlegible Next
 
 **Character:** One Japanese gothic family, chosen for its equal-width figures, carries every level by size and weight alone (400, 500, 700, 800; Latin subsets only). It reads like a planner's printed ruling: plain, even, a little formal.
 
@@ -328,7 +328,7 @@ A 30px vermillion circle with an inner hairline ring and a drawn "M" in seal ink
 
 ### Do:
 - **Do** keep every sheet flat on the page with a 1px rule and 6px corners.
-- **Do** use M PLUS 1p for everything, with tabular figures.
+- **Do** use Atkinson Hyperlegible Next for everything, with tabular figures.
 - **Do** name panels with the tracked uppercase label (0.74rem, 800, 0.12em) as their title.
 - **Do** mark estimated, partial or future data: dashed lines and outlines, faded partial months, a small "est".
 - **Do** give every dollar figure an amount class (`.amt`, `.tamt`, `.big`, or a covered table cell) so Hide amounts blurs it.

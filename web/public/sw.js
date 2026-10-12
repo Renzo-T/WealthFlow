@@ -3,7 +3,7 @@
 // always comes live from the server and is never stored by the browser); the page below is built in, so there's
 // nothing to download.
 const ICON = '<svg width="48" height="48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">'
-  + '<rect width="512" height="512" rx="112" fill="#1e2a47"/><circle cx="256" cy="256" r="170" fill="#d9482e"/><circle cx="256" cy="256" r="143" fill="none" stroke="#fff6f2" stroke-width="11" opacity=".55"/><path d="M183.5 319.5V197.1l72.5 79.3 72.5-79.3v122.4" fill="none" stroke="#fff6f2" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  + '<circle cx="256" cy="256" r="247.5" fill="#d9482e"/><circle cx="256" cy="256" r="207.9" fill="none" stroke="#fff6f2" stroke-width="16.5" opacity=".55"/><path d="M150.4 348.4L150.4 170.2L256.0 285.7L361.6 170.2L361.6 348.4" fill="none" stroke="#fff6f2" stroke-width="42.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 const OFFLINE = `<!doctype html>
 <html lang="en">

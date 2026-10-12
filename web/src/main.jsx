@@ -1,9 +1,10 @@
 import { createRoot } from 'react-dom/client';
-// The one typeface (bundled, works offline): Latin subsets only; its figures are equal-width, so money lines up.
-import '@fontsource/m-plus-1p/latin-400.css';
-import '@fontsource/m-plus-1p/latin-500.css';
-import '@fontsource/m-plus-1p/latin-700.css';
-import '@fontsource/m-plus-1p/latin-800.css';
+// The one typeface (bundled, works offline), Latin subsets only: Atkinson Hyperlegible Next, made to stay readable at
+// small sizes; its tabular figures (font-variant-numeric) keep money columns aligned.
+import '@fontsource/atkinson-hyperlegible-next/latin-400.css';
+import '@fontsource/atkinson-hyperlegible-next/latin-500.css';
+import '@fontsource/atkinson-hyperlegible-next/latin-700.css';
+import '@fontsource/atkinson-hyperlegible-next/latin-800.css';
 import './styles.css';
 import App from './App.jsx';
 

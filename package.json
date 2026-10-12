@@ -28,7 +28,7 @@
     "plaid": "latest"
   },
   "devDependencies": {
-    "@fontsource/m-plus-1p": "^5.3.0",
+    "@fontsource/atkinson-hyperlegible-next": "^5.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "concurrently": "^8.2.2",
     "d3-sankey": "^0.12.3",
