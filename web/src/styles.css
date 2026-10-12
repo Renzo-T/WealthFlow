@@ -760,3 +760,10 @@ p code { background: var(--surface-2); border: 1px solid var(--line); border-rad
 .acctrow .btnrow { margin-top: .2rem; }
 .acctstat { display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
 @media (max-width: 899px) { .acctrow { grid-template-columns: minmax(0, 1fr) 150px; } .acctstat { grid-column: 1 / -1; grid-row: 2; } }
+
+/* Investments: the holdings table (two-line cells) and the price-range bar. */
+.t.holdings th, .t.holdings td { vertical-align: top; }
+.t.holdings th .small { font-weight: 400; }
+.range { display: inline-grid; gap: .2rem; justify-items: end; }
+.rangebar { position: relative; display: block; width: 90px; height: 4px; border-radius: 4px; background: var(--line-strong); }
+.rangebar i { position: absolute; top: -3px; width: 2px; height: 10px; margin-left: -1px; border-radius: 2px; background: var(--ink); }

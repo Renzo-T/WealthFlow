@@ -454,3 +454,15 @@ test('accounts page: each account\'s activity this month and how far back its hi
   const a = (await get('/accounts/activity')).body.chk;
   assert.deepEqual([a.month_in, a.month_out, a.n, a.first], [1200, 80, 3, '2025-01-15']); // the split part isn't counted twice
 });
+
+test('holdings: the day\'s change uses the last price recorded before this one, and the range covers the past year', async () => {
+  bank('broker', 'Brokerage'); account('ira', { item: 'broker', type: 'investment', subtype: 'ira', balance: 1050 });
+  const today = new Date().toLocaleDateString('en-CA'), ago = (n) => new Date(Date.now() - n * 864e5).toLocaleDateString('en-CA');
+  db.prepare("INSERT INTO holdings (account_id, security_id, name, ticker, type, quantity, price, value, cost_basis, price_as_of) VALUES ('ira', 's1', 'Acme Index Fund', 'ACME', 'etf', 10, 105, 1050, 900, ?)").run(today);
+  for (const [d, p] of [[ago(400), 50], [ago(30), 90], [ago(3), 100], [today, 105]])
+    db.prepare("INSERT INTO holding_prices (security_id, date, price) VALUES ('s1', ?, ?)").run(d, p);
+  const [h] = (await get('/holdings')).body.filter((x) => x.security_id === 's1');
+  assert.deepEqual([h.prev_price, h.prev_date], [100, ago(3)]); // the weekend gap: the last price before today's
+  assert.deepEqual([h.low, h.high, h.range_since], [90, 105, ago(30)]); // the one from 400 days ago is outside the year
+  db.prepare("DELETE FROM holdings WHERE security_id = 's1'").run(); db.prepare('DELETE FROM holding_prices').run();
+});

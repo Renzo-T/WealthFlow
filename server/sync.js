@@ -124,14 +124,17 @@ export async function syncItem(item) {
         const { data: h } = await plaid.investmentsHoldingsGet({ access_token });
         const sec = Object.fromEntries(h.securities.map((s) => [s.security_id, s]));
         const ins = db.prepare(`INSERT OR REPLACE INTO holdings
-          (account_id, security_id, name, ticker, type, subtype, quantity, price, value, cost_basis) VALUES (?,?,?,?,?,?,?,?,?,?)`);
+          (account_id, security_id, name, ticker, type, subtype, quantity, price, value, cost_basis, price_as_of) VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+        const price = db.prepare('INSERT OR REPLACE INTO holding_prices (security_id, date, price) VALUES (?, ?, ?)');
         db.transaction(() => {
           for (const x of a.accounts) db.prepare('DELETE FROM holdings WHERE account_id = ?').run(x.account_id);
           for (const x of h.holdings) {
             const s = sec[x.security_id] ?? {};
+            const asOf = x.institution_price_as_of ?? s.close_price_as_of ?? today; // the price's own date, else the sync day
             ins.run(x.account_id, x.security_id, fundName(s.name) ?? s.ticker_symbol ?? 'Unknown', s.ticker_symbol ?? null,
               s.is_cash_equivalent ? 'cash' : (s.type ?? 'other'), s.subtype ?? null, x.quantity ?? 0, x.institution_price ?? 0,
-              x.institution_value ?? 0, x.cost_basis ?? null);
+              x.institution_value ?? 0, x.cost_basis ?? null, asOf);
+            if (!s.is_cash_equivalent && x.institution_price > 0) price.run(x.security_id, asOf.slice(0, 10), x.institution_price);
           }
         })();
       } catch (e) {

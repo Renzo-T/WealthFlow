@@ -176,4 +176,13 @@ if (!db.prepare('PRAGMA table_info(transactions)').all().some((c) => c.name === 
 // categories whose unspent money carries over month to month, starting with `since` (YYYY-MM).
 db.exec(`CREATE TABLE IF NOT EXISTS budget_overrides (month TEXT NOT NULL, item TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (month, item));
   CREATE TABLE IF NOT EXISTS budget_rollover (category TEXT PRIMARY KEY, since TEXT NOT NULL);`);
+// Each security's price as Plaid reported it, one row per price date (from each sync): Plaid only gives today's price,
+// so the day's change and the price range are worked out from these. holdings.price_as_of: the date of that price.
+db.exec('CREATE TABLE IF NOT EXISTS holding_prices (security_id TEXT NOT NULL, date TEXT NOT NULL, price REAL NOT NULL, PRIMARY KEY (security_id, date))');
+if (!db.prepare('PRAGMA table_info(holdings)').all().some((c) => c.name === 'price_as_of')) {
+  db.exec('ALTER TABLE holdings ADD COLUMN price_as_of TEXT');
+  // Start the price history from what's already stored, so tracking begins today rather than at the next sync.
+  db.prepare("INSERT OR IGNORE INTO holding_prices (security_id, date, price) SELECT security_id, ?, MAX(price) FROM holdings WHERE price > 0 AND type != 'cash' GROUP BY security_id")
+    .run(new Date().toLocaleDateString('en-CA'));
+}
 export default db;

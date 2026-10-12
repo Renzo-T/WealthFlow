@@ -127,10 +127,22 @@ for (const id in bal) db.prepare('UPDATE accounts SET balance = ? WHERE id = ?')
 // Holdings that add up to the brokerage balance.
 const mix = [['VTI', 'Vanguard Total Stock Market ETF', 'etf', 0.66, 291.4, 0.82], ['VXUS', 'Vanguard Total International Stock ETF', 'etf', 0.16, 66.1, 0.9],
   ['BND', 'Vanguard Total Bond Market ETF', 'etf', 0.12, 73.2, 1.01], [null, 'Cash', 'cash', 0.06, 1, 1]];
+// Prices carry the last trading day's date, as Plaid's do (a weekend shows Friday's).
+const lastTradingDay = (() => { let ago = 0; while ([0, 6].includes(day(ago).getDay())) ago++; return day(ago); })();
 for (const [ticker, name, type, share, price, basis] of mix) {
   const value = Math.round(bal.brk * share * 100) / 100, qty = Math.round((value / price) * 1000) / 1000;
-  db.prepare('INSERT INTO holdings (account_id, security_id, name, ticker, type, quantity, price, value, cost_basis) VALUES (?,?,?,?,?,?,?,?,?)')
-    .run('brk', `demo-${ticker ?? 'cash'}`, name, ticker, type, qty, price, value, ticker ? Math.round(value * basis * 100) / 100 : null);
+  db.prepare('INSERT INTO holdings (account_id, security_id, name, ticker, type, quantity, price, value, cost_basis, price_as_of) VALUES (?,?,?,?,?,?,?,?,?,?)')
+    .run('brk', `demo-${ticker ?? 'cash'}`, name, ticker, type, qty, price, value, ticker ? Math.round(value * basis * 100) / 100 : null, iso(lastTradingDay));
+  // A year of daily prices ending at today's (weekdays only, like a market), for the day's change and the range.
+  if (ticker) {
+    let p = price;
+    for (let ago = 0; ago <= 365; ago++) {
+      const d = day(ago);
+      if (d.getDay() === 0 || d.getDay() === 6) continue;
+      db.prepare('INSERT INTO holding_prices (security_id, date, price) VALUES (?, ?, ?)').run(`demo-${ticker}`, iso(d), Math.round(p * 100) / 100);
+      p /= 1 + between(-0.012, 0.0135) * (ticker === 'BND' ? 0.3 : 1);
+    }
+  }
 }
 // The card's latest statement (paid on the 25th).
 const lastStatement = (() => { const d = new Date(); d.setDate(20); if (d > new Date()) d.setMonth(d.getMonth() - 1); return d; })();

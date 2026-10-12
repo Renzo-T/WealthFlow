@@ -452,9 +452,21 @@ router.put('/income-names', (req, res) => {
 
 router.post('/sync', async (_req, res) => res.json(await syncAll()));
 
-router.get('/holdings', (_req, res) => res.json(db.prepare(`SELECT h.*, ${ACCT} AS account, a.subtype AS account_subtype,
-  a.type AS account_type, i.institution FROM holdings h JOIN accounts a ON a.id = h.account_id
-  LEFT JOIN items i ON i.id = a.item_id ORDER BY h.value DESC`).all().map((h) => ({ ...h, kind: holdingKind(h) }))));
+// Holdings, each with its previous price (the last one recorded before this price's date, for the day's change) and
+// the lowest and highest prices recorded in the past year (Plaid has no price history; it builds up from syncs).
+router.get('/holdings', (_req, res) => {
+  const prev = db.prepare('SELECT price, date FROM holding_prices WHERE security_id = ? AND date < ? ORDER BY date DESC LIMIT 1');
+  const range = db.prepare(`SELECT MIN(price) low, MAX(price) high, MIN(date) since FROM holding_prices
+    WHERE security_id = ? AND date >= date('now', '-365 days')`);
+  res.json(db.prepare(`SELECT h.*, ${ACCT} AS account, a.subtype AS account_subtype,
+    a.type AS account_type, i.institution FROM holdings h JOIN accounts a ON a.id = h.account_id
+    LEFT JOIN items i ON i.id = a.item_id ORDER BY h.value DESC`).all().map((h) => {
+    const day = (h.price_as_of ?? new Date().toLocaleDateString('en-CA')).slice(0, 10);
+    const p = prev.get(h.security_id, day), r = range.get(h.security_id);
+    return { ...h, kind: holdingKind(h), prev_price: p?.price ?? null, prev_date: p?.date ?? null,
+      low: r?.low ?? null, high: r?.high ?? null, range_since: r?.since ?? null };
+  }));
+});
 
 router.get('/summary', (_req, res) => res.json(summary()));
 router.get('/cashflow', (_req, res) => res.json(cashFlow()));
