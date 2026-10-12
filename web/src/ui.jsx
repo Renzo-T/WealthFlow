@@ -138,12 +138,12 @@ export function Hover({ tip, children, className = '' }) {
 }
 
 // The usual tooltip body: a title, label/value rows (with an optional muted note per row), then an optional note.
-export function TipList({ title, rows, note }) {
+export function TipList({ title, rows = [], note }) {
   return (
     <>
       {title && <div className="hovtitle">{title}</div>}
-      <ul>{rows.map(([label, value, sub], i) => (
-        <li key={i}><span>{label}{sub && <span className="muted"> · {sub}</span>}</span><b className="amt">{value}</b></li>))}</ul>
+      {rows.length > 0 && <ul>{rows.map(([label, value, sub], i) => (
+        <li key={i}><span>{label}{sub && <span className="muted"> · {sub}</span>}</span><b className="amt">{value}</b></li>))}</ul>}
       {note && <div className="muted hovnote">{note}</div>}
     </>
   );

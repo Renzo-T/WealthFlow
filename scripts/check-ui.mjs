@@ -95,6 +95,14 @@ for (const scheme of ['light', 'dark']) {
       events.length = 0;
       await send('Page.navigate', { url: `${BASE}/#/${page}` });
       await sleep(page === 'dashboard' ? 5000 : 3500);
+      // Hover every hover target (tooltips render their own content, which can throw), then look for a crash below.
+      await send('Runtime.evaluate', { awaitPromise: true, expression: `(async () => {
+        for (const el of document.querySelectorAll('.hov')) {
+          el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+          await new Promise((r) => setTimeout(r, 10));
+          el.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+        }
+      })()` });
       const { result } = await send('Runtime.evaluate', { returnByValue: true, expression: `(() => {
         const main = document.querySelector('main') ?? document.body;
         return {
