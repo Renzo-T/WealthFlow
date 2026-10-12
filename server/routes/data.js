@@ -148,7 +148,7 @@ router.get('/transactions.csv', (req, res) => {
   for (const r of rows) lines.push([r.date, r.name, r.merchant, r.shown, r.shown_grp, r.account, r.to_account,
     (-r.amount).toFixed(2), r.pending ? 'yes' : ''].map(q).join(','));
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="wealthflow-transactions-${new Date().toLocaleDateString('en-CA')}.csv"`);
+  res.setHeader('Content-Disposition', `attachment; filename="mizo-money-transactions-${new Date().toLocaleDateString('en-CA')}.csv"`);
   res.send(lines.join('\r\n'));
 });
 

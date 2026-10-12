@@ -61,9 +61,13 @@ router.get('/backup/download', async (_req, res) => {
     const dir = path.join(dataDir, 'backups');
     fs.mkdirSync(dir, { recursive: true });
     const stamp = new Date().toLocaleString('sv').replace(/[: ]/g, '-').slice(0, 16);
-    const file = path.join(dir, `wealthflow-${stamp}.db`);
+    const file = path.join(dir, `mizo-money-${stamp}.db`);
     await db.backup(file);
-    for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.db')).sort().slice(0, -5)) fs.unlinkSync(path.join(dir, f));
+    // Keep the 5 newest downloaded copies (named under either app name). The daily auto-*.db backups are kept by
+    // backup.js and never touched here.
+    const manual = fs.readdirSync(dir).filter((x) => /^(mizo-money|wealthflow)-.*\.db$/.test(x))
+      .sort((a, b) => fs.statSync(path.join(dir, a)).mtimeMs - fs.statSync(path.join(dir, b)).mtimeMs);
+    for (const f of manual.slice(0, -5)) fs.unlinkSync(path.join(dir, f));
     res.download(file);
   } catch (e) { res.status(500).json({ error_message: e.message }); }
 });

@@ -482,3 +482,23 @@ test('month spread: each day\'s spending on one fixed dot scale, with bills and 
   assert.equal(s.days.length, new Date(+month.slice(0, 4), +month.slice(5), 0).getDate());
   for (const f of s.days.filter((x) => x.future)) assert.equal(f.spent, null);
 });
+
+test('backup download: named after the app, keeps 5 downloaded copies, and never deletes the daily automatic backups', async () => {
+  const fs = await import('node:fs'), path = await import('node:path');
+  const dir = path.join(process.env.WEALTHFLOW_DATA_DIR, 'backups');
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.mkdirSync(dir, { recursive: true });
+  const autos = ['01', '02', '03', '04', '05', '06', '07'].map((d) => `auto-2026-01-${d}.db`);
+  for (const f of autos) fs.writeFileSync(path.join(dir, f), '');
+  for (let i = 0; i < 6; i++) fs.writeFileSync(path.join(dir, `wealthflow-2025-0${i + 1}-01-12-00.db`), '');
+  const r = await fetch(`${base}/backup/download`);
+  assert.equal(r.status, 200);
+  assert.match(r.headers.get('content-disposition'), /mizo-money-[\d-]+\.db/);
+  await r.arrayBuffer();
+  const left = fs.readdirSync(dir);
+  for (const f of autos) assert.ok(left.includes(f), `${f} was deleted`);
+  assert.equal(left.filter((f) => /^(mizo-money|wealthflow)-/.test(f)).length, 5);
+  assert.ok(left.some((f) => f.startsWith('mizo-money-')));
+  const csv = await fetch(`${base}/transactions.csv`);
+  if (csv.status === 200) assert.match(csv.headers.get('content-disposition'), /mizo-money-transactions-/);
+});
