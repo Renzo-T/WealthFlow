@@ -14,7 +14,7 @@ import { join } from 'node:path';
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const BASE = arg('url', 'https://localhost:3000');
 const WIDTH = Number(arg('width', 1440));
-const PAGES = ['dashboard', 'transactions', 'budget', 'bills', 'flow', 'trips', 'reports', 'networth', 'investments', 'forecast', 'goals', 'settings'];
+const PAGES = ['dashboard', 'accounts', 'transactions', 'budget', 'bills', 'flow', 'trips', 'reports', 'networth', 'investments', 'forecast', 'goals', 'settings'];
 // Chrome first: headless Edge can stall (no frames drawn) while your own Edge window is open.
 const CANDIDATES = [process.env.BROWSER,
   'C:/Program Files/Google/Chrome/Application/chrome.exe', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

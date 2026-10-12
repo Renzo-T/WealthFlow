@@ -444,3 +444,13 @@ test('bills: "Not a bill" works on a bill you never edited, including payments t
   assert.deepEqual(db.prepare('SELECT hidden, rule, name FROM bill_settings WHERE key = ?').get(key), { hidden: 1, rule: null, name: null });
   assert.equal((await put(`/bills/${encodeURIComponent(key)}`, { hidden: false })).status, 200);
 });
+
+test('accounts page: each account\'s activity this month and how far back its history goes', async () => {
+  const month = new Date().toLocaleDateString('en-CA').slice(0, 7);
+  tx('chk', `${month}-01`, -1200, 'ACME CORP PAYROLL', { primary: 'INCOME' });
+  tx('chk', `${month}-01`, 80, 'GROCER');
+  tx('chk', '2025-01-15', 20, 'OLD COFFEE');
+  db.prepare("INSERT INTO transactions (id, account_id, date, name, amount, split_of) VALUES ('part', 'chk', ?, 'GROCER', 40, 'x')").run(`${month}-01`);
+  const a = (await get('/accounts/activity')).body.chk;
+  assert.deepEqual([a.month_in, a.month_out, a.n, a.first], [1200, 80, 3, '2025-01-15']); // the split part isn't counted twice
+});

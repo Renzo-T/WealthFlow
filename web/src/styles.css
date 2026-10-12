@@ -750,3 +750,13 @@ p code { background: var(--surface-2); border: 1px solid var(--line); border-rad
 .envpick legend { font-weight: 600; margin-bottom: .3rem; padding: 0; }
 .benefits { margin: .35rem 0 .5rem; padding-left: 1.2rem; line-height: 1.5; }
 .benefits li + li { margin-top: .2rem; }
+
+/* Accounts page: one row per account (name, this month's activity, balance and links). */
+.acctrow { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr) 170px; align-items: center; gap: 1rem;
+  padding: .7rem .25rem; border-top: 1px solid var(--line); }
+.acctrow:first-child { border-top: 0; }
+.acctrow.dim { opacity: .55; }
+.acctrow .r { text-align: right; }
+.acctrow .btnrow { margin-top: .2rem; }
+.acctstat { display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
+@media (max-width: 899px) { .acctrow { grid-template-columns: minmax(0, 1fr) 150px; } .acctstat { grid-column: 1 / -1; grid-row: 2; } }

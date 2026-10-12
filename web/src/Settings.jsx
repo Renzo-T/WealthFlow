@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { api } from './api.js';
-import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
 import { Panel, PageHeader } from './ui.jsx';
 import { PlaidKeys } from './PlaidSetup.jsx';
 
@@ -121,44 +120,13 @@ export default function Settings({ onChange }) {
   const removeRule = async (id) => { await api(`/rules/${id}`, { method: 'DELETE' }); setRules(await api('/rules')); };
   const changeRule = async (id, category) => { await api(`/rules/${id}`, { method: 'PATCH', body: JSON.stringify({ category }) }); setRules(await api('/rules')); };
 
-  const remove = async (i) => {
-    if (!window.confirm(`Remove ${i.institution}?\n\nThis disconnects it from Plaid and deletes its accounts, transactions, and history from WealthFlow. On the Trial plan it does NOT free up a connection slot.`)) return;
-    let r = await api(`/items/${i.id}`, { method: 'DELETE' });
-    if (r.can_force && window.confirm(`Plaid couldn't remove it: ${r.error_message}\n\nRemove it from WealthFlow anyway?`))
-      r = await api(`/items/${i.id}?force=1`, { method: 'DELETE' });
-    setMeta(await api('/items'));
-    onChange?.();
-  };
-  const reload = async () => { setMeta(await api('/items')); onChange?.(); };
 
   return (
     <>
       <PageHeader title="Settings" sub="Connections and backups for this copy of WealthFlow." />
-      <Panel className="mt" title={<>Connections <span className="badge">{sys?.plaidEnv ?? '…'}</span></>}
-        actions={meta && meta.items.length < meta.max && <ConnectBank />}>
-        {meta && <p className="small muted">{meta.items.length} of {meta.max} Plaid connections used. On the Trial plan, removing a connection does not free a slot.</p>}
-        {meta && <p className="small muted">WealthFlow updates from Plaid when it starts and every {meta.autoSyncHours} hours while it's running{meta.lastSync ? ` (last: ${new Date(meta.lastSync).toLocaleString()})` : ''}.
-          Plaid gets new data from each bank on its own schedule, usually a few times a day for transactions and about once a day for investments.
-          A newly connected bank can take several hours to fill in its history and holdings.</p>}
-        {/* Each bank: its status, and anything it still needs from you (sign in again, or approve more data). */}
-        {meta?.items.map((i) => {
-          const more = missing(i);
-          return (
-            <div className="trow" key={i.id}>
-              <span className="tmain"><b>{i.institution}</b>
-                {i.state === 'sign-in' ? <span className="small bad" title={i.status}>Needs you to sign in again</span>
-                  : i.state === 'error' ? <span className="small hint" title={i.status}>Couldn't update: {i.reason}. Tried again at the next sync.</span>
-                  : more.products ? <span className="small hint">Can also share {more.text}</span>
-                    : <span className="small good">Connected</span>}</span>
-              <span className="btnrow">
-                {i.state === 'sign-in' && <UpdateLink item={i} label="Reconnect" className="btn primary" />}
-                {i.status === 'ok' && more.products && <UpdateLink item={i} label="Approve" products={more.products} onDone={reload} />}
-                <button className="linkbtn" onClick={() => remove(i)}>Remove</button>
-              </span>
-            </div>
-          );
-        })}
-        <p className="small muted foot">To hide a single account without disconnecting its bank, untick it on the Net worth page.</p>
+      <Panel className="mt" title={<>Banks <span className="badge">{sys?.plaidEnv ?? '…'}</span></>} actions={<a className="btn" href="#/accounts">Open Accounts</a>}>
+        <p className="small muted">{meta ? `${meta.items.length} of ${meta.max} Plaid connections used. ` : ''}Connecting, reconnecting and removing banks, and renaming or hiding
+          accounts, are on the Accounts page.</p>
       </Panel>
       <PlaidKeys banks={meta?.items.length ?? 0} onChange={() => api('/system').then(setSys)} />
       <AppSetting />

@@ -60,6 +60,17 @@ router.get('/networth', (_req, res) => {
   });
 });
 
+// The Accounts page: each account's activity. Money in/out this month is the account's own movements (transfers
+// included, split parts not double-counted); first/last show how far back the bank's history goes.
+router.get('/accounts/activity', (_req, res) => {
+  const month = new Date().toLocaleDateString('en-CA').slice(0, 7);
+  res.json(Object.fromEntries(db.prepare(`SELECT account_id, COUNT(*) n, MIN(date) first, MAX(date) last,
+      COALESCE(SUM(CASE WHEN substr(date, 1, 7) = ? AND amount < 0 THEN -amount END), 0) month_in,
+      COALESCE(SUM(CASE WHEN substr(date, 1, 7) = ? AND amount > 0 THEN amount END), 0) month_out,
+      SUM(pending) pending
+    FROM transactions WHERE split_of IS NULL GROUP BY account_id`).all(month, month).map((r) => [r.account_id, r])));
+});
+
 router.patch('/accounts/:id/nickname', (req, res) => {
   const nick = String(req.body.nickname ?? '').trim().slice(0, 60);
   db.prepare('UPDATE accounts SET nickname = ? WHERE id = ?').run(nick || null, req.params.id);
@@ -374,7 +385,7 @@ router.get('/setup', (_req, res) => {
   const banks = n('SELECT COUNT(*) n FROM items');
   const income = bills().some((b) => b.direction === 'in' && !b.hidden && !b.ended && ['Salary', 'Income'].includes(b.category));
   const steps = [
-    { key: 'banks', label: 'Connect your banks', done: banks > 0, detail: banks ? `${banks} connected` : 'Checking, cards, and any brokerage or retirement accounts', href: '#/settings' },
+    { key: 'banks', label: 'Connect your banks', done: banks > 0, detail: banks ? `${banks} connected` : 'Checking, cards, and any brokerage or retirement accounts', href: '#/accounts' },
     { key: 'sort', label: 'Sort what WealthFlow couldn\'t', done: banks > 0 && toSort === 0, detail: toSort ? `${toSort} waiting` : 'Unmatched transfers and payments with people', href: '#/transactions' },
     { key: 'paycheck', label: 'Tell it about your paycheck', done: income && paycheckCandidates().length === 0, detail: 'So Upcoming and Free to spend know payday', href: '#/bills' },
     { key: 'budget', label: 'Set up a budget', done: n('SELECT (SELECT COUNT(*) FROM budgets) + (SELECT COUNT(*) FROM budget_groups WHERE amount IS NOT NULL) n') > 0, detail: 'Suggestions are filled in from your bills and spending', href: '#/budget' },

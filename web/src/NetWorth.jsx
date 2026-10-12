@@ -5,7 +5,7 @@ import { Panel, PageHeader, PageSkeleton, Hover, TipList, tipText } from './ui.j
 import NetWorthChart from './NetWorthChart.jsx';
 
 // Rename in place: saves on Enter or when the field loses focus. Empty restores the bank's name.
-function Nickname({ a, saved }) {
+export function Nickname({ a, saved }) {
   const [v, setV] = useState(a.nickname ?? '');
   const save = async () => {
     if (v.trim() === (a.nickname ?? '')) return;
@@ -29,7 +29,7 @@ const ACCOUNT_TYPES = [
   ['investment/hsa', 'HSA'], ['loan/mortgage', 'Mortgage'], ['loan/auto', 'Auto loan'], ['loan/student', 'Student loan'],
   ['loan/loan', 'Other loan'], ['other/other', 'Other'],
 ];
-function AccountType({ a, saved }) {
+export function AccountType({ a, saved }) {
   const cur = `${a.type}/${a.subtype ?? a.type}`;
   const bank = `${a.plaid_type}/${a.plaid_subtype ?? a.plaid_type}`;
   const opts = ACCOUNT_TYPES.some(([v]) => v === cur) ? ACCOUNT_TYPES : [[cur, label(a.subtype || a.type)], ...ACCOUNT_TYPES];
@@ -84,7 +84,7 @@ function Spark({ data, estimated, debt }) {
 }
 
 const avatarColor = (s) => SERIES[[...(s ?? '?')].reduce((h, c) => h + c.charCodeAt(0), 0) % SERIES.length];
-const Avatar = ({ name }) => <span className="avatar" style={{ background: `${avatarColor(name)}22`, color: avatarColor(name) }}>{(name ?? '?')[0]}</span>;
+export const Avatar = ({ name }) => <span className="avatar" style={{ background: `${avatarColor(name)}22`, color: avatarColor(name) }}>{(name ?? '?')[0]}</span>;
 
 function AccountRow({ a, open, setOpen, saved }) {
   const toggle = async () => { await api(`/accounts/${a.id}`, { method: 'PATCH', body: JSON.stringify({ in_networth: !a.in_networth }) }); saved(); };

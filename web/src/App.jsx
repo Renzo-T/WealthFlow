@@ -9,6 +9,7 @@ import Forecast from './Forecast.jsx';
 import Investments from './Investments.jsx';
 import NetWorth from './NetWorth.jsx';
 import Settings from './Settings.jsx';
+import Accounts from './Accounts.jsx';
 import Flow from './Flow.jsx';
 import Bills from './Bills.jsx';
 import NavIcon from './NavIcon.jsx';
@@ -21,7 +22,7 @@ const HIDE_KEY = 'wealthflow.hideAmounts', THEME_KEY = 'wealthflow.theme';
 const systemDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* storage unavailable */ } } };
 const NAV = [
-  { id: 'dashboard', label: 'Dashboard' }, { id: 'transactions', label: 'Transactions' },
+  { id: 'dashboard', label: 'Dashboard' }, { id: 'accounts', label: 'Accounts' }, { id: 'transactions', label: 'Transactions' },
   { id: 'budget', label: 'Budget' }, { id: 'bills', label: 'Bills' }, { id: 'flow', label: 'Money flow' }, { id: 'trips', label: 'Trips' }, { id: 'reports', label: 'Reports' }, { id: 'networth', label: 'Net worth' },
   { id: 'investments', label: 'Investments' }, { id: 'forecast', label: 'Forecast' },
   { id: 'goals', label: 'Goals' }, { id: 'settings', label: 'Settings' },
@@ -111,7 +112,7 @@ export default function App() {
       <main className="main">
         <div className="topbar">
           {update?.available && <a className="chip-link info" href="#/settings" title={`You have version ${update.version}. See Settings › Updates.`}>Version {update.latest} is available</a>}
-          {attention > 0 && <a className="chip-link" href="#/settings" title="See Settings › Connections">
+          {attention > 0 && <a className="chip-link" href="#/accounts" title="See Accounts">
             {attention} bank{attention > 1 ? 's' : ''} need{attention > 1 ? '' : 's'} attention</a>}
           {meta.lastSync && (
             <span className="small muted" title={`WealthFlow checks Plaid when it starts and every ${meta.autoSyncHours} hours while it's running. Plaid gets new data from each bank on its own schedule (transactions a few times a day, investments about daily), so something new at your bank can take up to a day to show here.`}>
@@ -140,7 +141,7 @@ export default function App() {
             <button className="btn" onClick={refresh} disabled={busy}>{busy ? 'Trying…' : 'Try again'}</button></div>
         ))}
         <PageBoundary key={page}>
-        {page === 'transactions' ? <Transactions /> : page === 'budget' ? <Budget /> : page === 'goals' ? <Goals /> : page === 'trips' ? <Trips /> : page === 'reports' ? <Reports />
+        {page === 'accounts' ? <Accounts onChange={load} /> : page === 'transactions' ? <Transactions /> : page === 'budget' ? <Budget /> : page === 'goals' ? <Goals /> : page === 'trips' ? <Trips /> : page === 'reports' ? <Reports />
           : page === 'forecast' ? <Forecast /> : page === 'investments' ? <Investments /> : page === 'networth' ? <NetWorth />
             : page === 'settings' ? <Settings onChange={load} /> : page === 'flow' ? <Flow /> : page === 'bills' ? <Bills /> : <>
               <PageHeader title={greeting} sub="Here's your financial overview for today." />

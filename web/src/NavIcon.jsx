@@ -3,6 +3,7 @@ const P = {
   dashboard: <><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></>,
   transactions: <><path d="M4 7h13l-3-3" /><path d="M20 17H7l3 3" /></>,
   budget: <><circle cx="12" cy="12" r="9" /><path d="M12 3v9l6.4 6.4" /></>,
+  accounts: <><path d="M3 10l9-6 9 6" /><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8" /><path d="M3 20h18" /></>,
   bills: <><rect x="4" y="5" width="16" height="16" rx="2" /><path d="M8 3v4M16 3v4M4 10h16" /><path d="M9 15l2 2 4-4" /></>,
   flow: <><path d="M3 6h5c4 0 4 12 8 12h5" /><path d="M3 18h5c2 0 3-3 4-6" /><path d="M14 6h7" /></>,
   networth: <><path d="M3 20h18" /><path d="M5 20V10l7-6 7 6v10" /><path d="M10 20v-5h4v5" /></>,
