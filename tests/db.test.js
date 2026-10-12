@@ -47,3 +47,10 @@ test('backup writes a complete copy that opens on its own', async () => {
   assert.equal(copy.prepare('SELECT v FROM t').get().v, 42);
   copy.close();
 });
+
+test('a missing value is stored as empty (NULL), and true/false as 1/0, instead of failing', () => {
+  db.exec('DROP TABLE IF EXISTS m; CREATE TABLE m (a, b, c)');
+  db.prepare('INSERT INTO m (a, b, c) VALUES (?, ?, ?)').run(1, undefined, true);
+  db.prepare('INSERT INTO m (a, b, c) VALUES (@a, @b, @c)').run({ a: 2, b: undefined, c: false });
+  assert.deepEqual(db.prepare('SELECT * FROM m ORDER BY a').all(), [{ a: 1, b: null, c: 1 }, { a: 2, b: null, c: 0 }]);
+});

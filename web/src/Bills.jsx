@@ -102,7 +102,11 @@ export default function Bills() {
   useEffect(() => { load(); }, [load]);
   if (!list) return <PageSkeleton />;
 
-  const put = (key, body) => api(`/bills/${encodeURIComponent(key)}`, { method: 'PUT', body: JSON.stringify(body) });
+  const put = async (key, body) => {
+    const r = await api(`/bills/${encodeURIComponent(key)}`, { method: 'PUT', body: JSON.stringify(body) }).catch((e) => ({ error_message: e.message }));
+    if (r.error_message && body.hidden !== undefined) window.alert(`Couldn't save that: ${r.error_message}`); // the editor shows its own errors
+    return r;
+  };
   const del = async (key) => { await api(`/bills/${encodeURIComponent(key)}`, { method: 'DELETE' }); load(); };
   const saveEdit = (b) => async (body) => {
     const r = await put(b.key, { name: body.name === b.name ? undefined : body.name, rule: body.rule, amount_mode: body.amount_mode, amount: body.amount });

@@ -436,3 +436,11 @@ test('update notice: reports this version and never asks GitHub from tests', asy
   assert.equal(u.available, false);
   assert.equal((await post('/update/check')).status, 200);
 });
+
+test('bills: "Not a bill" works on a bill you never edited, including payments to a person with a note', async () => {
+  const key = 'alex rivera "🏠 rent"|out';
+  const r = await put(`/bills/${encodeURIComponent(key)}`, { hidden: true });
+  assert.equal(r.status, 200, JSON.stringify(r.body)); // used to fail: no schedule saved yet
+  assert.deepEqual(db.prepare('SELECT hidden, rule, name FROM bill_settings WHERE key = ?').get(key), { hidden: 1, rule: null, name: null });
+  assert.equal((await put(`/bills/${encodeURIComponent(key)}`, { hidden: false })).status, 200);
+});

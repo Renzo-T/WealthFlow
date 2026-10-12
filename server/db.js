@@ -18,11 +18,16 @@ if (file !== ':memory:') sqlite.exec('PRAGMA journal_mode = WAL');
 // The same small interface the code was written against (prepare → run/get/all, exec, transaction, backup).
 // Rows come back as plain objects (node:sqlite's have no prototype, which surprises deepEqual and JSON helpers).
 const plain = (r) => (r === undefined ? r : { ...r });
+// A missing value (undefined) is stored as NULL, as the code was written to expect; node:sqlite would refuse it
+// ("cannot be bound"). Booleans become 1/0 for the same reason. Covers positional values and named-value objects.
+const value = (v) => (v === undefined ? null : typeof v === 'boolean' ? Number(v) : v);
+const bind = (args) => args.map((a) => (a && typeof a === 'object' && !Array.isArray(a) && !ArrayBuffer.isView(a)
+  ? Object.fromEntries(Object.entries(a).map(([k, v]) => [k, value(v)])) : value(a)));
 let depth = 0;
 const db = {
   prepare(sql) {
     const st = sqlite.prepare(sql);
-    return { run: (...a) => st.run(...a), get: (...a) => plain(st.get(...a)), all: (...a) => st.all(...a).map(plain) };
+    return { run: (...a) => st.run(...bind(a)), get: (...a) => plain(st.get(...bind(a))), all: (...a) => st.all(...bind(a)).map(plain) };
   },
   exec: (sql) => sqlite.exec(sql),
   // transaction(fn) returns a function that runs fn in one transaction: all of it is saved, or none of it if it

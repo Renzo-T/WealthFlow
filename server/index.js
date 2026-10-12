@@ -22,6 +22,12 @@ app.use('/api', plan);
 app.use('/api', system);
 app.use('/api', trips);
 app.use('/api', reports);
+// Anything that throws in a route: a readable message for the page and a line in the log, instead of an HTML error
+// page the page can't read (which made a failed action look like a button that does nothing).
+app.use('/api', (err, req, res, _next) => {
+  console.error(`${req.method} ${req.originalUrl}: ${err.stack ?? err.message}`);
+  res.status(500).json({ error_message: `Something went wrong in WealthFlow: ${err.message}` });
+});
 
 // Development (npm start): the API alone on port 4000; Vite serves the page on 3000 and forwards /api here.
 // App mode (npm run app, WEALTHFLOW_APP=1): the built page and the API together on 3000, https when certs/ has the
