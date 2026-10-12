@@ -20,7 +20,7 @@ router.post('/token', async (req, res) => {
   try {
     const { data } = await plaid.linkTokenCreate({
       user: { client_user_id: 'local-user' },
-      client_name: 'WealthFlow',
+      client_name: 'Mizo Money',
       products: [Products.Transactions],
       optional_products: [Products.Investments, Products.Liabilities], // holdings; card statements and due dates
       transactions: { days_requested: 730 }, // Plaid's max; only applies when a bank is first connected
@@ -45,7 +45,7 @@ router.post('/update-token/:id', async (req, res) => {
   if (!item) return res.status(404).json({ error_message: 'Unknown connection.' });
   let wanted = String(req.query.products ?? (req.query.investments === '1' ? 'investments' : '')).split(',').filter((p) => PRODUCTS[p]);
   const token = (products) => plaid.linkTokenCreate({
-    user: { client_user_id: 'local-user' }, client_name: 'WealthFlow', country_codes: [CountryCode.Us], language: 'en',
+    user: { client_user_id: 'local-user' }, client_name: 'Mizo Money', country_codes: [CountryCode.Us], language: 'en',
     access_token: decrypt(item.access_token),
     ...(products.length && { additional_consented_products: products.map((p) => PRODUCTS[p][0]) }),
     ...linkOptions(req),
@@ -132,7 +132,7 @@ router.post('/setup', async (req, res) => {
   if (fromEnv('PLAID_CLIENT_ID') || fromEnv('PLAID_SECRET')) return res.status(400).json({ error_message: 'Your keys are set in .env; change them there.' });
   try {
     await plaidClient({ PLAID_CLIENT_ID: client_id, PLAID_SECRET: secret, PLAID_ENV: env }).linkTokenCreate({
-      user: { client_user_id: 'local-user' }, client_name: 'WealthFlow', products: [Products.Transactions], country_codes: [CountryCode.Us], language: 'en' });
+      user: { client_user_id: 'local-user' }, client_name: 'Mizo Money', products: [Products.Transactions], country_codes: [CountryCode.Us], language: 'en' });
   } catch (e) {
     const d = e.response?.data;
     return res.status(400).json({ error_message: d

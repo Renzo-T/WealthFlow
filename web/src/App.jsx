@@ -102,7 +102,7 @@ export default function App() {
   return (
     <div className="shell">
       <aside className="side">
-        <div className="logo">WealthFlow</div>
+        <div className="logo">Mizo Money</div>
         <div className="tag">Your money. In focus.</div>
         {NAV.map((n) => (
           <button key={n.label} className={`nav${n.id === page ? ' on' : ''}`}
@@ -115,7 +115,7 @@ export default function App() {
           {attention > 0 && <a className="chip-link" href="#/accounts" title="See Accounts">
             {attention} bank{attention > 1 ? 's' : ''} need{attention > 1 ? '' : 's'} attention</a>}
           {meta.lastSync && (
-            <span className="small muted" title={`WealthFlow checks Plaid when it starts and every ${meta.autoSyncHours} hours while it's running. Plaid gets new data from each bank on its own schedule (transactions a few times a day, investments about daily), so something new at your bank can take up to a day to show here.`}>
+            <span className="small muted" title={`Mizo Money checks Plaid when it starts and every ${meta.autoSyncHours} hours while it's running. Plaid gets new data from each bank on its own schedule (transactions a few times a day, investments about daily), so something new at your bank can take up to a day to show here.`}>
               {busy ? 'Checking for new data…' : synced || `Updated ${ago(meta.lastSync)}`}
             </span>)}
           <button className={`iconbtn${busy ? ' spin' : ''}`} onClick={refresh} disabled={busy} title="Check Plaid for new data now" aria-label="Refresh data">
@@ -137,7 +137,7 @@ export default function App() {
           <div key={i.id} className="alert"><span title={i.status}>{i.institution} needs you to sign in again.</span><UpdateLink item={i} label="Reconnect" /></div>
         ))}
         {failing.map((i) => (
-          <div key={i.id} className="alert warn"><span title={i.status}>Couldn't update {i.institution}: {i.reason}. WealthFlow tries again on its own.</span>
+          <div key={i.id} className="alert warn"><span title={i.status}>Couldn't update {i.institution}: {i.reason}. Mizo Money tries again on its own.</span>
             <button className="btn" onClick={refresh} disabled={busy}>{busy ? 'Trying…' : 'Try again'}</button></div>
         ))}
         <PageBoundary key={page}>

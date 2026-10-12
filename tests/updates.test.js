@@ -15,7 +15,7 @@ beforeEach(() => {
 });
 afterEach(() => { globalThis.fetch = realFetch; process.env.WEALTHFLOW_UPDATE_CHECKS = '0'; });
 const release = (tag) => () => new Response(JSON.stringify({ tag_name: tag, html_url: `https://github.com/acme/wealthflow/releases/tag/${tag}`,
-  published_at: '2026-10-01T12:00:00Z', assets: [{ name: `WealthFlow-${tag.slice(1)}-win-x64.zip`, browser_download_url: 'https://example.test/wf.zip' }] }), { status: 200 });
+  published_at: '2026-10-01T12:00:00Z', assets: [{ name: `MizoMoney-${tag.slice(1)}-win-x64.zip`, browser_download_url: 'https://example.test/wf.zip' }] }), { status: 200 });
 const bump = (v) => v.split('.').map((x, i) => (i === 1 ? +x + 1 : i === 2 ? 0 : +x)).join('.'); // next minor version
 
 test('versions compare by number, not as text', () => {

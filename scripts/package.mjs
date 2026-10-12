@@ -1,6 +1,6 @@
-// npm run package: the downloadable Windows copy, release/WealthFlow-<version>-win-x64.zip. Nothing to install: it
+// npm run package: the downloadable Windows copy, release/MizoMoney-<version>-win-x64.zip. Nothing to install: it
 // carries its own Node (the official build from nodejs.org, checksum-verified), the server with only its runtime
-// packages, and the page already built. People unzip it and double-click WealthFlow.cmd.
+// packages, and the page already built. People unzip it and double-click Mizo Money.cmd.
 //   WEALTHFLOW_NODE_VERSION=v22.20.0 npm run package   bundles that Node instead of the one running this script.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,8 +12,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 process.chdir(root);
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const nodeVersion = process.env.WEALTHFLOW_NODE_VERSION || process.version;
-const name = `WealthFlow-${pkg.version}-win-x64`;
-const out = path.join('release', 'WealthFlow'), cache = path.join('release', 'cache');
+const name = `MizoMoney-${pkg.version}-win-x64`;
+const out = path.join('release', 'Mizo Money'), cache = path.join('release', 'cache');
 const run = (cmd, args, opts = {}) => execFileSync(cmd, args, { stdio: 'inherit', shell: process.platform === 'win32' && cmd === 'npm', ...opts }); // npm.cmd needs a shell
 const step = (s) => console.log(`\n• ${s}`);
 // Windows' own tar (bsdtar) reads and writes zip files; another tar earlier on the PATH (e.g. Git's) may not.
@@ -24,7 +24,7 @@ fs.mkdirSync(cache, { recursive: true });
 
 step('Building the page');
 const { build } = await import('vite');
-// Straight into the package, not web/dist: a WealthFlow running from this folder serves web/dist.
+// Straight into the package, not web/dist: a Mizo Money running from this folder serves web/dist.
 await build({ root: 'web', logLevel: 'warn', build: { outDir: path.resolve(out, 'web', 'dist'), emptyOutDir: true } });
 
 step('Copying the app');
@@ -33,11 +33,11 @@ fs.mkdirSync(path.join(out, 'scripts'));
 fs.copyFileSync('scripts/app.mjs', path.join(out, 'scripts', 'app.mjs'));
 for (const f of ['package.json', 'package-lock.json']) fs.copyFileSync(f, path.join(out, f));
 fs.writeFileSync(path.join(out, 'PORTABLE'),
-  'This copy keeps your data in your user\'s app-data folder (on Windows, %LOCALAPPDATA%\\WealthFlow), not in this folder,\r\n' +
+  'This copy keeps your data in your user\'s app-data folder (on Windows, %LOCALAPPDATA%\\Mizo Money), not in this folder,\r\n' +
   'so replacing this folder with a newer version keeps everything.\r\n');
-fs.writeFileSync(path.join(out, 'WealthFlow.cmd'), [
+fs.writeFileSync(path.join(out, 'Mizo Money.cmd'), [
   '@echo off',
-  'rem Starts WealthFlow in the background and opens it in your browser (or just opens it if it is already running).',
+  'rem Starts Mizo Money in the background and opens it in your browser (or just opens it if it is already running).',
   '"%~dp0node.exe" "%~dp0scripts\\app.mjs" --background --open',
   '',
 ].join('\r\n'));
@@ -72,5 +72,5 @@ fs.copyFileSync(path.join(cache, zipName, 'LICENSE'), path.join(out, 'NODE-LICEN
 step('Zipping');
 const final = path.join('release', `${name}.zip`);
 fs.rmSync(final, { force: true });
-run(tar, ['-a', '-c', '-f', `${name}.zip`, 'WealthFlow'], { cwd: 'release' });
+run(tar, ['-a', '-c', '-f', `${name}.zip`, 'Mizo Money'], { cwd: 'release' });
 console.log(`\nDone: ${final} (${(fs.statSync(final).size / 1e6).toFixed(1)} MB)`);

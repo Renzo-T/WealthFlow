@@ -132,7 +132,7 @@ export class PageBoundary extends Component {
     return (
       <div className="card mt pageerror" role="alert">
         <b>This page hit a problem.</b>
-        <p className="small muted">The rest of WealthFlow still works. Reloading usually fixes it; if not, the details below help find the cause.</p>
+        <p className="small muted">The rest of Mizo Money still works. Reloading usually fixes it; if not, the details below help find the cause.</p>
         <pre className="small">{String(this.state.error?.message ?? this.state.error)}</pre>
         <button className="btn primary" onClick={() => window.location.reload()}>Reload</button>
       </div>

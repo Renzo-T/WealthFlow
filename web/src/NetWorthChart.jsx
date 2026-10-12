@@ -73,7 +73,7 @@ export default function NetWorthChart({ history }) {
     </>}>
       <div ref={ref} />
       {body}
-      {hasEst && <p className="small muted foot">Dashed = estimated: bank and card balances rewound from transactions, investments held at today's value (Plaid doesn't provide their history). Each day WealthFlow syncs adds a real point.</p>}
+      {hasEst && <p className="small muted foot">Dashed = estimated: bank and card balances rewound from transactions, investments held at today's value (Plaid doesn't provide their history). Each day Mizo Money syncs adds a real point.</p>}
     </Panel>
   );
 }

@@ -1,6 +1,6 @@
 {
-  "name": "WealthFlow",
-  "short_name": "WealthFlow",
+  "name": "Mizo Money",
+  "short_name": "Mizo Money",
   "description": "Your personal finance dashboard, running on this computer.",
   "start_url": "/",
   "scope": "/",

@@ -1,10 +1,10 @@
-// npm run app: WealthFlow as one program. Builds the page when its files changed since the last build, then serves
+// npm run app: Mizo Money as one program. Builds the page when its files changed since the last build, then serves
 // the page and the API together on port 3000 (https when certs/ has a local certificate), the address the installed
 // app opens.
 //   --log         write output to app.log in the data folder (used when nobody sees a console)
-//   --open        open WealthFlow in the browser once it's ready (or right away if it's already running)
-//   --background  start it detached with no window and return at once (WealthFlow.cmd in the download uses this)
-// "Start WealthFlow when I sign in" runs this hidden with --log.
+//   --open        open Mizo Money in the browser once it's ready (or right away if it's already running)
+//   --background  start it detached with no window and return at once (Mizo Money.cmd in the download uses this)
+// "Start Mizo Money when I sign in" runs this hidden with --log.
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -20,14 +20,14 @@ if (args.includes('--background')) {
 }
 
 // The download on Windows: files unzipped from a downloaded zip carry Windows' "from the internet" mark, which can make
-// Windows ask before running WealthFlow.cmd. Once WealthFlow has run, take that mark off its own launcher (and Node),
+// Windows ask before running Mizo Money.cmd. Once Mizo Money has run, take that mark off its own launcher (and Node),
 // so it asks at most once. (Starting at sign-in and the Start button never go through that check.)
 if (process.platform === 'win32' && fs.existsSync('PORTABLE'))
-  for (const f of ['WealthFlow.cmd', 'node.exe']) try { fs.unlinkSync(`${f}:Zone.Identifier`); } catch { /* not marked */ }
+  for (const f of ['Mizo Money.cmd', 'node.exe']) try { fs.unlinkSync(`${f}:Zone.Identifier`); } catch { /* not marked */ }
 
 const { dataDir } = await import('../server/config.js');
 if (args.includes('--log')) {
-  // Appended (a second launch that finds WealthFlow already running mustn't wipe the running copy's log); past 1 MB
+  // Appended (a second launch that finds Mizo Money already running mustn't wipe the running copy's log); past 1 MB
   // the old log moves to app.old.log.
   fs.mkdirSync(dataDir, { recursive: true });
   const file = path.join(dataDir, 'app.log');

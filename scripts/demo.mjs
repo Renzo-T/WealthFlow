@@ -1,5 +1,5 @@
 // npm run demo -- <folder>: fills a NEW data folder with an invented household (about five months of paychecks, rent,
-// bills, card spending, savings, a brokerage account and a trip), for screenshots and trying WealthFlow without a bank.
+// bills, card spending, savings, a brokerage account and a trip), for screenshots and trying Mizo Money without a bank.
 // Nothing here is real, and it never touches your own data folder. Then run it with:
 //   WEALTHFLOW_DATA_DIR=<folder> WEALTHFLOW_PORT=3100 node scripts/app.mjs
 // It can't sync (the banks are made up), so leave Refresh alone. The same seed gives the same household every time.

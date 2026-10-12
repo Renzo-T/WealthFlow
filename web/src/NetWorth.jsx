@@ -57,7 +57,7 @@ const isDebt = (a) => a.type === 'credit' || a.type === 'loan';
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 // Signed change for display: for debts, the balance going up is bad, so colour by what it means for net worth.
 const Change = ({ v, debt, suffix = '', since }) => {
-  if (v == null) return <span className="small muted" title="Investment values can't be worked out backwards, so history starts when WealthFlow started tracking">
+  if (v == null) return <span className="small muted" title="Investment values can't be worked out backwards, so history starts when Mizo Money started tracking">
     {since ? `tracking since ${shortDate(since)}` : 'no history yet'}</span>;
   if (Math.abs(v) < 0.5) return <span className="small muted">no change{suffix}</span>;
   const good = debt ? v < 0 : v > 0;
@@ -123,7 +123,7 @@ function WhatMoved() {
   const head = <div className="ranges">{PERIODS.map(([k, l]) => <button key={k} className={period === k ? 'on' : ''} onClick={() => setPeriod(k)}>{l}</button>)}</div>;
   if (!b.available) return (
     <Panel className="mt" title="What moved your net worth">
-      <p className="small muted mt-0">This needs a real daily value for every account at both ends of a period. WealthFlow records one each day
+      <p className="small muted mt-0">This needs a real daily value for every account at both ends of a period. Mizo Money records one each day
         {b.since ? ` (since ${shortDate(b.since)})` : ' from the first sync'}, so it shows up after the next day's sync.</p>
     </Panel>);
   const max = Math.max(Math.abs(b.saved), Math.abs(b.market), 1);

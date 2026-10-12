@@ -11,7 +11,7 @@ export function BudgetsPanel({ items, suggestions }) {
     <Panel title="Budgets" actions={<a href="#/budget">Manage</a>}>
       {top.length === 0 && (
         <EmptyState icon="plan" title="Plan your month" actions={<a className="btn primary linkbtn-solid" href="#/budget">Set up a budget</a>}>
-          {suggestions?.count ? <>From your bills and recent spending, WealthFlow can fill in <b className="amt">{usd(suggestions.total)}</b> a month across {suggestions.count} categories. Adjust anything after.</>
+          {suggestions?.count ? <>From your bills and recent spending, Mizo Money can fill in <b className="amt">{usd(suggestions.total)}</b> a month across {suggestions.count} categories. Adjust anything after.</>
             : 'Set amounts for categories like Groceries or Rent, and see how you\'re tracking as the month goes.'}
         </EmptyState>)}
       {top.map((b) => (

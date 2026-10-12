@@ -30,7 +30,7 @@ router.put('/update', (req, res) => { setChecks(!!req.body.enabled); res.json(up
 
 // Stop the background copy (app mode only; in development, stop npm start instead).
 router.post('/app/quit', (_req, res) => {
-  if (!appMode()) return res.status(400).json({ error_message: 'WealthFlow is running from npm start; stop it there.' });
+  if (!appMode()) return res.status(400).json({ error_message: 'Mizo Money is running from npm start; stop it there.' });
   res.json({ ok: true });
   setTimeout(() => process.exit(0), 200);
 });

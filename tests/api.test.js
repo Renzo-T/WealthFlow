@@ -380,9 +380,9 @@ test('app: reports the mode, and Stop only works for the background copy', async
 
 test('app: the sign-in command starts this folder\'s app with no window, detached from any console', async () => {
   const { startupCommand } = await import('../server/startup.js');
-  const cmd = startupCommand(String.raw`C:\Users\Alex O'Neil\WealthFlow`, String.raw`C:\Program Files\nodejs\node.exe`);
-  // No PowerShell window that Windows Terminal could show (and closing would stop WealthFlow).
-  assert.equal(cmd, String.raw`conhost.exe --headless "C:\Program Files\nodejs\node.exe" "C:\Users\Alex O'Neil\WealthFlow\scripts\app.mjs" --background --log`);
+  const cmd = startupCommand(String.raw`C:\Users\Alex O'Neil\Mizo Money`, String.raw`C:\Program Files\nodejs\node.exe`);
+  // No PowerShell window that Windows Terminal could show (and closing would stop Mizo Money).
+  assert.equal(cmd, String.raw`conhost.exe --headless "C:\Program Files\nodejs\node.exe" "C:\Users\Alex O'Neil\Mizo Money\scripts\app.mjs" --background --log`);
 });
 
 // ---------- First run: Plaid keys, and Hosted Link ----------

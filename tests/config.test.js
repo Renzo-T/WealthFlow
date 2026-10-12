@@ -39,3 +39,14 @@ test('keys saved in the app are used, .env wins over them, and empty values are 
   assert.ok(!('PLAID_SECRET' in file()));
   assert.ok('ENCRYPTION_KEY' in file()); // saving keys never drops the encryption key
 }));
+
+test('the download keeps using a folder set up under the app\'s earlier name; new installs get "Mizo Money"', async () => {
+  const { userDataDir } = await import('../server/config.js');
+  const os = await import('node:os');
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'wf-appdata-'));
+  assert.equal(userDataDir(base), path.join(base, 'Mizo Money'));
+  fs.mkdirSync(path.join(base, 'WealthFlow')); fs.writeFileSync(path.join(base, 'WealthFlow', 'wealthflow.db'), '');
+  assert.equal(userDataDir(base), path.join(base, 'WealthFlow'));
+  fs.mkdirSync(path.join(base, 'Mizo Money')); // once the new folder exists, it wins
+  assert.equal(userDataDir(base), path.join(base, 'Mizo Money'));
+});

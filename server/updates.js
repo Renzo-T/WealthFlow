@@ -35,7 +35,7 @@ export async function refreshUpdate({ force = false, slug = repoSlug() } = {}) {
   let next;
   try {
     const r = await fetch(`https://api.github.com/repos/${slug}/releases/latest`, {
-      headers: { 'User-Agent': 'WealthFlow', Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(10000) });
+      headers: { 'User-Agent': 'Mizo Money', Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(10000) });
     if (r.status === 404) next = { checked, latest: null }; // no releases yet, or a private repository
     else if (!r.ok) next = { ...prev, checked, error: `GitHub answered ${r.status}` };
     else {

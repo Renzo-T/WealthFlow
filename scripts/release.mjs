@@ -30,7 +30,7 @@ process.on('SIGINT', () => {}); // Ctrl+C stops the step that's running; the che
 const bumped = run(`npm version ${bump} --no-git-tag-version`, true);
 if (!bumped.ok) { undo(); stop(`Couldn't change the version: ${bumped.err || bumped.out}`); }
 const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
-console.log(`Releasing v${version}. First the usual checks (tests, build and, if WealthFlow is running, every page);`);
+console.log(`Releasing v${version}. First the usual checks (tests, build and, if Mizo Money is running, every page);`);
 console.log('they take a few minutes.\n');
 const commit = run(`git commit -m "Release v${version}" -- package.json package-lock.json`);
 if (!commit.ok) { undo(); stop('The checks failed or were stopped: see above. Fix what they report and run npm run release again.'); }

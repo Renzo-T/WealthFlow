@@ -187,7 +187,7 @@ export function syncAll() {
 export const lastSync = () => db.prepare("SELECT value FROM meta WHERE key = 'last_sync'").get()?.value ?? null;
 
 // What a bank's saved status means for you. Only Plaid's sign-in errors need you to reconnect (Link update mode);
-// anything else (the bank or Plaid briefly unavailable, no internet, a bug in WealthFlow) fixes itself or needs a fix
+// anything else (the bank or Plaid briefly unavailable, no internet, a bug in Mizo Money) fixes itself or needs a fix
 // here, and reconnecting would only spend one of your connection slots.
 const NEEDS_SIGN_IN = new Set(['ITEM_LOGIN_REQUIRED', 'PENDING_EXPIRATION', 'PENDING_DISCONNECT', 'INVALID_CREDENTIALS',
   'INVALID_MFA', 'INVALID_UPDATED_USERNAME', 'INSUFFICIENT_CREDENTIALS', 'ITEM_LOCKED', 'USER_SETUP_REQUIRED',
@@ -198,7 +198,7 @@ const REASONS = {
   INSTITUTION_NOT_AVAILABLE: "the bank isn't available right now",
   INSTITUTION_NO_LONGER_SUPPORTED: 'Plaid no longer supports this bank',
   PRODUCT_NOT_READY: 'Plaid is still preparing this data',
-  RATE_LIMIT_EXCEEDED: 'Plaid asked WealthFlow to slow down',
+  RATE_LIMIT_EXCEEDED: 'Plaid asked Mizo Money to slow down',
   INTERNAL_SERVER_ERROR: 'Plaid had a problem',
   PLANNED_MAINTENANCE: 'Plaid is down for maintenance',
   INVALID_API_KEYS: "Plaid didn't accept your keys (Settings › Plaid keys)",
@@ -211,7 +211,7 @@ export function describeStatus(status) {
   if (REASONS[status]) return { state: 'error', reason: REASONS[status] };
   if (/ENOTFOUND|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|socket hang up|timeout|Network Error/i.test(status))
     return { state: 'error', reason: "couldn't reach Plaid (is the internet connected?)" };
-  return { state: 'error', reason: /^[A-Z_]+$/.test(status) ? `Plaid said ${status}` : `something went wrong in WealthFlow (${status})` };
+  return { state: 'error', reason: /^[A-Z_]+$/.test(status) ? `Plaid said ${status}` : `something went wrong in Mizo Money (${status})` };
 }
 // Any bank whose last sync failed (startup syncs again for these instead of waiting hours).
 export const anyFailing = () => db.prepare("SELECT 1 FROM items WHERE status IS NOT NULL AND status != 'ok' LIMIT 1").get() !== undefined;

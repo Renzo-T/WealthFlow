@@ -1,4 +1,4 @@
-// WealthFlow's service worker. It only does one thing: when the WealthFlow server isn't running, opening the app
+// Mizo Money's service worker. It only does one thing: when the Mizo Money server isn't running, opening the app
 // shows a page saying so (with a Start button) instead of the browser's connection error. Nothing is cached (your data
 // always comes live from the server and is never stored by the browser); the page below is built in, so there's
 // nothing to download.
@@ -12,7 +12,7 @@ const OFFLINE = `<!doctype html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WealthFlow isn't running</title>
+  <title>Mizo Money isn't running</title>
   <style>
     :root { --bg: #f3f7fc; --card: #fff; --ink: #0f1b33; --muted: #6b7a94; --blue: #2f6bed; --line: #e2ebf6; color-scheme: light; }
     @media (prefers-color-scheme: dark) { :root { --bg: #0b1220; --card: #121b2e; --ink: #e6ecf7; --muted: #8e9bb4; --line: #23304a; color-scheme: dark; } }
@@ -33,11 +33,11 @@ const OFFLINE = `<!doctype html>
 <body>
   <div class="card">
     ${ICON}
-    <h1>WealthFlow isn't running</h1>
-    <p>This window shows WealthFlow, which runs on this computer. Start it with the button below, or by double-clicking
-      <b>WealthFlow.cmd</b> in the WealthFlow folder (from the code: <code>npm run app</code>).</p>
+    <h1>Mizo Money isn't running</h1>
+    <p>This window shows Mizo Money, which runs on this computer. Start it with the button below, or by double-clicking
+      <b>Mizo Money.cmd</b> in the Mizo Money folder (from the code: <code>npm run app</code>).</p>
     <div class="row">
-      <button class="primary" id="start">Start WealthFlow</button>
+      <button class="primary" id="start">Start Mizo Money</button>
       <button id="retry">Try again</button>
     </div>
     <p class="status" id="status" role="status"></p>
@@ -49,14 +49,14 @@ const OFFLINE = `<!doctype html>
     setInterval(async () => { if (await up()) location.reload(); }, 3000);
     document.getElementById('retry').onclick = () => location.reload();
     start.onclick = () => {
-      // The wealthflow:// link (Settings › App › Let the app window start WealthFlow) starts it; the browser asks first.
+      // The wealthflow:// link (Settings › App › Let the app window start Mizo Money) starts it; the browser asks first.
       start.disabled = true;
-      status.textContent = 'Starting WealthFlow…';
+      status.textContent = 'Starting Mizo Money…';
       location.href = 'wealthflow://start';
       setTimeout(() => {
         start.disabled = false;
-        status.textContent = "Still not running. If your browser didn't offer to open WealthFlow, the Start button isn't set up on this "
-          + 'computer: start it from WealthFlow.cmd, then turn on "Let the app window start WealthFlow" in Settings › App.';
+        status.textContent = "Still not running. If your browser didn't offer to open Mizo Money, the Start button isn't set up on this "
+          + 'computer: start it from Mizo Money.cmd, then turn on "Let the app window start Mizo Money" in Settings › App.';
       }, 15000);
     };
   </script>

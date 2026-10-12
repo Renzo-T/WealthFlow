@@ -1,10 +1,10 @@
-# WealthFlow
+# Mizo Money
 
 A local, single-user finance dashboard on Plaid's free Trial plan: net worth, spending, budgets, goals, holdings, and a projection. Everything runs on your machine, and your data stays in a local SQLite file.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dashboard-dark.png">
-  <img alt="The WealthFlow dashboard: net worth, this month's income and spending, upcoming bills, asset allocation and cash flow" src="docs/screenshots/dashboard.png">
+  <img alt="The Mizo Money dashboard: net worth, this month's income and spending, upcoming bills, asset allocation and cash flow" src="docs/screenshots/dashboard.png">
 </picture>
 
 <sub>Screenshots use an invented household (`npm run demo`), not real data.</sub>
@@ -34,8 +34,10 @@ A local, single-user finance dashboard on Plaid's free Trial plan: net worth, sp
 | **Transactions** | **Net worth** |
 | ![Reports: spending month by month](docs/screenshots/reports.png) | ![Trips: a trip's spending by category](docs/screenshots/trips.png) |
 | **Reports** | **Trips** |
+| ![Accounts: each bank's connection and its accounts](docs/screenshots/accounts.png) | ![Investments: holdings with price change, gain and cost basis](docs/screenshots/investments.png) |
+| **Accounts** | **Investments** |
 
-Your data only changes when you change it. WealthFlow only asks you to sort recent transactions (from 3 months before
+Your data only changes when you change it. Mizo Money only asks you to sort recent transactions (from 3 months before
 your first bank connection), since older history tends to have gaps.
 
 ## Get started
@@ -43,18 +45,18 @@ You need a free [Plaid](https://dashboard.plaid.com/signup) account (US/Canada).
 your banks; your data comes straight to your computer.
 
 ### Windows: download (nothing else to install)
-1. Download `WealthFlow-<version>-win-x64.zip` from the
+1. Download `MizoMoney-<version>-win-x64.zip` from the
    [latest release](https://github.com/Renzo-T/WealthFlow/releases/latest). It brings everything it needs, Node included.
 2. Right-click the zip › **Properties** › tick **Unblock** › OK, then unzip it somewhere permanent (e.g. Documents).
-3. Double-click `WealthFlow.cmd`. It opens WealthFlow in your browser.
+3. Double-click `Mizo Money.cmd`. It opens Mizo Money in your browser.
 
 If you skipped Unblock, Windows may say "Windows protected your PC": choose **More info › Run anyway**. It only asks the
-first time (WealthFlow then clears the mark Windows put on its launcher), and starting at sign-in never asks.
-`WealthFlow.cmd` is a script, which can't carry a publisher signature; the Node inside is Node's own signed build.
+first time (Mizo Money then clears the mark Windows put on its launcher), and starting at sign-in never asks.
+`Mizo Money.cmd` is a script, which can't carry a publisher signature; the Node inside is Node's own signed build.
 
 ### Mac, Linux, or working on the code
 Not needed on Windows if you use the download. You need [Node](https://nodejs.org) 22.13 or newer, then in the
-WealthFlow folder:
+Mizo Money folder:
 ```
 npm install
 npm run app
@@ -70,15 +72,15 @@ the current **LTS** ("long-term support") version:
   terminal afterwards so it's found.
 - **Mac:** the installer from [nodejs.org](https://nodejs.org), or `brew install node` with Homebrew.
 - **Linux:** your distribution's package is often too old; use [nvm](https://github.com/nvm-sh/nvm) or
-  [fnm](https://github.com/Schniz/fnm) instead (`nvm use` in the WealthFlow folder picks the version in `.nvmrc`).
+  [fnm](https://github.com/Schniz/fnm) instead (`nvm use` in the Mizo Money folder picks the version in `.nvmrc`).
 
-After changing Node, run `npm install` again. WealthFlow says so plainly if your Node is too old.
+After changing Node, run `npm install` again. Mizo Money says so plainly if your Node is too old.
 </details>
 
-### Then, in WealthFlow
-1. Paste your Plaid **client ID** and **secret** (Plaid dashboard › Developers › Keys). WealthFlow checks them with
+### Then, in Mizo Money
+1. Paste your Plaid **client ID** and **secret** (Plaid dashboard › Developers › Keys). Mizo Money checks them with
    Plaid before saving them.
-2. Click **Connect a bank**. Plaid's sign-in page opens in a new tab, and WealthFlow picks up the connection when you
+2. Click **Connect a bank**. Plaid's sign-in page opens in a new tab, and Mizo Money picks up the connection when you
    finish there.
 
 - **Sandbox** keys work straight away with test banks (`user_good` / `pass_good`, code `1234`).
@@ -87,46 +89,47 @@ After changing Node, run `npm install` again. WealthFlow says so plainly if your
   Production have different secrets; switch in **Settings › Plaid keys**.
 
 ## Everyday use
-- **Settings > App > Install WealthFlow** (Chrome or Edge) gives it its own window, Start-menu entry and taskbar icon.
-- **Settings > App > Start WealthFlow when I sign in** (Windows, optional, off until you turn it on) runs it in the
+- **Settings > App > Install Mizo Money** (Chrome or Edge) gives it its own window, Start-menu entry and taskbar icon.
+- **Settings > App > Start Mizo Money when I sign in** (Windows, optional, off until you turn it on) runs it in the
   background with no window (about 90 MB of memory), checking your banks every 6 hours. What it adds: a complete
-  day-by-day balance history (WealthFlow records balances once a day while running, and Plaid can't supply past days,
+  day-by-day balance history (Mizo Money records balances once a day while running, and Plaid can't supply past days,
   so without it net worth and investment charts have gaps on days you didn't open it), daily automatic backups, and an
   app that's already up to date when you open it. Without it, transactions still catch up whenever you open it.
-- **Settings > App > Let the app window start WealthFlow** (Windows): if WealthFlow isn't running, the window shows a
-  **Start WealthFlow** button, so the Start-menu or taskbar shortcut always works. Your browser asks before starting it
-  the first time ("Open WealthFlow?"); it can always allow. Without it, the window says WealthFlow isn't running and
+- **Settings > App > Let the app window start Mizo Money** (Windows): if Mizo Money isn't running, the window shows a
+  **Start Mizo Money** button, so the Start-menu or taskbar shortcut always works. Your browser asks before starting it
+  the first time ("Open Mizo Money?"); it can always allow. Without it, the window says Mizo Money isn't running and
   how to start it.
-- **Settings > App > Stop WealthFlow** stops the background copy.
+- **Settings > App > Stop Mizo Money** stops the background copy.
 
 On Mac and Linux, start it with `npm run app`; starting at sign-in and the Start button are Windows-only for now.
 
 ## Your data
-Everything stays on your computer, in WealthFlow's data folder:
-- **Download:** `%LOCALAPPDATA%\WealthFlow`, so replacing the app folder with a newer version keeps your data.
+Everything stays on your computer, in Mizo Money's data folder:
+- **Download:** `%LOCALAPPDATA%\Mizo Money`, so replacing the app folder with a newer version keeps your data. (A copy set up
+  before the app was called Mizo Money keeps using `%LOCALAPPDATA%\WealthFlow`.)
 - **From the code:** `data/` in the project. `WEALTHFLOW_DATA_DIR` moves it.
 
 It holds the database, daily automatic backups (`backups/`, the last 14), `app.log`, and `config.json` with your Plaid
 keys and the key that encrypts your bank connections. **Settings > Backup** downloads a copy of the database; keep a
 copy of `config.json` with it, since without that key every bank has to be connected again (using new slots). To
-restore, stop WealthFlow, put the backup in place of `wealthflow.db`, and start it again.
+restore, stop Mizo Money, put the backup in place of `wealthflow.db`, and start it again.
 
-**Updating:** when a new version is out, WealthFlow says so in the top bar and in **Settings > Updates** (it checks
-GitHub's releases about once a day; you can turn that off there). Stop WealthFlow, then replace the folder with the
+**Updating:** when a new version is out, Mizo Money says so in the top bar and in **Settings > Updates** (it checks
+GitHub's releases about once a day; you can turn that off there). Stop Mizo Money, then replace the folder with the
 new download (or `git pull` and `npm install`), and start it again. If "Start when I sign in" or "Let the app window
-start WealthFlow" was on and the folder moved, turn it off and on.
+start Mizo Money" was on and the folder moved, turn it off and on.
 
 **Sharing:** each person needs their own copy with their own Plaid account and keys. Never send someone your data
 folder, `config.json` or `.env`: your keys would use your 10 slots and put their bank connections in your database.
 
 ## Privacy and security
-- **No WealthFlow servers.** There's no account, sign-up or analytics. WealthFlow only listens on this computer
+- **No Mizo Money servers.** There's no account, sign-up or analytics. Mizo Money only listens on this computer
   (`localhost`), so other devices on your network can't open it.
-- **What goes over the internet:** WealthFlow's requests to Plaid (your transactions, balances, holdings and card
+- **What goes over the internet:** Mizo Money's requests to Plaid (your transactions, balances, holdings and card
   statements come back), Plaid's sign-in page when you connect a bank, and merchant logos, which load from addresses
   Plaid provides. About once a day it also asks GitHub whether a newer version is out (an anonymous request; turn it
   off in Settings > Updates). Nothing else; even the font is bundled.
-- **Your bank passwords never reach WealthFlow.** You sign in on Plaid's page; WealthFlow only gets a Plaid access
+- **Your bank passwords never reach Mizo Money.** You sign in on Plaid's page; Mizo Money only gets a Plaid access
   token per bank.
 - **Encrypted:** those access tokens, with AES-256-GCM, using the key in `config.json` (created on first run). The
   rest of the database (transactions, balances) is a plain file in your data folder, protected by your user account
@@ -144,7 +147,7 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
 - `npm run verify`: everything above plus a production build and a scan that refuses secrets. It runs automatically
   before every commit (`npm install` turns the hook on).
 - `npm run demo -- <empty folder>`: fills a new data folder with an invented household (five months of pay, bills,
-  spending, savings, investments and a trip), for trying WealthFlow without a bank or retaking the screenshots. Run it
+  spending, savings, investments and a trip), for trying Mizo Money without a bank or retaking the screenshots. Run it
   with `WEALTHFLOW_DATA_DIR=<folder> WEALTHFLOW_PORT=3100 node scripts/app.mjs`; it can't sync, since the banks are made up.
 - `npm run package`: the Windows download in `release/` (bundles the official Node from nodejs.org).
 - `npm run release [patch|minor|major]`: publishes a version from a clean, up-to-date `main`. It bumps
@@ -156,9 +159,9 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
 - `CLAUDE.md` describes the architecture, the data flow and the Plaid quirks handled.
 
 ## Troubleshooting
-- **"WealthFlow isn't running" / the page doesn't load:** start it (`WealthFlow.cmd` or `npm run app`). If it still
+- **"Mizo Money isn't running" / the page doesn't load:** start it (`Mizo Money.cmd` or `npm run app`). If it still
   won't start, the end of `app.log` in the data folder says why.
-- **"Port 3000 is in use":** another WealthFlow (perhaps the one started at sign-in) or `npm start` is already
+- **"Port 3000 is in use":** another Mizo Money (perhaps the one started at sign-in) or `npm start` is already
   running. Use that one, or stop it first.
 - **"Plaid didn't accept those keys":** copy the whole client ID, and the secret for the environment you picked
   (Sandbox and Production secrets differ).
@@ -167,7 +170,7 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
 - **A bank needs you to sign in again** (red banner): click **Reconnect**. Plaid's page opens in a new tab; finish
   there.
 - **"Couldn't update" a bank** (amber banner): the bank or Plaid was unavailable, or the internet was down. Nothing to
-  do: WealthFlow tries again at the next sync (and when it starts), or click **Try again**. Don't reconnect for this;
+  do: Mizo Money tries again at the next sync (and when it starts), or click **Try again**. Don't reconnect for this;
   it would only use up a connection slot. If it keeps happening, the reason in the banner and `app.log` say why.
 - **"Add holdings" banner:** your bank has investment accounts. Click it once to grant access to holdings.
 - **A shop shows up as a bill:** shops only count when they charge about the same amount each time (autoship, a

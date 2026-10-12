@@ -142,7 +142,7 @@ export default function Investments() {
       <PageHeader title="Investments" sub="Holdings across your linked brokerage, retirement and HSA accounts." />
       {pending.length > 0 && <div className="note">
         {pending.join(', ')} {pending.length > 1 ? 'are' : 'is'} connected with investment access, but Plaid hasn't sent holdings yet.
-        The first download can take a few hours after connecting; WealthFlow checks again automatically.</div>}
+        The first download can take a few hours after connecting; Mizo Money checks again automatically.</div>}
       {rows.length === 0 && pending.length === 0 && <div className="card empty mt">No holdings yet. Connect a brokerage or retirement account to see them here.</div>}
       {rows.length > 0 && <>
         <div className="cards">

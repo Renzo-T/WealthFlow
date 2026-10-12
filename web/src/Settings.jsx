@@ -36,7 +36,7 @@ function AppSetting() {
     if (r.error_message) setErr(r.error_message); else setA(r);
   };
   const quit = async () => {
-    if (!window.confirm('Stop WealthFlow?\n\nIt stops updating until it starts again (when you next sign in, or with npm run app). This window will show that it isn\'t running.')) return;
+    if (!window.confirm('Stop Mizo Money?\n\nIt stops updating until it starts again (when you next sign in, or with npm run app). This window will show that it isn\'t running.')) return;
     await api('/app/quit', { method: 'POST' });
     setTimeout(() => window.location.reload(), 800);
   };
@@ -44,35 +44,35 @@ function AppSetting() {
     <Panel className="mt" title="App">
       <div className="row wraprow mid">
         {standalone() ? <span className="small muted">You're using the installed app.</span>
-          : canInstall ? <button className="btn primary" onClick={install}>Install WealthFlow</button>
+          : canInstall ? <button className="btn primary" onClick={install}>Install Mizo Money</button>
             : <span className="small muted">To install it, use Chrome or Edge's Install button at the right of the address bar.</span>}
       </div>
-      <p className="small muted">Installed, WealthFlow opens in its own window from the Start menu or taskbar, like any other app. Your data stays in
-        WealthFlow's folder on this computer either way.</p>
+      <p className="small muted">Installed, Mizo Money opens in its own window from the Start menu or taskbar, like any other app. Your data stays in
+        Mizo Money's folder on this computer either way.</p>
       {a.startup.supported ? <>
         <label className="check mt"><input type="checkbox" checked={a.startup.enabled} onChange={(e) => change('startup', e.target.checked)} />
-          Start WealthFlow when I sign in</label>
-        <p className="small muted">Optional. WealthFlow runs quietly in the background (no window; about 90 MB of memory) and checks your
+          Start Mizo Money when I sign in</label>
+        <p className="small muted">Optional. Mizo Money runs quietly in the background (no window; about 90 MB of memory) and checks your
           banks every 6 hours. What that adds:</p>
         <ul className="small muted benefits">
-          <li><b>A complete balance history.</b> WealthFlow notes each account's balance once a day while it's running, and Plaid can't
+          <li><b>A complete balance history.</b> Mizo Money notes each account's balance once a day while it's running, and Plaid can't
             supply past days later. Without it, net worth and investment charts have gaps on days you didn't open the app.</li>
           <li><b>Daily backups</b> of your data, made automatically.</li>
           <li><b>No wait</b> when you open the app: it's already up to date.</li>
         </ul>
-        <p className="small muted">Without it, your transactions still catch up whenever you open WealthFlow; only those daily balances and
+        <p className="small muted">Without it, your transactions still catch up whenever you open Mizo Money; only those daily balances and
           backups are skipped on days it isn't running.</p>
         {a.startup.enabled && !a.startup.here && <p className="small muted">It currently starts a copy in another folder; turn this off and on to use this one.</p>}
         <label className="check mt"><input type="checkbox" checked={a.launcher.enabled} onChange={(e) => change('launcher', e.target.checked)} />
-          Let the app window start WealthFlow</label>
-        <p className="small muted">When WealthFlow isn't running, the window shows a Start button instead of only saying so. Your browser asks
+          Let the app window start Mizo Money</label>
+        <p className="small muted">When Mizo Money isn't running, the window shows a Start button instead of only saying so. Your browser asks
           before starting it the first time (you can let it always allow).
           {a.launcher.enabled && !a.launcher.here && ' It currently starts a copy in another folder; turn this off and on to use this one.'}</p>
       </> : <p className="small muted">Starting at sign-in is only set up for Windows so far. Run <code>npm run app</code> to start it.</p>}
       {err && <p className="err">{err}</p>}
       <div className="row wraprow mid">
         <span className="small muted">{a.mode === 'app' ? 'Running in the background.' : 'Running from npm start (development).'}</span>
-        {a.mode === 'app' && <button className="btn" onClick={quit}>Stop WealthFlow</button>}
+        {a.mode === 'app' && <button className="btn" onClick={quit}>Stop Mizo Money</button>}
       </div>
     </Panel>
   );
@@ -98,12 +98,12 @@ function UpdateSetting() {
         </span></div>
         : <p className="small muted">Version {u.version}. {status}</p>}
       {u.available && <p className="small muted">{u.how === 'download'
-        ? <>To update: stop WealthFlow (Settings › App), replace the WealthFlow folder with the one in the new download, and start it again with
-          WealthFlow.cmd. Your data and settings stay: they're kept in your app-data folder, not in the WealthFlow folder.</>
-        : <>To update: in the WealthFlow folder run <code>git pull</code> and <code>npm install</code>, then restart it.</>}</p>}
+        ? <>To update: stop Mizo Money (Settings › App), replace the Mizo Money folder with the one in the new download, and start it again with
+          Mizo Money.cmd. Your data and settings stay: they're kept in your app-data folder, not in the Mizo Money folder.</>
+        : <>To update: in the Mizo Money folder run <code>git pull</code> and <code>npm install</code>, then restart it.</>}</p>}
       {u.repo ? <>
         <label className="check mt"><input type="checkbox" checked={u.enabled} onChange={(e) => toggle(e.target.checked)} /> Check for new versions</label>
-        <p className="small muted">About once a day WealthFlow asks GitHub for the newest release of {u.repo}. Nothing about you or your data is sent.</p>
+        <p className="small muted">About once a day Mizo Money asks GitHub for the newest release of {u.repo}. Nothing about you or your data is sent.</p>
       </> : <p className="small muted">This copy doesn't say where its releases are published, so it can't check for new versions.</p>}
     </Panel>
   );
@@ -123,7 +123,7 @@ export default function Settings({ onChange }) {
 
   return (
     <>
-      <PageHeader title="Settings" sub="Connections and backups for this copy of WealthFlow." />
+      <PageHeader title="Settings" sub="Connections and backups for this copy of Mizo Money." />
       <Panel className="mt" title={<>Banks <span className="badge">{sys?.plaidEnv ?? '…'}</span></>} actions={<a className="btn" href="#/accounts">Open Accounts</a>}>
         <p className="small muted">{meta ? `${meta.items.length} of ${meta.max} Plaid connections used. ` : ''}Connecting, reconnecting and removing banks, and renaming or hiding
           accounts, are on the Accounts page.</p>
@@ -154,11 +154,11 @@ export default function Settings({ onChange }) {
         })}
       </Panel>
       <Panel className="mt" title="Backup">
-        <p className="small muted">WealthFlow saves a copy of your database automatically once a day, after the first sync, and keeps the last 14 in <code>data/backups</code>.
+        <p className="small muted">Mizo Money saves a copy of your database automatically once a day, after the first sync, and keeps the last 14 in <code>data/backups</code>.
           {(() => { const last = backups.find((b) => b.auto); return last ? ` Latest: ${last.name.slice(5, 15)}.` : ' The first one is saved after the next sync.'; })()}
           {' '}Your daily net worth history can't be re-downloaded from Plaid later, so these are worth keeping.</p>
         <p className="small muted">Download backup saves a copy now, to your computer (the five newest downloads are also kept in <code>data/backups</code>).</p>
-        <p className="small muted">Bank connections are stored encrypted, and the key is {sys?.keyInEnv ? <>in your <code>.env</code> file</> : <>in <code>config.json</code> in WealthFlow's data folder{sys?.dataDir && <> (<code>{sys.dataDir}</code>)</>}</>}.
+        <p className="small muted">Bank connections are stored encrypted, and the key is {sys?.keyInEnv ? <>in your <code>.env</code> file</> : <>in <code>config.json</code> in Mizo Money's data folder{sys?.dataDir && <> (<code>{sys.dataDir}</code>)</>}</>}.
           Keep a copy of it with your backups: restoring a backup without that key means connecting every bank again. Forecast assumptions live in your browser and aren't included.</p>
         <a className="btn primary linkbtn-solid" href="/api/backup/download">Download backup</a>
       </Panel>

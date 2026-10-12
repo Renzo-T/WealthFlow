@@ -40,10 +40,10 @@ test('only real sign-in problems ask you to reconnect; other failures say why an
   assert.deepEqual(describeStatus('INSTITUTION_NOT_RESPONDING'), { state: 'error', reason: "the bank isn't responding right now" });
   assert.match(describeStatus('getaddrinfo ENOTFOUND production.plaid.com').reason, /internet/);
   assert.match(describeStatus('SOME_NEW_CODE').reason, /Plaid said SOME_NEW_CODE/);
-  // A bug in WealthFlow (like the one that once showed as "sign in again") must not send you to reconnect.
+  // A bug in Mizo Money (like the one that once showed as "sign in again") must not send you to reconnect.
   const bug = describeStatus('Too many parameter values were provided');
   assert.equal(bug.state, 'error');
-  assert.match(bug.reason, /went wrong in WealthFlow/);
+  assert.match(bug.reason, /went wrong in Mizo Money/);
 });
 
 test('a bank whose last sync failed is noticed, so startup syncs again', () => {

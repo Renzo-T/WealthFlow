@@ -13,7 +13,7 @@ function KeysForm({ initialEnv = 'sandbox', onSaved, onCancel, confirmEnvChange 
     e.preventDefault();
     if (confirmEnvChange && f.env !== initialEnv && !window.confirm(confirmEnvChange)) return;
     setBusy(true); setErr('');
-    const r = await api('/link/setup', { method: 'POST', body: JSON.stringify(f) }).catch(() => ({ error_message: 'WealthFlow isn\'t responding.' }));
+    const r = await api('/link/setup', { method: 'POST', body: JSON.stringify(f) }).catch(() => ({ error_message: 'Mizo Money isn\'t responding.' }));
     setBusy(false);
     if (r.ok) onSaved(r); else setErr(r.error_message);
   };
@@ -50,12 +50,12 @@ export function FirstRun({ onDone }) {
   return (
     <main className="main firstrun">
       <div className="card">
-        <div className="logo">WealthFlow</div>
-        <h2>Connect WealthFlow to Plaid</h2>
-        <p className="muted">WealthFlow runs on this computer and reads your accounts through Plaid. It needs your own Plaid keys, once.</p>
+        <div className="logo">Mizo Money</div>
+        <h2>Connect Mizo Money to Plaid</h2>
+        <p className="muted">Mizo Money runs on this computer and reads your accounts through Plaid. It needs your own Plaid keys, once.</p>
         <HowTo />
         <KeysForm onSaved={onDone} />
-        <p className="small muted">Keys are saved in WealthFlow's data folder on this computer, next to your database. Bank sign-ins are encrypted
+        <p className="small muted">Keys are saved in Mizo Money's data folder on this computer, next to your database. Bank sign-ins are encrypted
           with a key that was created for you automatically.</p>
       </div>
     </main>
@@ -76,7 +76,7 @@ export function PlaidKeys({ banks = 0, onChange }) {
         <KeysForm initialEnv={s.env} onCancel={() => setEdit(false)} onSaved={() => { setEdit(false); load(); onChange?.(); }}
           confirmEnvChange={banks ? `Banks connected under ${env} only work with ${env} keys; they will stop updating until you switch back. Continue?` : null} />
       </> : <p className="small muted">
-        {env} keys{s.client_id ? ` (client ID ${s.client_id})` : ''}{s.fromEnv ? ', set in the .env file. Change them there and restart WealthFlow.' : '.'}
+        {env} keys{s.client_id ? ` (client ID ${s.client_id})` : ''}{s.fromEnv ? ', set in the .env file. Change them there and restart Mizo Money.' : '.'}
         {s.env === 'sandbox' && ' Sandbox shows test data only; switch to Production keys to connect your real banks.'}
       </p>}
     </Panel>

@@ -45,7 +45,7 @@ function pattern(items) {
   return `${when}, ${similar ? 'similar amounts' : `amounts from ${usd2(Math.min(...amts))} to ${usd2(Math.max(...amts))}`}.`;
 }
 
-// Transfers to or from accounts WealthFlow can't see. Only the user knows what they are.
+// Transfers to or from accounts Mizo Money can't see. Only the user knows what they are.
 const REVIEW = {
   in: {
     title: 'Is this income?', noun: 'deposit', sign: '+',
@@ -73,7 +73,7 @@ function Review({ dir, items, decide, cats }) {
   const spendCats = cats.filter((g) => !['Income', 'Transfer', 'Savings & investments'].includes(g.group));
   return (
     <Panel className="mt" title={R.title}>
-      <p className="small muted mt-0">{R.text} Tell WealthFlow what it is and it'll remember for future ones too.</p>
+      <p className="small muted mt-0">{R.text} Tell Mizo Money what it is and it'll remember for future ones too.</p>
       {items.map((r) => (
         <div className="review" key={r.name}>
           <div className="trow">
@@ -108,7 +108,7 @@ function Review({ dir, items, decide, cats }) {
   );
 }
 
-// Payments with people that still need a category. Plaid guesses these from the note, so WealthFlow doesn't.
+// Payments with people that still need a category. Plaid guesses these from the note, so Mizo Money doesn't.
 // Each can be filed as a category (just this one, or always for that person), left as a payment with a person,
 // or, for money a friend sent you, linked to the charge it paid back.
 const avatarColor = (s) => SERIES[[...s].reduce((h, c) => h + c.charCodeAt(0), 0) % SERIES.length];
@@ -126,7 +126,7 @@ function PeoplePanel({ data, cats, reload }) {
   const first = (name) => name.split(' ')[0];
   return (
     <Panel className="mt" title={<>Payments with people <span className="asof">{data.count} to sort</span></>}>
-      <p className="small muted mt-0">Plaid guesses these from the note, so WealthFlow doesn't. Pick what each one was, or leave it as a payment
+      <p className="small muted mt-0">Plaid guesses these from the note, so Mizo Money doesn't. Pick what each one was, or leave it as a payment
         with a person. Money a friend sent you can count against the charge it paid back.</p>
       {data.items.slice(0, shown).map((r) => {
         const best = r.candidates[0]?.likely ? r.candidates[0] : null; // one-click only when the name or an even split matches

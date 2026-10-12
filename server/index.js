@@ -26,7 +26,7 @@ app.use('/api', reports);
 // page the page can't read (which made a failed action look like a button that does nothing).
 app.use('/api', (err, req, res, _next) => {
   console.error(`${req.method} ${req.originalUrl}: ${err.stack ?? err.message}`);
-  res.status(500).json({ error_message: `Something went wrong in WealthFlow: ${err.message}` });
+  res.status(500).json({ error_message: `Something went wrong in Mizo Money: ${err.message}` });
 });
 
 // Development (npm start): the API alone on port 4000; Vite serves the page on 3000 and forwards /api here.
@@ -37,11 +37,11 @@ app.use('/api', (err, req, res, _next) => {
 const autoSync = () => syncAll().then((r) => console.log(`Auto-sync: ${r.reduce((s, x) => s + x.added, 0)} new transactions`))
   .catch((e) => console.error('Auto-sync failed:', e.message));
 const listening = (url) => () => {
-  console.log(`WealthFlow on ${url}`);
+  console.log(`Mizo Money on ${url}`);
   if (process.env.WEALTHFLOW_OPEN === '1') openInBrowser(url);
   if (process.env.WEALTHFLOW_APP === '1') try {
     const fixed = repairEntries();
-    if (fixed.length) console.log(`Updated how Windows starts WealthFlow (${fixed.join(', ')}).`);
+    if (fixed.length) console.log(`Updated how Windows starts Mizo Money (${fixed.join(', ')}).`);
   } catch (e) { console.error(`Couldn't update the sign-in entry: ${e.message}`); }
   if (Date.now() - Date.parse(lastSync() ?? 0) > 3600e3 || anyFailing()) autoSync(); // a bank that failed last time: try again now
   setInterval(autoSync, AUTO_SYNC_HOURS * 3600e3);
@@ -50,7 +50,7 @@ const listening = (url) => () => {
   checkUpdate();
   setInterval(checkUpdate, 6 * 3600e3);
 };
-// --open (WealthFlow.cmd in the download): show it in the default browser.
+// --open (Mizo Money.cmd in the download): show it in the default browser.
 const openInBrowser = (url) => {
   const [cmd, args] = process.platform === 'win32' ? ['rundll32', ['url.dll,FileProtocolHandler', url]]
     : process.platform === 'darwin' ? ['open', [url]] : ['xdg-open', [url]];
@@ -69,7 +69,7 @@ if (process.env.WEALTHFLOW_APP === '1') {
   server.on('error', (e) => {
     // Already running (e.g. started at sign-in): with --open, just show that copy.
     if (e.code === 'EADDRINUSE' && process.env.WEALTHFLOW_OPEN === '1') { openInBrowser(url); setTimeout(() => process.exit(0), 500); return; }
-    console.error(e.code === 'EADDRINUSE' ? `Port ${port} is in use: WealthFlow (or npm start) is probably already running.` : e.message);
+    console.error(e.code === 'EADDRINUSE' ? `Port ${port} is in use: Mizo Money (or npm start) is probably already running.` : e.message);
     process.exit(1);
   });
 } else app.listen(4000, '127.0.0.1', listening('http://127.0.0.1:4000 (API)'));

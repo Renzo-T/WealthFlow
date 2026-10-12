@@ -48,7 +48,7 @@ router.get('/networth', (_req, res) => {
   res.json({
     accounts: accounts.map((a) => {
       const h = hist[a.id] ?? [];
-      // Investment values can't be worked out backwards from transactions (prices move), so before WealthFlow's first
+      // Investment values can't be worked out backwards from transactions (prices move), so before Mizo Money's first
       // daily snapshot there's no history: no change to report yet, just when tracking started.
       const realFrom = h.find((p) => !p.est)?.date ?? null;
       const untracked = a.type === 'investment' && (!realFrom || realFrom > h[0]?.date);
@@ -345,7 +345,7 @@ router.delete('/rules/:id', (req, res) => {
   res.json({ ok: true });
 });
 
-// Money that arrived from somewhere not connected to WealthFlow (no matching transfer found).
+// Money that arrived from somewhere not connected to Mizo Money (no matching transfer found).
 // Could be a paycheck or your own money moving in, so the user decides. Money coming out of a fund
 // (money-market sweeps, ETF sales) is always your own, so it's skipped.
 // Unmatched transfers to or from accounts that aren't connected. Only the user knows what they are:
@@ -386,7 +386,7 @@ router.get('/setup', (_req, res) => {
   const income = bills().some((b) => b.direction === 'in' && !b.hidden && !b.ended && ['Salary', 'Income'].includes(b.category));
   const steps = [
     { key: 'banks', label: 'Connect your banks', done: banks > 0, detail: banks ? `${banks} connected` : 'Checking, cards, and any brokerage or retirement accounts', href: '#/accounts' },
-    { key: 'sort', label: 'Sort what WealthFlow couldn\'t', done: banks > 0 && toSort === 0, detail: toSort ? `${toSort} waiting` : 'Unmatched transfers and payments with people', href: '#/transactions' },
+    { key: 'sort', label: 'Sort what Mizo Money couldn\'t', done: banks > 0 && toSort === 0, detail: toSort ? `${toSort} waiting` : 'Unmatched transfers and payments with people', href: '#/transactions' },
     { key: 'paycheck', label: 'Tell it about your paycheck', done: income && paycheckCandidates().length === 0, detail: 'So Upcoming and Free to spend know payday', href: '#/bills' },
     { key: 'budget', label: 'Set up a budget', done: n('SELECT (SELECT COUNT(*) FROM budgets) + (SELECT COUNT(*) FROM budget_groups WHERE amount IS NOT NULL) n') > 0, detail: 'Suggestions are filled in from your bills and spending', href: '#/budget' },
     { key: 'home', label: 'Check where home is', done: flag('setup_home_ok') || n('SELECT COUNT(*) n FROM home_bases') > 0, detail: 'Used to spot trips', href: '#/trips', confirm: 'Looks right' },

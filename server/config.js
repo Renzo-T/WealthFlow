@@ -12,9 +12,14 @@ import { fileURLToPath } from 'node:url';
 // a newer version never touches your data. WEALTHFLOW_DATA_DIR overrides both.
 export const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const portable = fs.existsSync(path.join(appRoot, 'PORTABLE'));
-export const userDataDir = () => (process.platform === 'win32' ? path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'WealthFlow')
-  : process.platform === 'darwin' ? path.join(os.homedir(), 'Library', 'Application Support', 'WealthFlow')
-    : path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'WealthFlow'));
+const appData = () => (process.platform === 'win32' ? process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
+  : process.platform === 'darwin' ? path.join(os.homedir(), 'Library', 'Application Support')
+    : process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'));
+// "Mizo Money"; a copy set up under the app's earlier name keeps using its existing "WealthFlow" folder.
+export const userDataDir = (base = appData()) => {
+  const now = path.join(base, 'Mizo Money'), before = path.join(base, 'WealthFlow');
+  return !fs.existsSync(now) && fs.existsSync(path.join(before, 'wealthflow.db')) ? before : now;
+};
 export const dataDir = path.resolve(process.env.WEALTHFLOW_DATA_DIR || (portable ? userDataDir() : path.join(appRoot, 'data')));
 const FILE = path.join(dataDir, 'config.json');
 const KEYS = ['PLAID_CLIENT_ID', 'PLAID_SECRET', 'PLAID_ENV', 'PLAID_REDIRECT_URI', 'ENCRYPTION_KEY'];

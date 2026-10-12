@@ -54,7 +54,7 @@ export function netWorthHistory() {
 
 // What moved your net worth over a period: what you saved (income − spending from transactions) and everything else,
 // mostly investments' market moves (also interest, fees outside transactions, corrections). Only on dates where every
-// account has a real daily value: before WealthFlow's first snapshots, investment values aren't known.
+// account has a real daily value: before Mizo Money's first snapshots, investment values aren't known.
 export function netWorthBreakdown(period = 'month', today = iso(new Date())) {
   const accounts = db.prepare('SELECT * FROM accounts WHERE in_networth = 1').all();
   if (!accounts.length) return { available: false };

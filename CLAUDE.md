@@ -1,4 +1,4 @@
-# WealthFlow
+# Mizo Money
 
 Local, single-user personal finance dashboard on Plaid. Express API on Node's built-in SQLite (`node:sqlite`, wrapped
 in `server/db.js` with `transaction()` and `backup()`; no compiled add-ons) in `server/`, and a React + Vite UI in
@@ -22,7 +22,7 @@ start; `.env`/environment variables override it). See README.md for setup.
   screenshots (`docs/screenshots/`); never put real data in screenshots.
 - `npm run package` builds the Windows download (`release/`, gitignored): official Node from nodejs.org
   (checksum-verified), server + runtime deps only (page libraries are devDependencies), the built page, a `PORTABLE`
-  marker (→ app-data folder) and `WealthFlow.cmd` (`app.mjs --background --open`).
+  marker (→ app-data folder) and `Mizo Money.cmd` (`app.mjs --background --open`).
 
 ## Run
 - `npm start`: API (`node --watch`, port 4000) and Vite 8 (port 3000, proxies `/api`) together. Node 22.13+ (`node:sqlite`
@@ -31,7 +31,7 @@ start; `.env`/environment variables override it). See README.md for setup.
   `WEALTHFLOW_APP=1`: page + API together on 3000 (https with `certs/`). Installable (manifest, icons, `web/public/sw.js`,
   which only shows a built-in "isn't running" page when the server is down; nothing is cached). Settings > App:
   install prompt, "Start when I sign in" (`server/startup.js`, an HKCU Run entry; Windows only), "Let the app window
-  start WealthFlow" (a `wealthflow://` link under HKCU\Software\Classes that runs the same hidden command and ignores
+  start Mizo Money" (a `wealthflow://` link under HKCU\Software\Classes that runs the same hidden command and ignores
   the address; the offline page's Start button opens it, and the page reloads once `/api/app` answers), Stop
   (`/api/app/quit`, app mode only). Vite uses `strictPort`, so `npm start` fails clearly while the app holds 3000.
 - `npm test`: node:test suites in `tests/` against an in-memory database (`WEALTHFLOW_DB=':memory:'`, set by
