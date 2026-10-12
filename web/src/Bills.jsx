@@ -127,7 +127,7 @@ export default function Bills() {
     <Fragment key={b.key}>
       <tr className={b.hidden ? 'dim' : undefined}>
         <td><span className="rowicon"><CategoryIcon group={b.can_card ? 'Debt repayment' : b.direction === 'in' ? 'Income' : b.grp} sub={b.category} kind={b.can_card ? 'card' : undefined} />
-          <span><b>{b.name}</b><div className="small muted">{SOURCE[b.source]}{b.edited ? ' · edited' : ''}{b.account ? ` · from ${b.account}` : ''}</div></span></span></td>
+          <span className="bname1"><b title={b.name}>{b.name}</b><div className="small muted">{SOURCE[b.source]}{b.edited ? ' · edited' : ''}{b.account ? ` · from ${b.account}` : ''}</div></span></span></td>
         <td>{b.schedule ? <span>{b.schedule[0].toUpperCase() + b.schedule.slice(1)}</span> : '—'}
           {b.card && <div className="small muted">Due {shortDate(b.card.due)}{b.card.paid ? ' · this statement is paid' : ''}</div>}</td>
         <td>{b.ended ? <span className="muted">Missed, probably ended</span> : b.unscheduled

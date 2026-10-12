@@ -39,7 +39,6 @@ export function ProjectionChart({ series, years }) {
     <svg className="chart" width={W} height={H} viewBox={`0 0 ${W} ${H}`} onMouseMove={move} onMouseLeave={() => setHover(null)} role="img" aria-label="Net worth projection">
       {[0, 1, 2, 3, 4].map((k) => { const v = lo + ((hi - lo) * k) / 4; return <g key={k}><line className="grid" x1={L} x2={W - R} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{compact.format(v)}</text></g>; })}
       {labels.map((i) => <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? 'start' : i === years ? 'end' : 'middle'}>{i === 0 ? 'Now' : `${i}y`}</text>)}
-      <path d={band} style={{ fill: 'var(--blue)' }} opacity=".08" />
       {series.map((s) => <path key={s.key} d={path(s.values)} fill="none" stroke={s.color} strokeWidth="2.5" strokeLinejoin="round" />)}
       {hover != null && <g>
         <line className="grid" x1={x(hover)} x2={x(hover)} y1={T} y2={H - B} />

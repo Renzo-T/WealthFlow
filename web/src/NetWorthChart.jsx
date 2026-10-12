@@ -31,7 +31,6 @@ export default function NetWorthChart({ history }) {
     const x = (i) => L + (i * (W - L - R)) / (data.length - 1);
     const y = (v) => T + ((hi - v) * (H - T - B)) / (hi - lo);
     const line = data.map((d, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(d.value).toFixed(1)}`).join(' ');
-    const area = `${line} L${x(data.length - 1)},${H - B} L${L},${H - B} Z`;
     // Split into runs of estimated vs. real days; neighbouring runs share their boundary point so the line is unbroken.
     const runs = [];
     data.forEach((d, i) => {
@@ -47,10 +46,8 @@ export default function NetWorthChart({ history }) {
     };
     body = (
       <svg className="chart" width={W} height={H} viewBox={`0 0 ${W} ${H}`} onMouseMove={move} onMouseLeave={() => setHover(null)}>
-        <defs><linearGradient id="nw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style={{ stopColor: 'var(--blue)' }} stopOpacity=".18" /><stop offset="1" style={{ stopColor: 'var(--blue)' }} stopOpacity="0" /></linearGradient></defs>
         {[0, 1, 2, 3, 4].map((k) => { const v = lo + ((hi - lo) * k) / 4; return <g key={k}><line className="grid" x1={L} x2={W - R} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{compact.format(v)}</text></g>; })}
         {[0, 1, 2, 3, 4, 5].map((k) => { const i = Math.round((k * (data.length - 1)) / 5); return <text key={k} x={x(i)} y={H - 6} textAnchor={k === 0 ? 'start' : k === 5 ? 'end' : 'middle'}>{day(data[i].date)}</text>; })}
-        <path d={area} fill="url(#nw)" opacity={hasEst ? 0.5 : 1} />
         {runs.map((r, k) => <path key={k} d={path(r)} fill="none" style={{ stroke: 'var(--blue)' }} strokeLinejoin="round"
           strokeWidth={r.est ? 1.75 : 2.5} strokeDasharray={r.est ? '5 4' : undefined} opacity={r.est ? 0.55 : 1} />)}
         {h && <g>

@@ -1,0 +1,1117 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-12T05:08:23.713Z",
+  "title": "Design System: Mizo Money",
+  "extensions": {
+    "colorMeta": {
+      "cover-indigo": {
+        "role": "primary",
+        "displayName": "Cover Indigo",
+        "canonical": "#1e2a47",
+        "oklch": "oklch(29.0% 0.056 266.0)",
+        "theme": "light",
+        "tonalRamp": [
+          "#030822",
+          "#17233f",
+          "#323f5e",
+          "#4f5d7e",
+          "#7180a2",
+          "#94a4c9",
+          "#b9caf0",
+          "#ddefff"
+        ]
+      },
+      "cover-fold": {
+        "role": "primary",
+        "displayName": "Cover Fold",
+        "canonical": "#2b3b63",
+        "oklch": "oklch(35.9% 0.073 266.3)",
+        "theme": "light",
+        "tonalRamp": [
+          "#020629",
+          "#132147",
+          "#2e3e66",
+          "#4a5c87",
+          "#6c7fac",
+          "#90a4d3",
+          "#b5cafb",
+          "#d8eeff"
+        ]
+      },
+      "cover-ink": {
+        "role": "primary",
+        "displayName": "Cover Ink",
+        "canonical": "#c5ccdd",
+        "oklch": "oklch(84.5% 0.025 267.9)",
+        "theme": "light",
+        "tonalRamp": [
+          "#070b16",
+          "#1f2430",
+          "#3a404d",
+          "#575d6c",
+          "#7a8090",
+          "#9ea4b5",
+          "#c3cadb",
+          "#e7eeff"
+        ]
+      },
+      "indigo-ink": {
+        "role": "primary",
+        "displayName": "Indigo Ink",
+        "canonical": "#2d4a93",
+        "oklch": "oklch(42.8% 0.125 265.2)",
+        "theme": "light",
+        "tonalRamp": [
+          "#010036",
+          "#071b5c",
+          "#1f3981",
+          "#3b59a4",
+          "#5b7dcb",
+          "#7ea2f3",
+          "#a5c9ff",
+          "#cceeff"
+        ]
+      },
+      "indigo-wash": {
+        "role": "primary",
+        "displayName": "Indigo Wash",
+        "canonical": "#e8ecf5",
+        "oklch": "oklch(94.3% 0.013 266.7)",
+        "theme": "light",
+        "tonalRamp": [
+          "#090b11",
+          "#21242a",
+          "#3d4047",
+          "#5a5e65",
+          "#7d8088",
+          "#a1a5ad",
+          "#c7cad3",
+          "#eaeef7"
+        ]
+      },
+      "page-paper": {
+        "role": "neutral",
+        "displayName": "Page Paper",
+        "canonical": "#f3f3ef",
+        "oklch": "oklch(96.3% 0.005 106.5)",
+        "theme": "light",
+        "tonalRamp": [
+          "#0b0b09",
+          "#242421",
+          "#40403d",
+          "#5e5e5a",
+          "#80807d",
+          "#a5a5a1",
+          "#cbcbc7",
+          "#efefeb"
+        ]
+      },
+      "dot-grid": {
+        "role": "neutral",
+        "displayName": "Dot Grid",
+        "canonical": "#d6d9d3",
+        "oklch": "oklch(88.1% 0.009 128.6)",
+        "theme": "light",
+        "tonalRamp": [
+          "#0a0c08",
+          "#232520",
+          "#3e413c",
+          "#5c5f59",
+          "#7f817c",
+          "#a3a6a0",
+          "#c9ccc6",
+          "#edf0ea"
+        ]
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Sheet",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "theme": "light",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#242424",
+          "#404040",
+          "#5d5d5d",
+          "#808080",
+          "#a4a4a4",
+          "#cacaca",
+          "#eeeeee"
+        ]
+      },
+      "sheet-tint": {
+        "role": "neutral",
+        "displayName": "Sheet Tint",
+        "canonical": "#f7f7f4",
+        "oklch": "oklch(97.5% 0.004 106.5)",
+        "theme": "light",
+        "tonalRamp": [
+          "#0b0b09",
+          "#242422",
+          "#40403d",
+          "#5e5e5b",
+          "#80807e",
+          "#a5a5a2",
+          "#cbcbc8",
+          "#efefec"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#e1e3df",
+        "oklch": "oklch(91.3% 0.006 128.5)",
+        "theme": "light",
+        "tonalRamp": [
+          "#0a0c09",
+          "#232522",
+          "#3f403d",
+          "#5d5e5b",
+          "#7f817d",
+          "#a3a5a1",
+          "#c9cbc7",
+          "#edefeb"
+        ]
+      },
+      "rule-strong": {
+        "role": "neutral",
+        "displayName": "Rule Strong",
+        "canonical": "#c8ccd2",
+        "oklch": "oklch(84.4% 0.009 258.3)",
+        "theme": "light",
+        "tonalRamp": [
+          "#090b0f",
+          "#212429",
+          "#3d4045",
+          "#5a5e63",
+          "#7d8086",
+          "#a1a5ab",
+          "#c7cbd1",
+          "#ebeff5"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1b2030",
+        "oklch": "oklch(24.6% 0.031 270.6)",
+        "theme": "light",
+        "tonalRamp": [
+          "#070a18",
+          "#1e2333",
+          "#393f51",
+          "#575d70",
+          "#798094",
+          "#9da4b9",
+          "#c3cae0",
+          "#e6eeff"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Ink Muted",
+        "canonical": "#555c6e",
+        "oklch": "oklch(47.5% 0.030 268.5)",
+        "theme": "light",
+        "tonalRamp": [
+          "#060a18",
+          "#1e2433",
+          "#393f50",
+          "#565d6f",
+          "#788093",
+          "#9ca4b8",
+          "#c2cadf",
+          "#e6eeff"
+        ]
+      },
+      "pencil": {
+        "role": "neutral",
+        "displayName": "Pencil",
+        "canonical": "#475066",
+        "oklch": "oklch(43.2% 0.038 267.4)",
+        "theme": "light",
+        "tonalRamp": [
+          "#050a1b",
+          "#1c2337",
+          "#373f54",
+          "#545d74",
+          "#768098",
+          "#9aa4bd",
+          "#bfcae4",
+          "#e3eeff"
+        ]
+      },
+      "ink-dot": {
+        "role": "neutral",
+        "displayName": "Ink Dot",
+        "canonical": "#26355c",
+        "oklch": "oklch(33.7% 0.072 266.7)",
+        "theme": "light",
+        "tonalRamp": [
+          "#020629",
+          "#142146",
+          "#2e3e66",
+          "#4b5c87",
+          "#6d7fac",
+          "#90a4d2",
+          "#b5cafa",
+          "#d9eeff"
+        ]
+      },
+      "seal-vermillion": {
+        "role": "secondary",
+        "displayName": "Seal Vermillion",
+        "canonical": "#d9482e",
+        "oklch": "oklch(60.2% 0.186 32.5)",
+        "theme": "light",
+        "tonalRamp": [
+          "#320000",
+          "#5b0000",
+          "#870000",
+          "#ae1800",
+          "#d8472d",
+          "#ff7055",
+          "#ff9f85",
+          "#ffcab1"
+        ]
+      },
+      "seal-ink": {
+        "role": "secondary",
+        "displayName": "Seal Ink",
+        "canonical": "#fff6f2",
+        "oklch": "oklch(97.9% 0.011 45.7)",
+        "theme": "light",
+        "tonalRamp": [
+          "#0f0a07",
+          "#292220",
+          "#453e3b",
+          "#635c58",
+          "#867e7b",
+          "#aba39f",
+          "#d1c8c5",
+          "#f5ece8"
+        ]
+      },
+      "money-in": {
+        "role": "tertiary",
+        "displayName": "Money In",
+        "canonical": "#24724f",
+        "oklch": "oklch(49.5% 0.095 160.2)",
+        "theme": "light",
+        "tonalRamp": [
+          "#001401",
+          "#003113",
+          "#004e2e",
+          "#1e6e4b",
+          "#47926d",
+          "#6cb790",
+          "#92deb6",
+          "#bbffdb"
+        ]
+      },
+      "money-out": {
+        "role": "tertiary",
+        "displayName": "Money Out",
+        "canonical": "#b4382a",
+        "oklch": "oklch(52.2% 0.163 29.9)",
+        "theme": "light",
+        "tonalRamp": [
+          "#2f0000",
+          "#570000",
+          "#800000",
+          "#a62a1d",
+          "#cf5241",
+          "#fa7865",
+          "#ffa491",
+          "#ffcebc"
+        ]
+      },
+      "caution-amber": {
+        "role": "tertiary",
+        "displayName": "Caution Amber",
+        "canonical": "#9a6410",
+        "oklch": "oklch(54.9% 0.113 70.8)",
+        "theme": "light",
+        "tonalRamp": [
+          "#220000",
+          "#431300",
+          "#633100",
+          "#855000",
+          "#aa7327",
+          "#d1984f",
+          "#f8be78",
+          "#ffe4a6"
+        ]
+      },
+      "warn-wash": {
+        "role": "tertiary",
+        "displayName": "Warn Wash",
+        "canonical": "#f7efde",
+        "oklch": "oklch(95.4% 0.024 85.8)",
+        "theme": "light",
+        "tonalRamp": [
+          "#100a02",
+          "#292316",
+          "#453f31",
+          "#645d4e",
+          "#877f70",
+          "#aba494",
+          "#d2cab9",
+          "#f6eedd"
+        ]
+      },
+      "alert-wash": {
+        "role": "tertiary",
+        "displayName": "Alert Wash",
+        "canonical": "#f9ebe8",
+        "oklch": "oklch(95.0% 0.016 32.0)",
+        "theme": "light",
+        "tonalRamp": [
+          "#110907",
+          "#2b211f",
+          "#483d3b",
+          "#665b58",
+          "#897d7a",
+          "#aea19e",
+          "#d5c7c4",
+          "#f9ebe8"
+        ]
+      },
+      "series-1": {
+        "role": "tertiary",
+        "displayName": "Series 1",
+        "canonical": "#3554a8",
+        "oklch": "oklch(46.9% 0.140 266.0)",
+        "theme": "light",
+        "tonalRamp": [
+          "#02003a",
+          "#071861",
+          "#1c3788",
+          "#3857ac",
+          "#587bd3",
+          "#7ba1fc",
+          "#a3c8ff",
+          "#cbedff"
+        ]
+      },
+      "series-2": {
+        "role": "tertiary",
+        "displayName": "Series 2",
+        "canonical": "#b5700e",
+        "oklch": "oklch(60.6% 0.130 66.9)",
+        "theme": "light",
+        "tonalRamp": [
+          "#250000",
+          "#470c00",
+          "#6a2b00",
+          "#8d4b00",
+          "#b36e09",
+          "#db9340",
+          "#ffba6f",
+          "#ffe19f"
+        ]
+      },
+      "series-3": {
+        "role": "tertiary",
+        "displayName": "Series 3",
+        "canonical": "#00909a",
+        "oklch": "oklch(59.5% 0.101 203.5)",
+        "theme": "light",
+        "tonalRamp": [
+          "#00131c",
+          "#00303a",
+          "#004e58",
+          "#006d77",
+          "#05919b",
+          "#46b7c1",
+          "#71dee8",
+          "#a2ffff"
+        ]
+      },
+      "series-4": {
+        "role": "tertiary",
+        "displayName": "Series 4",
+        "canonical": "#9a3fa8",
+        "oklch": "oklch(53.2% 0.178 322.1)",
+        "theme": "light",
+        "tonalRamp": [
+          "#21002b",
+          "#43004f",
+          "#670075",
+          "#892e97",
+          "#b054be",
+          "#d77ae6",
+          "#faa6ff",
+          "#ffcfff"
+        ]
+      },
+      "series-rest": {
+        "role": "tertiary",
+        "displayName": "Series Rest",
+        "canonical": "#8a90a0",
+        "oklch": "oklch(65.4% 0.025 269.3)",
+        "theme": "light",
+        "tonalRamp": [
+          "#070b16",
+          "#1f2430",
+          "#3a3f4d",
+          "#585d6c",
+          "#7a8090",
+          "#9ea4b5",
+          "#c4cadb",
+          "#e8eeff"
+        ]
+      },
+      "night-cover-indigo": {
+        "role": "primary",
+        "displayName": "Night Cover Indigo",
+        "canonical": "#1a2440",
+        "oklch": "oklch(26.6% 0.054 267.8)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#030822",
+          "#19223e",
+          "#333f5d",
+          "#505d7d",
+          "#7280a1",
+          "#96a4c8",
+          "#bbcaef",
+          "#dfeeff"
+        ]
+      },
+      "night-cover-fold": {
+        "role": "primary",
+        "displayName": "Night Cover Fold",
+        "canonical": "#283a66",
+        "oklch": "oklch(35.7% 0.080 265.7)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#01052b",
+          "#11214a",
+          "#2b3e6a",
+          "#485c8b",
+          "#697fb1",
+          "#8da4d8",
+          "#b2caff",
+          "#d6eeff"
+        ]
+      },
+      "night-cover-ink": {
+        "role": "primary",
+        "displayName": "Night Cover Ink",
+        "canonical": "#aab4cc",
+        "oklch": "oklch(77.0% 0.036 267.6)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#050a1a",
+          "#1c2336",
+          "#373f53",
+          "#555d73",
+          "#778096",
+          "#9ba4bc",
+          "#c0cae3",
+          "#e4eeff"
+        ]
+      },
+      "night-button": {
+        "role": "primary",
+        "displayName": "Night Button",
+        "canonical": "#3c58a8",
+        "oklch": "oklch(48.1% 0.132 266.9)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#020038",
+          "#0a195f",
+          "#203884",
+          "#3c58a8",
+          "#5c7ccf",
+          "#7fa1f8",
+          "#a6c8ff",
+          "#cdedff"
+        ]
+      },
+      "night-indigo-ink": {
+        "role": "primary",
+        "displayName": "Night Indigo Ink",
+        "canonical": "#9db2ea",
+        "oklch": "oklch(76.8% 0.084 268.5)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#02042c",
+          "#131f4c",
+          "#2d3d6c",
+          "#4a5b8d",
+          "#6b7eb3",
+          "#8ea3da",
+          "#b3c9ff",
+          "#d8edff"
+        ]
+      },
+      "night-indigo-wash": {
+        "role": "primary",
+        "displayName": "Night Indigo Wash",
+        "canonical": "#222a40",
+        "oklch": "oklch(28.8% 0.042 268.4)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#05091d",
+          "#1b2339",
+          "#363f56",
+          "#535d76",
+          "#75809a",
+          "#99a4c0",
+          "#bfcae7",
+          "#e2eeff"
+        ]
+      },
+      "night-paper": {
+        "role": "neutral",
+        "displayName": "Night Paper",
+        "canonical": "#11141c",
+        "oklch": "oklch(19.2% 0.017 268.7)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#080b12",
+          "#21242c",
+          "#3c4049",
+          "#595d68",
+          "#7c808b",
+          "#a0a4b0",
+          "#c6cad6",
+          "#eaeefa"
+        ]
+      },
+      "night-dot-grid": {
+        "role": "neutral",
+        "displayName": "Night Dot Grid",
+        "canonical": "#20252f",
+        "oklch": "oklch(26.4% 0.020 264.1)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#070b14",
+          "#1f242e",
+          "#3a404b",
+          "#585e69",
+          "#7a808d",
+          "#9ea5b2",
+          "#c4cbd8",
+          "#e8effd"
+        ]
+      },
+      "night-sheet": {
+        "role": "neutral",
+        "displayName": "Night Sheet",
+        "canonical": "#181c27",
+        "oklch": "oklch(22.8% 0.022 269.1)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#070b15",
+          "#20242f",
+          "#3b3f4c",
+          "#585d6b",
+          "#7b808e",
+          "#9fa4b3",
+          "#c4cada",
+          "#e8eefe"
+        ]
+      },
+      "night-sheet-tint": {
+        "role": "neutral",
+        "displayName": "Night Sheet Tint",
+        "canonical": "#1d2230",
+        "oklch": "oklch(25.4% 0.028 269.2)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#070a17",
+          "#1e2432",
+          "#3a3f4f",
+          "#575d6e",
+          "#798091",
+          "#9da4b7",
+          "#c3cadd",
+          "#e7eeff"
+        ]
+      },
+      "night-rule": {
+        "role": "neutral",
+        "displayName": "Night Rule",
+        "canonical": "#282e3d",
+        "oklch": "oklch(30.2% 0.029 267.7)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#060a17",
+          "#1e2432",
+          "#393f4f",
+          "#565d6e",
+          "#798092",
+          "#9da4b7",
+          "#c2cade",
+          "#e6eeff"
+        ]
+      },
+      "night-rule-strong": {
+        "role": "neutral",
+        "displayName": "Night Rule Strong",
+        "canonical": "#3a4255",
+        "oklch": "oklch(38.0% 0.034 267.0)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#050a1a",
+          "#1c2435",
+          "#373f52",
+          "#555d72",
+          "#778095",
+          "#9ba4bb",
+          "#c0cae2",
+          "#e4eeff"
+        ]
+      },
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "canonical": "#e7e9ef",
+        "oklch": "oklch(93.4% 0.008 271.3)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#0a0b0f",
+          "#222428",
+          "#3e4044",
+          "#5c5d62",
+          "#7e8085",
+          "#a2a4aa",
+          "#c8cad0",
+          "#eceef4"
+        ]
+      },
+      "night-ink-muted": {
+        "role": "neutral",
+        "displayName": "Night Ink Muted",
+        "canonical": "#a0a7b8",
+        "oklch": "oklch(72.8% 0.026 267.8)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#070b16",
+          "#1f2431",
+          "#3a3f4e",
+          "#575d6d",
+          "#798090",
+          "#9da4b5",
+          "#c3cadc",
+          "#e7eeff"
+        ]
+      },
+      "night-pencil": {
+        "role": "neutral",
+        "displayName": "Night Pencil",
+        "canonical": "#a3abbd",
+        "oklch": "oklch(74.1% 0.027 266.5)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#060b17",
+          "#1e2432",
+          "#39404f",
+          "#565e6e",
+          "#798091",
+          "#9da5b6",
+          "#c2cbdd",
+          "#e6efff"
+        ]
+      },
+      "night-ink-dot": {
+        "role": "neutral",
+        "displayName": "Night Ink Dot",
+        "canonical": "#a9b9e6",
+        "oklch": "oklch(78.9% 0.067 269.6)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#030627",
+          "#172144",
+          "#323e63",
+          "#4e5c84",
+          "#707fa9",
+          "#94a3cf",
+          "#b9c9f7",
+          "#dcedff"
+        ]
+      },
+      "night-seal-vermillion": {
+        "role": "secondary",
+        "displayName": "Night Seal Vermillion",
+        "canonical": "#e0533d",
+        "oklch": "oklch(62.8% 0.180 31.4)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#310000",
+          "#5a0000",
+          "#850000",
+          "#ac1d06",
+          "#d64a34",
+          "#ff725a",
+          "#ffa089",
+          "#ffcbb5"
+        ]
+      },
+      "night-money-in": {
+        "role": "tertiary",
+        "displayName": "Night Money In",
+        "canonical": "#5cc193",
+        "oklch": "oklch(73.8% 0.117 161.8)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#001500",
+          "#003311",
+          "#00512b",
+          "#007148",
+          "#2a956a",
+          "#56bb8e",
+          "#82e2b4",
+          "#b0ffda"
+        ]
+      },
+      "night-money-out": {
+        "role": "tertiary",
+        "displayName": "Night Money Out",
+        "canonical": "#ee806e",
+        "oklch": "oklch(71.8% 0.139 30.5)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#2c0000",
+          "#520000",
+          "#781106",
+          "#9d3729",
+          "#c55b4b",
+          "#ef816e",
+          "#ffaa97",
+          "#ffd2c1"
+        ]
+      },
+      "night-caution-amber": {
+        "role": "tertiary",
+        "displayName": "Night Caution Amber",
+        "canonical": "#e0a84a",
+        "oklch": "oklch(76.7% 0.128 77.6)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#210000",
+          "#421500",
+          "#633200",
+          "#845100",
+          "#aa7400",
+          "#d19939",
+          "#f6c06a",
+          "#ffe69b"
+        ]
+      },
+      "night-series-1": {
+        "role": "tertiary",
+        "displayName": "Night Series 1",
+        "canonical": "#6a86d4",
+        "oklch": "oklch(63.3% 0.122 267.9)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#020035",
+          "#0d1a5b",
+          "#24397f",
+          "#4058a2",
+          "#617cc9",
+          "#84a1f1",
+          "#aac8ff",
+          "#d0edff"
+        ]
+      },
+      "night-series-2": {
+        "role": "tertiary",
+        "displayName": "Night Series 2",
+        "canonical": "#c4852a",
+        "oklch": "oklch(66.6% 0.128 71.4)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#230000",
+          "#451100",
+          "#672e00",
+          "#894e00",
+          "#af7105",
+          "#d6963e",
+          "#fcbd6e",
+          "#ffe39e"
+        ]
+      },
+      "night-series-3": {
+        "role": "tertiary",
+        "displayName": "Night Series 3",
+        "canonical": "#109e9b",
+        "oklch": "oklch(63.3% 0.106 192.4)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#001415",
+          "#003131",
+          "#00504e",
+          "#006f6d",
+          "#009491",
+          "#3fb9b6",
+          "#6de0dd",
+          "#a0ffff"
+        ]
+      },
+      "night-series-4": {
+        "role": "tertiary",
+        "displayName": "Night Series 4",
+        "canonical": "#a266cf",
+        "oklch": "oklch(61.9% 0.162 308.8)",
+        "theme": "dark",
+        "tonalRamp": [
+          "#1b0032",
+          "#380057",
+          "#58187f",
+          "#783ca2",
+          "#9c60c9",
+          "#c285f1",
+          "#e6afff",
+          "#ffd7ff"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The lead figure only, net worth in the standing strip."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The page title, which on the dashboard is the date."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Secondary headline figures (free to spend, spent this month, panel totals)."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Budget group headers, trip names, totals rows."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Rows, descriptions, controls."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "Row details, footnotes, dates, deltas."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Panel titles and figure labels; tracked uppercase."
+      },
+      "column-head": {
+        "displayName": "Column head",
+        "purpose": "Table headers; tracked uppercase, muted."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating",
+        "value": "0 2px 6px rgba(27, 32, 48, .06), 0 14px 34px rgba(27, 32, 48, .12)",
+        "valueDark": "0 2px 6px rgba(0, 0, 0, .3), 0 14px 34px rgba(0, 0, 0, .45)",
+        "purpose": "Hover tooltips and chart tips only; anything that floats above the page."
+      },
+      {
+        "name": "selected-segment",
+        "value": "0 1px 2px rgba(27, 32, 48, .12)",
+        "purpose": "The active option in a range/segmented control."
+      },
+      {
+        "name": "today-edge",
+        "value": "inset 0 2px 0 var(--blue)",
+        "purpose": "Today's column in the month spread."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ink",
+        "value": "600ms cubic-bezier(.16, 1, .3, 1), 18ms stagger by date",
+        "purpose": "Month spread dots scale and fade in once, in date order. The one authored moment."
+      },
+      {
+        "name": "stamp",
+        "value": "500ms cubic-bezier(.16, 1, .3, 1), 18ms stagger + 120ms",
+        "purpose": "Bill and payday stamps press in from 1.5x just after the dots."
+      },
+      {
+        "name": "state",
+        "value": "150ms",
+        "purpose": "Background, border and colour changes on controls."
+      },
+      {
+        "name": "meter",
+        "value": "450ms cubic-bezier(.2, .7, .2, 1)",
+        "purpose": "Budget and goal bars changing width."
+      },
+      {
+        "name": "tooltip",
+        "value": "120ms ease-out",
+        "purpose": "Hover cards rise 2px into place."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: reduce",
+        "purpose": "All animation and transition durations collapse to near zero."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "rail-collapse",
+        "value": "1099px",
+        "purpose": "At and below: 64px icon rail, side sheets stack, board goes to two columns."
+      },
+      {
+        "name": "side-column",
+        "value": "1440px",
+        "purpose": "At and above: dashboard gains a 340px side column; the board beside it uses two columns."
+      },
+      {
+        "name": "single-column",
+        "value": "700px",
+        "purpose": "At and below: board is one column (narrow windows only; no phone layout)."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one main action on a page or sheet; indigo cover cloth.",
+      "html": "<button class=\"ds-btn-primary\">Fill in suggestions</button>",
+      "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"M PLUS 1p\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-btn-primary{font:inherit;font-weight:700;padding:.5rem .95rem;border-radius:6px;border:1px solid var(--rail);background:var(--rail);color:#fff;cursor:pointer;transition:background-color .15s,border-color .15s}.ds-btn-primary:hover{background:var(--rail-2);border-color:var(--rail-2)}.ds-btn-primary:focus-visible{outline:2px solid var(--blue);outline-offset:2px}.ds-btn-primary:active{transform:translateY(1px)}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Every other action: a sheet-coloured button with a strong hairline.",
+      "html": "<button class=\"ds-btn\">Today</button>",
+      "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"M PLUS 1p\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-btn{font:inherit;font-weight:500;padding:.5rem .95rem;border-radius:6px;border:1px solid var(--line-strong);background:var(--card);color:var(--ink);cursor:pointer;transition:border-color .15s}.ds-btn:hover{border-color:var(--ink)}.ds-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}.ds-btn:active{transform:translateY(1px)}"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Standard field; strong hairline, pencil on hover, indigo focus ring.",
+      "html": "<input class=\"ds-input\" value=\"4900\" aria-label=\"Budget\">",
+      "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"M PLUS 1p\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-input{font:inherit;padding:.5rem .75rem;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);color:var(--ink);text-align:right;width:7rem}.ds-input:hover{border-color:var(--hub)}.ds-input:focus-visible{outline:2px solid var(--blue);outline-offset:2px}"
+    },
+    {
+      "name": "Cover Rail Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "The indigo cover with the seal, wordmark and navigation.",
+      "html": "<nav class=\"ds-rail\"><div class=\"ds-logo\"><svg width=\"30\" height=\"30\" viewBox=\"0 0 32 32\" aria-hidden=\"true\"><circle cx=\"16\" cy=\"16\" r=\"15\" fill=\"var(--seal)\"/><circle cx=\"16\" cy=\"16\" r=\"12.6\" fill=\"none\" stroke=\"var(--seal-ink)\" stroke-width=\"1\" opacity=\".55\"/><path d=\"M9.6 21.6V10.8l6.4 7 6.4-7v10.8\" fill=\"none\" stroke=\"var(--seal-ink)\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><b>Mizo Money</b></div><a class=\"ds-nav on\" href=\"#\">Dashboard</a><a class=\"ds-nav\" href=\"#\">Transactions</a><a class=\"ds-nav\" href=\"#\">Budget</a></nav>",
+      "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"M PLUS 1p\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-rail{background:var(--rail);color:var(--rail-ink);padding:1.4rem .85rem;width:220px}.ds-logo{display:flex;align-items:center;gap:.7rem;padding:0 .45rem 1.6rem}.ds-logo b{color:#fff;font-weight:800;font-size:1.12rem}.ds-nav{display:block;color:var(--rail-ink);text-decoration:none;border-radius:6px;padding:.5rem .65rem;font-size:.95rem;margin-bottom:1px;transition:background-color .15s,color .15s}.ds-nav:hover{background:rgba(255,255,255,.06);color:#fff}.ds-nav.on{background:var(--rail-2);color:#fff;font-weight:700}.ds-nav:focus-visible{outline:2px solid #fff;outline-offset:2px}"
+    },
+    {
+      "name": "Tag",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Small round tag; indigo for information, green/red mixes only for meaning.",
+      "html": "<span class=\"ds-tag\">Fixed</span> <span class=\"ds-tag in\">Income</span>",
+      "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"M PLUS 1p\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-tag{font-size:.7rem;padding:.1rem .45rem;border-radius:99px;background:var(--soft);color:var(--blue)}.ds-tag.in{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}"
+    },
+    {
+      "name": "Panel Sheet",
+      "kind": "card",
+      "refersTo": "sheet",
+      "description": "A flat white sheet with a hairline; the tracked label is its title.",
+      "html": "<section class=\"ds-sheet\"><div class=\"ds-head\"><h2>Coming up</h2><a href=\"#\">Bills</a></div><div class=\"ds-row\"><span>City Power and Light</span><span class=\"ds-m\">today</span><b>−$88.58</b></div><div class=\"ds-row\"><span>Fiberline</span><span class=\"ds-m\">Oct 18</span><b>−$65.00</b></div></section>",
+      "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"M PLUS 1p\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-sheet{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1.15rem 1.3rem;max-width:360px}.ds-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.45rem}.ds-head h2{margin:0;font-size:.74rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.ds-head a{font-size:.8rem;color:var(--blue)}.ds-head a:focus-visible{outline:2px solid var(--blue);outline-offset:2px}.ds-row{display:grid;grid-template-columns:1fr auto auto;gap:.75rem;align-items:baseline;padding:.42rem 0;border-top:1px solid var(--line)}.ds-row:first-of-type{border-top:0}.ds-m{font-size:.8rem;color:var(--muted)}.ds-row b{font-weight:600}"
+    },
+    {
+      "name": "Standing Strip",
+      "kind": "custom",
+      "refersTo": "sheet",
+      "description": "Where you stand: one ruled sheet, net worth largest.",
+      "html": "<section class=\"ds-stand\"><div class=\"lead\"><span>Net worth</span><b>$47,620</b><small><i class=\"g\"><svg width=\"10\" height=\"10\" viewBox=\"0 0 10 10\" aria-hidden=\"true\"><path d=\"M5 1.5L9 8.5H1z\" fill=\"currentColor\"/></svg> 5.1%</i> vs. 30 days ago</small></div><div><span>Free to spend</span><b>$6,751</b><small>left this month after bills</small></div><div><span>Spent this month</span><b>$2,390</b><small>of $3,255 budgeted</small></div></section>",
+      "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"M PLUS 1p\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-stand{display:grid;grid-template-columns:1.5fr 1fr 1fr;background:var(--card);border:1px solid var(--line);border-radius:6px}.ds-stand>div{display:flex;flex-direction:column;gap:.3rem;padding:1.15rem 1.4rem 1.2rem;border-left:1px solid var(--line)}.ds-stand>div:first-child{border-left:0}.ds-stand span{font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.ds-stand b{font-size:1.95rem;font-weight:800;letter-spacing:-.02em;line-height:1.1}.ds-stand .lead b{font-size:3.1rem;letter-spacing:-.03em}.ds-stand small{font-size:.8rem;color:var(--muted)}.ds-stand .g{font-style:normal;color:var(--green);font-weight:700}"
+    },
+    {
+      "name": "Month Spread",
+      "kind": "custom",
+      "refersTo": "stamp-paid",
+      "description": "The signature: one ink dot per day on a fixed ramp, bills stamped on their dates, future days dashed, today tinted.",
+      "html": "<div class=\"ds-spread\"><span class=\"d\"><em>1</em><span class=\"ink\"><i style=\"width:30px;height:30px\"></i></span><span class=\"st\"><b class=\"stamp done\">L</b></span></span><span class=\"d\"><em>2</em><span class=\"ink\"><i style=\"width:8px;height:8px\"></i></span><span class=\"st\"><b class=\"stamp done\">T</b></span></span><span class=\"d\"><em>3</em><span class=\"ink\"><i style=\"width:8px;height:8px\"></i></span><span class=\"st\"><b class=\"stamp done\">E</b></span></span><span class=\"d\"><em>4</em><span class=\"ink\"></span><span class=\"st\"></span></span><span class=\"d\"><em>5</em><span class=\"ink\"><i style=\"width:5px;height:5px\"></i></span><span class=\"st\"></span></span><span class=\"d\"><em>6</em><span class=\"ink\"><i style=\"width:11px;height:11px\"></i></span><span class=\"st\"></span></span><span class=\"d\"><em>7</em><span class=\"ink\"><i style=\"width:15px;height:15px\"></i></span><span class=\"st\"><b class=\"stamp done\">N</b></span></span><span class=\"d\"><em>8</em><span class=\"ink\"><i style=\"width:8px;height:8px\"></i></span><span class=\"st\"></span></span><span class=\"d\"><em>9</em><span class=\"ink\"></span><span class=\"st\"><b class=\"stamp done in\">A</b></span></span><span class=\"d wk\"><em>10</em><span class=\"ink\"></span><span class=\"st\"></span></span><span class=\"d today\"><em>11</em><span class=\"ink\"></span><span class=\"st\"><b class=\"stamp\">C</b></span></span><span class=\"d\"><em>12</em><span class=\"ink\"><i class=\"fut\"></i></span><span class=\"st\"></span></span><span class=\"d\"><em>13</em><span class=\"ink\"><i class=\"fut\"></i></span><span class=\"st\"><b class=\"stamp\">S</b></span></span></div>",
+      "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"M PLUS 1p\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-spread{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));border-top:1px solid var(--ink);border-bottom:1px solid var(--line);background:var(--card);max-width:560px}.ds-spread .d{display:grid;grid-template-rows:auto 38px 18px;justify-items:center;align-items:center;gap:.3rem;padding:.5rem 0 .55rem;border-left:1px solid var(--line)}.ds-spread .d:first-child{border-left:0}.ds-spread .wk{background:var(--surface-2)}.ds-spread .today{background:var(--soft);box-shadow:inset 0 2px 0 var(--blue)}.ds-spread em{font-style:normal;font-size:.72rem;color:var(--muted)}.ds-spread .today em{color:var(--blue);font-weight:800}.ds-spread .ink{display:grid;place-items:center;height:38px}.ds-spread .ink i{display:block;border-radius:50%;background:var(--ink-dot);animation:ds-ink .6s cubic-bezier(.16,1,.3,1) both}.ds-spread .ink i.fut{width:8px;height:8px;background:none;border:1.5px dashed var(--line-strong);animation:none}.ds-spread .stamp{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:4px;border:1.5px dashed var(--hub);color:var(--hub);font-size:.62rem;font-weight:800;background:var(--card)}.ds-spread .stamp.done{border-style:solid;border-color:var(--blue);color:var(--blue);background:var(--soft)}.ds-spread .stamp.in{border-color:var(--green);color:var(--green)}.ds-spread .stamp.in.done{background:color-mix(in srgb,var(--green) 14%,var(--card))}.ds-spread .d:hover{background:color-mix(in srgb,var(--soft) 70%,transparent)}@keyframes ds-ink{from{transform:scale(.35);opacity:0}}@media (prefers-reduced-motion:reduce){.ds-spread .ink i{animation:none}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Planner Page",
+    "overview": "Money is kept the way a careful person keeps a Japanese stationery planner: a cloth-bound indigo cover down the left, calm ruled pages with a faint dot grid, ink-dark figures, and the month always in view. The page is the instrument. Hierarchy comes from size, weight and hairline rules, not from colour, shadow or decoration, so the few things that carry colour (money in, money out, something that needs you) are read at once.\n\nDensity is that of a well-used planner, not a spreadsheet: content sits on white sheets with ruled rows and fixed columns, figures align on equal-width digits, and every page opens under a dated header rule. The one authored moment is the month spread inking in on the dashboard; everything else simply appears. Light and dark are equals: dark is the same planner at night, with its own validated steps (the indigo cover stays), never an inversion.\n\nThe world refuses the category default of a white card grid with a blue accent, glossy area charts and soft shadows. It also refuses the bank-app look, playfulness, spreadsheet density and hiding detail.",
+    "keyCharacteristics": [
+      "An indigo cover rail holds the seal and the navigation; the page beside it is quiet paper with a 22px dot grid.",
+      "One gothic family (M PLUS 1p) at four weights carries every level; figures are tabular everywhere.",
+      "Hairline rules instead of shadows; 6px corners on every sheet and control.",
+      "Tracked uppercase labels name panels and figures; they are the titles, never a line above one.",
+      "The month spread: one ink dot per day on a fixed size ramp, bills and paydays stamped on their dates.",
+      "Estimated, partial and future data are always marked (dashed, faded, \"est\")."
+    ],
+    "rules": [
+      {
+        "name": "The Meaning-Only Rule",
+        "body": "Green and red mean money in/out or good/bad, nothing else. Category icons are inked in indigo; only income and saving keep green.",
+        "section": "colors"
+      },
+      {
+        "name": "The Seal Rule",
+        "body": "Vermillion is the logo. If it appears anywhere but the seal, it is a mistake.",
+        "section": "colors"
+      },
+      {
+        "name": "The Four-Hue Rule",
+        "body": "Charts use series-1 to series-4 in order; anything beyond four is grey. The tint is a secondary cue; a label always carries identity.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Never add a second typeface. Hierarchy is size and weight.",
+        "section": "typography"
+      },
+      {
+        "name": "The Equal Figures Rule",
+        "body": "All numbers are tabular (`font-variant-numeric: tabular-nums` on body), so columns of money align without effort.",
+        "section": "typography"
+      },
+      {
+        "name": "The Label Is the Title Rule",
+        "body": "A tracked uppercase label names the panel or figure it sits on. It is never a decorative line above a separate heading.",
+        "section": "typography"
+      },
+      {
+        "name": "The Fixed Columns Rule",
+        "body": "Lists and tables are ruled rows with fixed columns; names truncate to one line with the full name on hover rather than reflowing the grid.",
+        "section": "layout"
+      },
+      {
+        "name": "The Hairline Rule",
+        "body": "Separate with a 1px rule, never a shadow. A sheet that needs a shadow to stand out is on the wrong background.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** keep every sheet flat on the page with a 1px rule and 6px corners.",
+      "**Do** use M PLUS 1p for everything, with tabular figures.",
+      "**Do** name panels with the tracked uppercase label (0.74rem, 800, 0.12em) as their title.",
+      "**Do** mark estimated, partial or future data: dashed lines and outlines, faded partial months, a small \"est\".",
+      "**Do** give every dollar figure an amount class (`.amt`, `.tamt`, `.big`, or a covered table cell) so Hide amounts blurs it.",
+      "**Do** draw icons as 1.8px-stroke line SVGs in currentColor, matching the navigation set.",
+      "**Do** design light and dark together; dark keeps the indigo cover rail and uses its own validated steps.",
+      "**Do** put the detail behind a figure in a hover card (dotted underline) rather than hiding it."
+    ],
+    "donts": [
+      "**Don't** use green or red for anything but money in/out or good/bad.",
+      "**Don't** use vermillion anywhere but the seal.",
+      "**Don't** add drop shadows to sheets, or glossy gradients and area fills to charts.",
+      "**Don't** add a second typeface or a system display face.",
+      "**Don't** put a small line of label text above a heading as a kicker or eyebrow.",
+      "**Don't** use text glyphs (×, ‹, ›, ●, ↻) as icons; draw them.",
+      "**Don't** use more than four chart hues; the rest are grey.",
+      "**Don't** design a phone layout; narrow windows collapse the rail and stack columns."
+    ]
+  }
+}

@@ -3,7 +3,7 @@ import { api } from './api.js';
 import Progress from './Progress.jsx';
 import { usd } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
-import { Panel, PageHeader, EmptyState, PageSkeleton, Hover, TipList } from './ui.jsx';
+import { Panel, PageHeader, EmptyState, PageSkeleton, Hover, TipList, Check } from './ui.jsx';
 
 const pct = (g) => (g.target ? Math.round((g.saved / g.target) * 100) : 0);
 const monthYear = (d) => new Date(`${d}T00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
@@ -80,7 +80,7 @@ function GoalCard({ g, accounts, reload, compact }) {
   );
   return (
     <div className={`card goal${done ? ' done' : ''}`}>
-      <div className="row base"><b>{g.name}</b>{done ? <span className="donepill">Reached ✓</span> : <span className="small muted">{pct(g)}%</span>}</div>
+      <div className="row base"><b>{g.name}</b>{done ? <span className="donepill">Reached <Check size={11} /></span> : <span className="small muted">{pct(g)}%</span>}</div>
       <div className="big amt">{usd(g.saved)}</div>
       <div className="small muted">of <span className="amt">{usd(g.target)}</span>{g.account ? ` · follows ${g.account}` : ''}</div>
       <Progress value={g.saved} max={g.target} />

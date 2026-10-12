@@ -3,9 +3,7 @@
 // always comes live from the server and is never stored by the browser); the page below is built in, so there's
 // nothing to download.
 const ICON = '<svg width="48" height="48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">'
-  + '<rect width="512" height="512" rx="112" fill="#2f6bed"/>'
-  + '<path d="M104 344 L200 248 L272 304 L408 160" fill="none" stroke="#fff" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>'
-  + '<path d="M328 160 H408 V240" fill="none" stroke="#fff" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  + '<rect width="512" height="512" rx="112" fill="#1e2a47"/><circle cx="256" cy="256" r="170" fill="#d9482e"/><circle cx="256" cy="256" r="143" fill="none" stroke="#fff6f2" stroke-width="11" opacity=".55"/><path d="M183.5 319.5V197.1l72.5 79.3 72.5-79.3v122.4" fill="none" stroke="#fff6f2" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 const OFFLINE = `<!doctype html>
 <html lang="en">
@@ -14,8 +12,8 @@ const OFFLINE = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mizo Money isn't running</title>
   <style>
-    :root { --bg: #f3f7fc; --card: #fff; --ink: #0f1b33; --muted: #6b7a94; --blue: #2f6bed; --line: #e2ebf6; color-scheme: light; }
-    @media (prefers-color-scheme: dark) { :root { --bg: #0b1220; --card: #121b2e; --ink: #e6ecf7; --muted: #8e9bb4; --line: #23304a; color-scheme: dark; } }
+    :root { --bg: #f3f3ef; --card: #fff; --ink: #1b2030; --muted: #555c6e; --blue: #1e2a47; --line: #e1e3df; color-scheme: light; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #11141c; --card: #181c27; --ink: #e7e9ef; --muted: #a0a7b8; --blue: #3c58a8; --line: #282e3d; color-scheme: dark; } }
     body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--ink);
       font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
     .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 2rem; max-width: 30rem; margin: 1rem; }

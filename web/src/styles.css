@@ -1,30 +1,41 @@
-/* Theme tokens. Dark mode follows the system unless the top-bar toggle sets data-theme on <html>.
-   Chart series colours (format.js) are the same in both themes; they pass the palette checks on either surface. */
+/* Theme tokens: the Planner Page world (PRODUCT.md, .impeccable/surfaces). An indigo cloth-bound cover (the rail), a
+   quiet ruled page, ink-dark text; green/red only mean in/out or good/bad; vermillion is the logo seal and nothing else.
+   Dark mode follows the system unless the top-bar toggle sets data-theme on <html>; it is the same planner at night,
+   its own validated steps, not an inversion. --blue is the accent (kept as a name so older rules follow the theme). */
 :root {
-  --bg: #f3f7fc; --card: #fff; --line: #e2ebf6; --ink: #0f1b33; --muted: #6b7a94;
-  --blue: #2f6bed; --soft: #e8f0fe; --green: #1fa971; --amber: #d9951c; --red: #e5484d; --purple: #7c5cf0;
-  --surface-2: #f8fbff; --line-strong: #c9d6ea; --disabled: #9aa7bd; --hub: #475569;
-  --alert-bg: #fdecec; --note-ink: #1d4fc4; --warn-bg: #fff6e8; --warn-ink: #8a5a12; --warn-dot: #d9771c;
-  --shadow: 0 6px 20px rgba(15, 27, 51, .12);
+  --bg: #f3f3ef; --card: #ffffff; --line: #e1e3df; --ink: #1b2030; --muted: #555c6e;
+  --blue: #2d4a93; --accent: var(--blue); --soft: #e8ecf5; --green: #24724f; --amber: #9a6410; --red: #b4382a; --purple: #7a4e9c;
+  --surface-2: #f7f7f4; --line-strong: #c8ccd2; --disabled: #8f96a5; --hub: #475066;
+  --alert-bg: #f9ebe8; --note-ink: #2d4a93; --warn-bg: #f7efde; --warn-ink: #74500f; --warn-dot: #b5720f;
+  --shadow: 0 2px 6px rgba(27, 32, 48, .06), 0 14px 34px rgba(27, 32, 48, .12);
+  --rail: #1e2a47; --rail-2: #2b3b63; --rail-ink: #c5ccdd; --rail-line: rgba(255, 255, 255, .09); --btn: #1e2a47; --btn-hover: #2b3b63;
+  --seal: #d9482e; --seal-ink: #fff6f2; --dot: #d6d9d3; --ink-dot: #26355c;
+  --s1: #3554a8; --s2: #b5700e; --s3: #00909a; --s4: #9a3fa8; --neutral: #8a90a0; --neutral-light: #c5c9d2; --in: #24724f;
   color-scheme: light;
-  font-family: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--ink);
+  font-family: 'M PLUS 1p', 'Segoe UI', system-ui, sans-serif; color: var(--ink);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0b1220; --card: #121b2e; --line: #23304a; --ink: #e6ecf7; --muted: #8e9bb4;
-    --blue: #5b8cff; --soft: #1a2a4d; --green: #2fbf86; --amber: #e7b04a; --red: #f06a6e;
-    --surface-2: #16213a; --line-strong: #34446a; --disabled: #56647f; --hub: #94a3b8;
-    --alert-bg: #3a1a20; --note-ink: #a9c1ff; --warn-bg: #3a2a12; --warn-ink: #f3c27a; --warn-dot: #e8893a;
-    --shadow: 0 6px 20px rgba(0, 0, 0, .45);
+    --bg: #11141c; --card: #181c27; --line: #282e3d; --ink: #e7e9ef; --muted: #a0a7b8;
+    --blue: #9db2ea; --soft: #222a40; --green: #5cc193; --amber: #e0a84a; --red: #ee806e; --purple: #b48bd6;
+    --surface-2: #1d2230; --line-strong: #3a4255; --disabled: #5f6779; --hub: #a3abbd;
+    --alert-bg: #3a1e1c; --note-ink: #afc0ee; --warn-bg: #33281a; --warn-ink: #ebc27d; --warn-dot: #e0a84a;
+    --shadow: 0 2px 6px rgba(0, 0, 0, .3), 0 14px 34px rgba(0, 0, 0, .45);
+    --rail: #1a2440; --rail-2: #283a66; --rail-ink: #aab4cc; --rail-line: rgba(255, 255, 255, .07); --btn: #3c58a8; --btn-hover: #4a67b8;
+    --seal: #e0533d; --seal-ink: #fff3ee; --dot: #20252f; --ink-dot: #a9b9e6;
+    --s1: #6a86d4; --s2: #c4852a; --s3: #109e9b; --s4: #a266cf; --neutral: #7d8496; --neutral-light: #4a5163; --in: #5cc193;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0b1220; --card: #121b2e; --line: #23304a; --ink: #e6ecf7; --muted: #8e9bb4;
-  --blue: #5b8cff; --soft: #1a2a4d; --green: #2fbf86; --amber: #e7b04a; --red: #f06a6e;
-  --surface-2: #16213a; --line-strong: #34446a; --disabled: #56647f; --hub: #94a3b8;
-  --alert-bg: #3a1a20; --note-ink: #a9c1ff; --warn-bg: #3a2a12; --warn-ink: #f3c27a; --warn-dot: #e8893a;
-  --shadow: 0 6px 20px rgba(0, 0, 0, .45);
+  --bg: #11141c; --card: #181c27; --line: #282e3d; --ink: #e7e9ef; --muted: #a0a7b8;
+  --blue: #9db2ea; --soft: #222a40; --green: #5cc193; --amber: #e0a84a; --red: #ee806e; --purple: #b48bd6;
+  --surface-2: #1d2230; --line-strong: #3a4255; --disabled: #5f6779; --hub: #a3abbd;
+  --alert-bg: #3a1e1c; --note-ink: #afc0ee; --warn-bg: #33281a; --warn-ink: #ebc27d; --warn-dot: #e0a84a;
+  --shadow: 0 2px 6px rgba(0, 0, 0, .3), 0 14px 34px rgba(0, 0, 0, .45);
+  --rail: #1a2440; --rail-2: #283a66; --rail-ink: #aab4cc; --rail-line: rgba(255, 255, 255, .07); --btn: #3c58a8; --btn-hover: #4a67b8;
+  --seal: #e0533d; --seal-ink: #fff3ee; --dot: #20252f; --ink-dot: #a9b9e6;
+  --s1: #6a86d4; --s2: #c4852a; --s3: #109e9b; --s4: #a266cf; --neutral: #7d8496; --neutral-light: #4a5163; --in: #5cc193;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -648,8 +659,8 @@ img, svg { color-scheme: inherit; }
 .idea > .amt { font-weight: 600; white-space: nowrap; }
 
 /* "Is this your paycheck?" */
-.paycheck { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; border-left: 3px solid var(--green); }
-.paycheck.compact { display: block; border: 1px solid var(--line); border-left: 3px solid var(--green); border-radius: 10px; padding: .6rem .75rem; margin-bottom: .75rem; }
+.paycheck { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; }
+.paycheck.compact { display: block; border: 1px solid var(--line); border-radius: 10px; padding: .6rem .75rem; margin-bottom: .75rem; }
 .paycheck.compact .btnrow { margin-top: .5rem; flex-wrap: wrap; }
 .paycheck .btnrow { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
 
@@ -687,7 +698,7 @@ p.btrips { display: block; text-align: center; margin-top: .25rem; }
 .pageerror pre { white-space: pre-wrap; background: var(--surface-2); padding: .6rem .75rem; border-radius: 8px; }
 
 /* Getting started checklist */
-.setup { border-left: 3px solid var(--blue); }
+.setup { }
 .setupbar { height: 6px; border-radius: 3px; background: var(--soft); margin: .6rem 0 .4rem; overflow: hidden; }
 .setupbar i { display: block; height: 100%; background: var(--blue); }
 .setupsteps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .3rem 1.25rem; }
@@ -767,3 +778,182 @@ p code { background: var(--surface-2); border: 1px solid var(--line); border-rad
 .range { display: inline-grid; gap: .2rem; justify-items: end; }
 .rangebar { position: relative; display: block; width: 90px; height: 4px; border-radius: 4px; background: var(--line-strong); }
 .rangebar i { position: absolute; top: -3px; width: 2px; height: 10px; margin-left: -1px; border-radius: 2px; background: var(--ink); }
+
+/* =====================================================================================================================
+   Planner Page world. Everything above still works; this layer sets the type, the cover rail, ruled pages and the
+   month spread. One family (M PLUS 1p, equal-width figures) carries every level by size and weight.
+   ===================================================================================================================== */
+body { font-family: 'M PLUS 1p', 'Segoe UI', system-ui, sans-serif; line-height: 1.45; -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums; caret-color: var(--blue); accent-color: var(--blue); }
+::selection { background: color-mix(in srgb, var(--blue) 24%, transparent); color: var(--ink); }
+* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+a { color: var(--blue); text-underline-offset: 3px; }
+
+/* The cover: an indigo rail with the seal and the navigation. */
+.side { background: var(--rail); border-right: 0; padding: 1.4rem .85rem; color: var(--rail-ink); scrollbar-color: var(--rail-2) transparent; }
+.logo { display: flex; align-items: center; gap: .7rem; padding: 0 .45rem 1.6rem; }
+.wordmark { color: #fff; font-weight: 800; font-size: 1.12rem; letter-spacing: .01em; }
+.side .nav { color: var(--rail-ink); border-radius: 6px; padding: .5rem .65rem; font-size: .95rem; margin-bottom: 1px; }
+.side .nav:hover { background: rgba(255, 255, 255, .06); color: #fff; }
+.side .nav.on { background: var(--rail-2); color: #fff; font-weight: 700; }
+.side .navicon, .side .nav.on .navicon { color: currentColor; opacity: .85; }
+.side .nav:focus-visible { outline-color: #fff; }
+
+/* The page: quiet paper with a faint dot grid; content sits on white sheets with hairline rules, no shadows. */
+.main { background: radial-gradient(var(--dot) 1px, transparent 1.3px) 0 0 / 22px 22px, var(--bg); padding: 1.5rem 2.5rem 3.5rem; }
+.card { border-radius: 6px; border: 1px solid var(--line); box-shadow: none; padding: 1.15rem 1.3rem; }
+.panel .head { margin-bottom: .75rem; }
+.panel h2, .card h3, .split h3, .subhead { font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ink); }
+.card h3 { color: var(--muted); }
+.asof { background: none; border: 1px solid var(--line); text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+/* Page header: the dated rule at the top of a planner page. */
+.top { border-bottom: 1.5px solid var(--ink); padding-bottom: .7rem; margin-bottom: 1.25rem; align-items: flex-end; }
+h1 { font-size: 2.15rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.sub { font-size: .95rem; margin-top: .3rem; }
+.big, .stsbig { font-weight: 800; letter-spacing: -.02em; }
+
+/* Controls: standard ones, in the world's ink. */
+.btn { border-radius: 6px; border-color: var(--line-strong); font-weight: 500; }
+.btn:hover:not(:disabled) { border-color: var(--ink); }
+.btn.primary { background: var(--btn); border-color: var(--btn); color: #fff; font-weight: 700; }
+.btn.primary:hover:not(:disabled) { background: var(--btn-hover); border-color: var(--btn-hover); }
+input, select { border-radius: 6px; border-color: var(--line-strong); }
+input:hover, select:hover { border-color: var(--hub); }
+.iconbtn { border-radius: 6px; }
+.ranges { background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; padding: 2px; }
+.ranges button { border-radius: 5px; }
+.ranges button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(27, 32, 48, .12); }
+.chipbtn, .pill, .badge, .kind, .ftag, .donepill, .splitchip, .tripchip, .rulecat { border-radius: 99px; }
+:focus-visible, .btn:focus-visible, .iconbtn:focus-visible, .ranges button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible,
+.linkbtn:focus-visible, .calday:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* Tables: ruled rows and fixed columns, nothing else. */
+.t th { font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.t th .small { text-transform: none; letter-spacing: 0; }
+.t td { border-bottom-color: var(--line); }
+.txtable .dayrow td, .grouprow td { background: var(--surface-2); }
+
+/* Notices: a small ink dot instead of a text glyph, and no thick colored edges. */
+.chip-link::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--warn-dot); vertical-align: middle; margin: -2px .45rem 0 0; }
+.chip-link.info::before { background: var(--blue); }
+.setup, .paycheck { border-left: 1px solid var(--line); }
+.paycheck.compact { border-left: 1px solid var(--line); }
+.alert, .note, .gapnote { border-radius: 6px; }
+.insight { border-radius: 6px; }
+.insight-ic { background: var(--soft); color: var(--blue); }
+.trend { display: inline-block; vertical-align: 0; margin-right: .1rem; }
+
+/* Where you stand: one ruled strip, net worth largest. */
+.standing { display: grid; grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr)); background: var(--card); border: 1px solid var(--line); border-radius: 6px; }
+.stand { display: flex; flex-direction: column; gap: .3rem; padding: 1.15rem 1.4rem 1.2rem; border-left: 1px solid var(--line); min-width: 0; }
+.stand:first-child { border-left: 0; }
+.slabel { font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.sfig.big { margin: 0; font-size: 1.95rem; line-height: 1.1; }
+.stand.lead .sfig.big { font-size: 3.1rem; letter-spacing: -.03em; }
+.delta .good, .delta .bad { font-weight: 700; }
+@media (max-width: 1099px) { .stand.lead .sfig.big { font-size: 2.6rem; } }
+
+/* The month spread: the signature. One column per day; ink dots on a fixed scale; stamps for bills and paydays. */
+.spread .head { margin-bottom: .5rem; }
+.spreadnav { display: flex; align-items: center; gap: .4rem; }
+.spreadnav .legend { margin-right: .75rem; align-items: center; }
+.spreadnav .legend span { display: inline-flex; align-items: center; gap: .35rem; }
+.lgdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ink-dot); }
+.sdays { display: grid; grid-template-columns: repeat(var(--n, 31), minmax(0, 1fr)); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
+.sdays > .hov { display: block; text-decoration: none; }
+.sday { display: grid; grid-template-rows: auto 38px 18px; justify-items: center; align-items: center; gap: .3rem; padding: .5rem 0 .55rem;
+  border-left: 1px solid var(--line); height: 100%; }
+.sdays > :first-child .sday { border-left: 0; }
+.sday.weekend { background: var(--surface-2); }
+.snum { font-size: .72rem; color: var(--muted); font-weight: 500; }
+.sday.today { background: var(--soft); box-shadow: inset 0 2px 0 var(--blue); }
+.sday.today .snum { color: var(--blue); font-weight: 800; }
+.sday.future .snum { color: var(--muted); }
+.sink { display: grid; place-items: center; width: 100%; height: 38px; }
+.sink i { display: block; border-radius: 50%; background: var(--ink-dot); animation: ink .6s cubic-bezier(.16, 1, .3, 1) both; animation-delay: calc(var(--i) * 18ms); }
+.sstamps { display: flex; gap: 2px; }
+.stamp { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 4px; border: 1.5px dashed var(--hub); color: var(--hub);
+  font-style: normal; font-size: .62rem; font-weight: 800; line-height: 1; background: var(--card); }
+.stamp.done { border-style: solid; border-color: var(--blue); color: var(--blue); background: var(--soft); }
+.stamp.in { border-color: var(--green); color: var(--green); }
+.stamp.in.done { background: color-mix(in srgb, var(--green) 14%, var(--card)); }
+.legend .stamp { width: 13px; height: 13px; font-size: 0; }
+.sink i.fut { width: 8px; height: 8px; background: none; border: 1.5px dashed var(--line-strong); animation: none; }
+.sday .stamp { animation: stamp .5s cubic-bezier(.16, 1, .3, 1) both; animation-delay: calc(var(--i) * 18ms + 120ms); }
+.sday:hover { background: color-mix(in srgb, var(--soft) 70%, transparent); }
+.sfoot { display: flex; flex-wrap: wrap; gap: .4rem 1.5rem; margin-top: .7rem; }
+.sfoot b { color: var(--ink); }
+.sscale { margin-left: auto; }
+.skelrow { height: 112px; }
+@keyframes ink { from { transform: scale(.35); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes stamp { from { transform: scale(1.5); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* One authored moment (the spread inking in); everything else simply appears. */
+.dash > div, .main > section, .main > .card, .flowchart, .chart { animation: none; }
+.hovtip { border-radius: 6px; }
+@media (max-width: 1099px) {
+  .side .logo { font-size: inherit; justify-content: center; padding: 0 0 1.2rem; }
+  .side .logo::before { content: none; }
+  .wordmark { display: none; }
+}
+/* Dashboard: lead panels (where you stand, the month spread) run full width above the board. */
+.dlead { display: grid; gap: 1rem; margin: .5rem 0 1rem; }
+.dlead .dcell { display: block; }
+.dlead.editing .dcell { outline: 2px dashed var(--line-strong); outline-offset: 4px; border-radius: 6px; }
+
+/* Under the spread: needs you, coming up, budget, as ruled sections of one sheet. */
+.glance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0; }
+.gsec { padding: 1.05rem 1.3rem 1.1rem; border-left: 1px solid var(--line); min-width: 0; }
+.gsec:first-child { border-left: 0; }
+.ghead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .45rem; }
+.ghead h2 { margin: 0; font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.grow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .75rem; align-items: baseline; padding: .42rem 0; border-top: 1px solid var(--line); }
+.grow:first-of-type { border-top: 0; }
+.glink { grid-template-columns: minmax(0, 1fr) auto; color: var(--ink); text-decoration: none; }
+.glink:hover span:first-child { color: var(--blue); }
+.gmore { color: var(--muted); }
+.gname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gwhen { white-space: nowrap; }
+.gquiet { display: flex; gap: .45rem; align-items: center; color: var(--muted); margin: .2rem 0 0; }
+.gquiet svg { color: var(--green); flex: none; }
+.gtotal { margin-bottom: .4rem; }
+.gbud { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: .75rem; row-gap: .3rem; padding: .35rem 0; }
+.gbud .meter { grid-column: 1 / -1; border-radius: 2px; }
+.gbud .meter i { border-radius: 2px; background: var(--blue); }
+.gbud .meter i.over { background: var(--red); }
+@media (max-width: 1099px) { .glance { grid-template-columns: 1fr; } .gsec { border-left: 0; border-top: 1px solid var(--line); } .gsec:first-child { border-top: 0; } }
+
+/* Board panels keep their natural height (no half-empty cards stretched to their neighbours). */
+.dmain { align-items: start; }
+.dcell > :not(.pctl) { flex: none; }
+.upnote.first { border-top: 0; padding-top: 0; margin-top: 0; }
+
+/* Names stay on one line; the full name is on hover. */
+.trow .tmain > b, .bname1 > b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trow .rowicon { min-width: 0; }
+.billtable td:nth-child(1) { white-space: nowrap; max-width: 18rem; }
+.bname1 { display: block; min-width: 0; overflow: hidden; }
+.recur svg { vertical-align: -1px; }
+.donepill svg, .setupcheck svg { vertical-align: -1px; }
+
+/* Board packing (Dashboard.jsx usePacked): small fixed rows; each panel spans what its content needs. Beside the side
+   column the board uses two wider columns, so lists have room for whole names. */
+.dmain { grid-auto-rows: 8px; row-gap: 16px; align-items: start; }
+@media (min-width: 1440px) {
+  .dboard.has-rail .dmain { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dboard.has-rail .dcell.span3, .dboard.has-rail .dcell.span2 { grid-column: span 2; }
+}
+.trow .tmain > .small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bname1 > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.billtable td:nth-child(3) { min-width: 7.5rem; }
+.billtable td:nth-child(2) { min-width: 8rem; }
+
+/* One corner language: 6px sheets and controls (round only for tags, dots and the seal). */
+.watch, .estate-ic, .bstrip, .billform, .explain, .tip, .paycheck.compact, .spliteditor, .aedit, .watchnow, .hovtip, .insight,
+.dboard.editing .dcell, .arow, .gapnote, .note, .alert, .mlogo { border-radius: 6px; }
+.mlogo { border-radius: 50%; }
+/* Investments: the holdings table fits its sheet at 1440 (tighter cells and header tracking for nine columns). */
+.t.holdings th, .t.holdings td { padding-left: .5rem; padding-right: .5rem; }
+.t.holdings th { letter-spacing: .05em; }
+.t.holdings .rangebar { width: 72px; }

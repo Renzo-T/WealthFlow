@@ -1,0 +1,53 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/assigned.html"
+        ],
+        "createdAt": "2026-10-12T04:59:41.716Z",
+        "reason": "Claude: spent decision-round sketch under .impeccable/mocks/decision (gitignored, never shipped); not part of the app"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/model-pick.html"
+        ],
+        "createdAt": "2026-10-12T04:59:41.775Z",
+        "reason": "Claude: spent decision-round sketch under .impeccable/mocks/decision (gitignored, never shipped); not part of the app"
+      },
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/model-pick.html"
+        ],
+        "createdAt": "2026-10-12T04:59:41.837Z",
+        "reason": "Claude: spent decision-round sketch under .impeccable/mocks/decision (gitignored, never shipped); not part of the app"
+      },
+      {
+        "rule": "overused-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/canon.html"
+        ],
+        "createdAt": "2026-10-12T04:59:41.902Z",
+        "reason": "Claude: the category-standard sketch uses Inter deliberately to depict the category default; spent, never shipped"
+      },
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/canon.html"
+        ],
+        "createdAt": "2026-10-12T04:59:41.958Z",
+        "reason": "Claude: spent decision-round sketch under .impeccable/mocks/decision (gitignored, never shipped); not part of the app"
+      }
+    ]
+  }
+}

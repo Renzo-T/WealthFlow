@@ -16,7 +16,7 @@ import NavIcon from './NavIcon.jsx';
 import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
 import { FirstRun } from './PlaidSetup.jsx';
 import { api } from './api.js';
-import { PageHeader, DashboardSkeleton, PageBoundary } from './ui.jsx';
+import { PageHeader, DashboardSkeleton, PageBoundary, Seal } from './ui.jsx';
 
 const HIDE_KEY = 'wealthflow.hideAmounts', THEME_KEY = 'wealthflow.theme';
 const systemDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
@@ -102,8 +102,7 @@ export default function App() {
   return (
     <div className="shell">
       <aside className="side">
-        <div className="logo">Mizo Money</div>
-        <div className="tag">Your money. In focus.</div>
+        <div className="logo"><Seal size={30} /><span className="wordmark">Mizo Money</span></div>
         {NAV.map((n) => (
           <button key={n.label} className={`nav${n.id === page ? ' on' : ''}`}
             title={n.label} onClick={() => { window.location.hash = `#/${n.id}`; }}><NavIcon id={n.id} /><span className="navlabel">{n.label}</span></button>
@@ -144,7 +143,7 @@ export default function App() {
         {page === 'accounts' ? <Accounts onChange={load} /> : page === 'transactions' ? <Transactions /> : page === 'budget' ? <Budget /> : page === 'goals' ? <Goals /> : page === 'trips' ? <Trips /> : page === 'reports' ? <Reports />
           : page === 'forecast' ? <Forecast /> : page === 'investments' ? <Investments /> : page === 'networth' ? <NetWorth />
             : page === 'settings' ? <Settings onChange={load} /> : page === 'flow' ? <Flow /> : page === 'bills' ? <Bills /> : <>
-              <PageHeader title={greeting} sub="Here's your financial overview for today." />
+              <PageHeader title={new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} sub={`${greeting}. Here's where you stand.`} />
               {loaded && <SetupChecklist />}
               {!loaded ? <DashboardSkeleton /> : ready ? <Dashboard s={s} extra={extra} meta={meta} reload={load} />
                 : <div className="card empty mt"><p>No accounts yet. Connect a bank to see your dashboard.</p><ConnectBank /></div>}

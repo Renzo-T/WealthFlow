@@ -1,6 +1,9 @@
 // Round icon for a budget group or subcategory. The icon and the text label beside it carry identity; the tint
 // is a secondary cue from the shared palette (format.js), so it never has to tell categories apart on its own.
-import { SERIES, NEUTRAL, INCOME } from './format.js';
+import { SERIES, NEUTRAL, INCOME, tint } from './format.js';
+
+// Icons are inked in the planner's indigo; only money in (income, saving) keeps its green.
+const ink = (c) => (c === INCOME ? INCOME : 'var(--blue)');
 
 const I = {
   home: <><path d="M4 11l8-7 8 7" /><path d="M6 10v10h12V10" /></>,
@@ -38,7 +41,7 @@ export default function CategoryIcon({ group, sub, kind, size = 30 }) {
   const [icon0, color] = GROUP[group] ?? ['receipt', NEUTRAL];
   const icon = kind ?? SUB[sub] ?? icon0;
   return (
-    <span className="caticon" style={{ width: size, height: size, color, background: `${color}1f` }} aria-hidden="true">
+    <span className="caticon" style={{ width: size, height: size, color: ink(color), background: tint(ink(color), 12) }} aria-hidden="true">
       <svg viewBox="0 0 24 24" width={size * 0.55} height={size * 0.55} fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{I[icon]}</svg>
     </span>
   );

@@ -1,7 +1,9 @@
 import { Fragment, useState } from 'react';
 import { api } from './api.js';
 import { usd, usd2, allocColor } from './format.js';
-import { Panel, EmptyState, Hover, TipList, tipText } from './ui.jsx';
+import { Panel, EmptyState, Hover, TipList, tipText, Trend, Close } from './ui.jsx';
+const Clock = () => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="6" cy="6" r="4.8" /><path d="M6 3.4V6l1.8 1.2" /></svg>;
+const Level = () => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M2.5 4.5h7M2.5 7.5h7" /></svg>;
 const monthName = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'long' });
 import CategoryIcon from './CategoryIcon.jsx';
 
@@ -30,7 +32,7 @@ export function InsightStrip({ changed, todo = [] }) {
   return (
     <div className="insight">
       {text && <span title="Same days of last month, everyday spending only: recurring bills are left out, and banks without history for last month aren't compared.">
-        <span className="insight-ic" aria-hidden="true">{changed.reason === 'early' ? '◷' : changed.diff > 0 ? '↑' : changed.flat ? '≈' : '↓'}</span>{text}</span>}
+        <span className="insight-ic" aria-hidden="true">{changed.reason === 'early' ? <Clock /> : changed.flat ? <Level /> : <Trend up={changed.diff > 0} />}</span>{text}</span>}
       {waiting > 0 && <span className="todo">{todo.map((t) => <a key={t.key} href={t.href} className="chip-link">{t.label}</a>)}</span>}
     </div>
   );
@@ -131,7 +133,7 @@ export function WatchlistPanel({ data, reload }) {
           return (
             <div className="watch" key={w.id}>
               <div className="row base"><span className="rowicon">{w.kind === 'category' ? <CategoryIcon sub={w.value} group={null} size={26} /> : <span className="avatar sm">{w.value[0]}</span>}<b>{w.value}</b></span>
-                <button className="linkbtn" onClick={() => remove(w.id)} aria-label={`Stop watching ${w.value}`}>×</button></div>
+                <button className="linkbtn" onClick={() => remove(w.id)} aria-label={`Stop watching ${w.value}`}><Close /></button></div>
               <div className="watchstats">
                 <div><span className="small muted">Monthly average</span><b className="amt">{w.avg == null ? '—'
                   : <Hover tip={<TipList title={`Last ${w.history.length} month${w.history.length > 1 ? 's' : ''}`} rows={w.history.map((h) => [monthName(h.month), usd(h.total)])} />}>{usd(w.avg)}</Hover>}</b></div>

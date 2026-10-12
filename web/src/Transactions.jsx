@@ -1,9 +1,9 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { api } from './api.js';
-import { usd2, usd, signed, label, shortDate, SERIES } from './format.js';
+import { usd2, usd, signed, label, shortDate, SERIES, tint } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
-import { Panel, PageHeader, Skeleton, Hover, TipList } from './ui.jsx';
+import { Panel, PageHeader, Skeleton, Hover, TipList, Repeat, Close } from './ui.jsx';
 
 const txIcon = (t) => (t.to_account ? { group: t.shown_grp === 'Transfer' ? 'Transfer' : t.shown_grp, kind: t.shown_grp === 'Transfer' ? 'swap' : undefined }
   : { group: t.shown_grp ?? t.grp, sub: t.shown ?? t.category });
@@ -22,7 +22,7 @@ export function RecentTransactions({ items }) {
       {items.map((t) => (
         <div className="trow" key={t.id}>
           <span className="rowicon"><CategoryIcon {...txIcon(t)} />
-            <span className="tmain"><b>{title(t)}</b>
+            <span className="tmain"><b title={title(t)}>{title(t)}</b>
               <span className="small muted">{t.to_account ? accounts(t) : label(t.shown)}</span></span></span>
           <span className="r">{amount(t)}<div className="small muted">{shortDate(t.date)}</div></span>
         </div>
@@ -132,7 +132,7 @@ function PeoplePanel({ data, cats, reload }) {
         const best = r.candidates[0]?.likely ? r.candidates[0] : null; // one-click only when the name or an even split matches
         return (
           <div className="peer" key={r.id}>
-            <span className="avatar" style={{ background: `${avatarColor(r.person)}22`, color: avatarColor(r.person) }}>{r.person[0]}</span>
+            <span className="avatar" style={{ background: tint(avatarColor(r.person), 13), color: avatarColor(r.person) }}>{r.person[0]}</span>
             <span className="peerwho"><b>{r.person}</b>{r.note && <span className="peernote">“{r.note}”</span>}
               <span className="small muted">{shortDate(r.date)} · {r.amount < 0 ? 'paid you' : 'you paid'}</span></span>
             <span className={`tamt${r.amount < 0 ? ' good' : ''}`}>{signed(-r.amount)}</span>
@@ -184,7 +184,7 @@ function SplitEditor({ t, cats, reload, onClose }) {
             <option value="" disabled>Category…</option>
             {cats.map(({ group, subs }) => <optgroup key={group} label={group}>{subs.map((c) => <option key={c} value={c}>{c}</option>)}</optgroup>)}
           </select>
-          {parts.length > 2 && <button className="linkbtn" onClick={() => setParts(parts.filter((_, j) => j !== i))} aria-label="Remove this part">×</button>}
+          {parts.length > 2 && <button className="linkbtn" onClick={() => setParts(parts.filter((_, j) => j !== i))} aria-label="Remove this part"><Close /></button>}
         </div>
       ))}
       <div className="btnrow">
@@ -379,7 +379,7 @@ export default function Transactions() {
                         {editing && <td><input type="checkbox" checked={sel.has(t.id)} onChange={() => toggleSel(t.id)} aria-label={`Select ${title(t)}`} /></td>}
                         <td className="merch" title={t.name}><span className="merchcell"><Logo t={t} /><span>{title(t)}
                           {t.recurring && <Hover className="quiet" tip={<TipList title={t.bill?.name ?? 'Recurring bill'} rows={[['Schedule', t.bill?.schedule ?? '—'],
-                            ['Next', t.bill?.next_date ? shortDate(t.bill.next_date) : '—']]} note="Part of a recurring bill. Change it on the Bills page." />}><span className="recur">↻</span></Hover>}
+                            ['Next', t.bill?.next_date ? shortDate(t.bill.next_date) : '—']]} note="Part of a recurring bill. Change it on the Bills page." />}><span className="recur" aria-label="Recurring"><Repeat /></span></Hover>}
                           {t.pending ? <span className="badge">Pending</span> : null}
                           {t.trip_name && <button className="tripchip" title="Part of a trip: click to change" onClick={(e) => {
                             e.stopPropagation(); setOpen(t.id);

@@ -26,3 +26,10 @@ ui-shots/
 
 # Downloadable build (npm run package) and the Node it bundles
 release/
+
+# Design tool working files (impeccable)
+.impeccable/mocks/
+.impeccable/review/
+.impeccable/build/
+.impeccable/questions/
+.impeccable/hook.cache.json

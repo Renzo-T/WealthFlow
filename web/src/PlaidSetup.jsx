@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from './api.js';
-import { Panel } from './ui.jsx';
+import { Panel, Seal } from './ui.jsx';
 
 // Plaid keys: pasted once on first run (the server checks them with Plaid before saving them to config.json in the
 // data folder), and changeable later in Settings. The secret is never sent back to the page.
@@ -50,7 +50,7 @@ export function FirstRun({ onDone }) {
   return (
     <main className="main firstrun">
       <div className="card">
-        <div className="logo">Mizo Money</div>
+        <div className="logo"><Seal size={34} /><span className="wordmark">Mizo Money</span></div>
         <h2>Connect Mizo Money to Plaid</h2>
         <p className="muted">Mizo Money runs on this computer and reads your accounts through Plaid. It needs your own Plaid keys, once.</p>
         <HowTo />

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from './api.js';
-import { usd, usd2, label, SERIES, NEUTRAL, shortDate } from './format.js';
-import { Panel, PageHeader, PageSkeleton, Hover, TipList, tipText } from './ui.jsx';
+import { usd, usd2, label, SERIES, NEUTRAL, shortDate, tint } from './format.js';
+import { Panel, PageHeader, PageSkeleton, Hover, TipList, tipText, Trend } from './ui.jsx';
 import NetWorthChart from './NetWorthChart.jsx';
 
 // Rename in place: saves on Enter or when the field loses focus. Empty restores the bank's name.
@@ -61,7 +61,7 @@ const Change = ({ v, debt, suffix = '', since }) => {
     {since ? `tracking since ${shortDate(since)}` : 'no history yet'}</span>;
   if (Math.abs(v) < 0.5) return <span className="small muted">no change{suffix}</span>;
   const good = debt ? v < 0 : v > 0;
-  return <span className={`small amt ${good ? 'good' : 'bad'}`}>{v > 0 ? '↑' : '↓'} {usd(Math.abs(v))}{suffix}</span>;
+  return <span className={`small amt ${good ? 'good' : 'bad'}`}><Trend up={v > 0} /> {usd(Math.abs(v))}{suffix}</span>;
 };
 
 // 30-day trend, coloured by what the change means for net worth (a debt going up is bad). A flat line
@@ -84,7 +84,7 @@ function Spark({ data, estimated, debt }) {
 }
 
 const avatarColor = (s) => SERIES[[...(s ?? '?')].reduce((h, c) => h + c.charCodeAt(0), 0) % SERIES.length];
-export const Avatar = ({ name }) => <span className="avatar" style={{ background: `${avatarColor(name)}22`, color: avatarColor(name) }}>{(name ?? '?')[0]}</span>;
+export const Avatar = ({ name }) => <span className="avatar" style={{ background: tint(avatarColor(name), 13), color: avatarColor(name) }}>{(name ?? '?')[0]}</span>;
 
 function AccountRow({ a, open, setOpen, saved }) {
   const toggle = async () => { await api(`/accounts/${a.id}`, { method: 'PATCH', body: JSON.stringify({ in_networth: !a.in_networth }) }); saved(); };

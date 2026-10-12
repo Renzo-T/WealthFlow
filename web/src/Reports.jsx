@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { api } from './api.js';
 import { usd, usd2, shortDate, SERIES, NEUTRAL } from './format.js';
-import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, Trend } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 
 const mon = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'short' });
@@ -99,7 +99,7 @@ function Subscriptions() {
               <span className="tmain"><b>{s.recent?.length ? <Hover className="quiet" tip={<TipList title="Recent charges" rows={s.recent.map((r) => [shortDate(r.date), usd2(r.amount)])}
                 note={s.next ? `Next around ${shortDate(s.next)}.` : null} />}>{s.name}</Hover> : s.name}</b><span className="small muted">{s.frequency} · {s.category}{s.account ? ` · ${s.account}` : ''}{s.last ? ` · last ${shortDate(s.last)}` : ''}</span></span></span>
             <span className="r">{s.change && <Hover tip={<TipList title="Price change" rows={[['Before', usd2(s.change.from)], ['Now', usd2(s.change.to)]]} note={`Since ${shortDate(s.change.since)}`} />}>
-              <span className={`pchange ${s.change.to > s.change.from ? 'up' : 'down'}`}>{s.change.to > s.change.from ? '↑' : '↓'} {usd2(Math.abs(s.change.to - s.change.from))}</span></Hover>}</span>
+              <span className={`pchange ${s.change.to > s.change.from ? 'up' : 'down'}`}><Trend up={s.change.to > s.change.from} /> {usd2(Math.abs(s.change.to - s.change.from))}</span></Hover>}</span>
             <span className="r"><b className="amt">{usd2(s.amount)}</b>{s.estimate && <sup className="est">est</sup>}<div className="small muted amt"><Hover className="quiet" tip={<TipList rows={[['A month', usd2(s.monthly)], ['A year', usd2(s.yearly)]]}
               note={s.frequency === 'Monthly' ? null : `${s.frequency}, spread over the year.`} />}>{usd(s.yearly)} a year</Hover></div></span>
           </div>

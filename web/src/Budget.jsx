@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { api } from './api.js';
 import Progress from './Progress.jsx';
 import { usd, label, usd2 } from './format.js';
-import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, amountsHidden } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, amountsHidden, Chevron, Repeat, Close } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 
 export function BudgetsPanel({ items, suggestions }) {
@@ -74,11 +74,11 @@ function Row({ c, income, progress, save, tags = true, inGroup = false, month, r
           rows={c.bills.map((x) => [x, ''])} note={c.kind === 'nonmonthly' ? 'The budget is the monthly share, so the money is there when the bill comes.' : null} />}>
           <span className="ftag">{KIND_TAG[c.kind]}</span></Hover>}
         {c.overridden && <Hover className="quiet" tip={<TipList title={`${monthShort(month)} only`} rows={[['This month', usd(c.budget)], ['Usually', c.usual == null ? '—' : usd(c.usual)]]} />}>
-          <span className="ftag mtag">{monthShort(month)} only<button className="tagx" onClick={() => resetMonth(c)} aria-label="Back to the usual amount">×</button></span></Hover>}
+          <span className="ftag mtag">{monthShort(month)} only<button className="tagx" onClick={() => resetMonth(c)} aria-label="Back to the usual amount"><Close /></button></span></Hover>}
         {c.rollover && <Hover tip={<TipList title="Rolls over" rows={c.carryHistory.map((h) => [monthShort(h.month), signedUsd(h.left)])}
           note={c.carryHistory.length ? 'Unspent money carries into the next month; overspending takes from it.' : 'Starts building up from this month.'} />}>
           <button className="ftag rtag" onClick={() => window.confirm(`Stop rolling over ${c.category}? What's carried over (${usd(c.carry)}) won't count any more.`) && setRollover(c, false)}>
-            ↻ {c.carry ? signedUsd(c.carry) : 'rolls over'}</button></Hover>}
+            <Repeat /> {c.carry ? signedUsd(c.carry) : 'rolls over'}</button></Hover>}
         {!c.rollover && !income && !inGroup && c.kind === 'nonmonthly' && <button className="linkbtn small" onClick={() => setRollover(c, true)}
           title="Let unspent money build up month to month until the bill comes">Roll over</button>}</span>
       <span className="r">{inGroup ? null : <BudgetInput c={c} save={save} />}</span>
@@ -112,7 +112,7 @@ function GroupCard({ id, title, rows, income, progress, save, tags, clear, group
       <div className={`bhead${whole ? ' whole' : ''}`}>
         <button className="btitle" onClick={toggle} aria-expanded={open}>
           <svg className={`chev${open ? ' open' : ''}`} viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>{title}</button>
-        <span className="r amt bheadin">{self?.overridden && <span className="ftag mtag">{monthShort(month)} only<button className="tagx" onClick={() => resetMonth(self)} aria-label="Back to the usual amount">×</button></span>}
+        <span className="r amt bheadin">{self?.overridden && <span className="ftag mtag">{monthShort(month)} only<button className="tagx" onClick={() => resetMonth(self)} aria-label="Back to the usual amount"><Close /></button></span>}
           {whole ? <BudgetInput c={self} save={save} /> : budget ? usd(budget) : '—'}</span>
         <span className="r amt">{usd(actual)}</span>
         <span className="r">{whole ? (group.groupBudget != null ? <Remaining value={left} income={income} /> : <span className="small muted">no budget</span>)
@@ -248,9 +248,9 @@ Budgets apply to every month, so this clears them everywhere. Suggestions stay, 
     <>
       <PageHeader title="Budget" sub="Plan each month by category. Amounts apply to every month unless you set one for a single month (&quot;Only …&quot;).">
         <div className="monthnav">
-          <button className="iconbtn" onClick={() => setMonth(b.prev)} aria-label="Previous month">‹</button>
+          <button className="iconbtn" onClick={() => setMonth(b.prev)} aria-label="Previous month"><Chevron dir="left" /></button>
           <b>{monthName(month)}</b>
-          <button className="iconbtn" onClick={() => setMonth(b.next)} aria-label="Next month">›</button>
+          <button className="iconbtn" onClick={() => setMonth(b.next)} aria-label="Next month"><Chevron /></button>
           <button className="btn" onClick={() => setMonth(thisMonth())} disabled={month === thisMonth()}>Today</button>
           <span className="ranges bscope" title="Where your edits go">
             <button className={scope === 'all' ? 'on' : ''} onClick={() => setScope('all')}>Every month</button>

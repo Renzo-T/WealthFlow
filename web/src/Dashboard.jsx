@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { api } from './api.js';
-import { DashboardSkeleton } from './ui.jsx';
+import { DashboardSkeleton, Trend, Check } from './ui.jsx';
 import Cards from './Cards.jsx';
+import MonthSpread from './MonthSpread.jsx';
+import Glance from './Glance.jsx';
 import NetWorthChart from './NetWorthChart.jsx';
 import AssetAllocation from './AssetAllocation.jsx';
 import Upcoming from './Upcoming.jsx';
 import CashFlow from './CashFlow.jsx';
 import Categories from './Categories.jsx';
 import { RecentTransactions } from './Transactions.jsx';
-import { BudgetsPanel } from './Budget.jsx';
 import { GoalsPanel } from './Goals.jsx';
 import { ProjectionPanel } from './Projection.jsx';
 import { InsightStrip, FrequentPanel, WatchlistPanel, SafeToSpendPanel, InvestmentsCard } from './Insights.jsx';
@@ -16,22 +17,24 @@ import { defaultLayout, mergeLayout } from './layout.js';
 
 // Every dashboard panel, in default order. `span` is its width in a 3-column row (3 = full width); `rail` means it
 // sits in the right-hand column on wide screens by default. To add a panel: add it here; saved layouts pick it
-// up at its default position automatically.
+// up at its default position automatically. `lead` panels (where you stand, the month spread) run full width above the
+// rest, side column included, in your order.
 export const PANELS = [
-  { id: 'cards', name: 'Summary tiles', span: 3, render: ({ s }) => <Cards s={s} /> },
+  { id: 'cards', name: 'Where you stand', span: 3, lead: true, render: ({ s, extra }) => <Cards s={s} safe={extra.safe} budgets={extra.budgets} /> },
+  { id: 'month', name: 'Month spread', span: 3, lead: true, render: () => <MonthSpread /> },
+  { id: 'glance', name: 'Needs you, coming up, budget', span: 3, lead: true, render: ({ extra }) => <Glance todo={extra.todo} upcoming={extra.upcoming} budgets={extra.budgets} /> },
   { id: 'insight', name: 'What changed', span: 3, render: ({ extra }) => <InsightStrip changed={extra.insights?.changed} todo={extra.todo} /> },
   { id: 'networth', name: 'Net worth chart', span: 2, render: ({ s }) => <NetWorthChart history={s.history} /> },
   { id: 'allocation', name: 'Asset allocation', span: 1, render: ({ extra }) => <AssetAllocation a={extra.allocation} /> },
   { id: 'investments', name: 'Investments', span: 1, render: ({ extra }) => <InvestmentsCard d={extra.invest} /> },
-  { id: 'upcoming', name: 'Upcoming bills & income', span: 1, rail: true, render: ({ extra }) => <Upcoming items={extra.upcoming} /> },
+  { id: 'upcoming', name: 'Upcoming bills & income', span: 1, rail: true, render: ({ extra }) => <Upcoming items={extra.upcoming} calendar={false} skip={5} /> },
   { id: 'safe', name: 'Free to spend', span: 1, rail: true, render: ({ extra, reload }) => <SafeToSpendPanel d={extra.safe} reload={reload} /> },
   { id: 'recent', name: 'Recent transactions', span: 1, render: ({ extra }) => <RecentTransactions items={extra.recent} /> },
   { id: 'cashflow', name: 'Cash flow', span: 1, render: ({ extra }) => <CashFlow data={extra.cashflow} /> },
-  { id: 'top', name: 'Top spending', span: 1, render: ({ extra }) => <Categories c={extra.categories} changes={extra.insights?.groupChanges} /> },
+  { id: 'top', name: 'Top spending', span: 1, rail: true, render: ({ extra }) => <Categories c={extra.categories} changes={extra.insights?.groupChanges} /> },
   { id: 'watchlist', name: 'Watchlist', span: 2, render: ({ extra, reload }) => <WatchlistPanel data={extra.watchlist} reload={reload} /> },
   { id: 'frequent', name: 'Frequent spending', span: 1, render: ({ extra }) => <FrequentPanel items={extra.insights?.frequent ?? []} early={extra.insights?.changed?.reason === 'early'} /> },
   { id: 'projection', name: 'Net worth projection', span: 2, render: ({ s, extra }) => <ProjectionPanel s={s} cashflow={extra.cashflow} /> },
-  { id: 'budgets', name: 'Budgets', span: 1, render: ({ extra }) => <BudgetsPanel items={extra.budgets.items} suggestions={extra.budgets.suggestions} /> },
   { id: 'goals', name: 'Goals', span: 2, render: ({ extra }) => <GoalsPanel items={extra.goals} /> },
 ];
 const DEFAULT = defaultLayout(PANELS);
@@ -44,8 +47,8 @@ function Controls({ p, i, n, layout, set }) {
     <div className="pctl">
       <b>{p.name}</b>
       <span className="btnrow">
-        <button className="iconbtn" disabled={i === 0} onClick={() => move(-1)} aria-label={`Move ${p.name} up`}>↑</button>
-        <button className="iconbtn" disabled={i === n - 1} onClick={() => move(1)} aria-label={`Move ${p.name} down`}>↓</button>
+        <button className="iconbtn" disabled={i === 0} onClick={() => move(-1)} aria-label={`Move ${p.name} up`}><Trend up /></button>
+        <button className="iconbtn" disabled={i === n - 1} onClick={() => move(1)} aria-label={`Move ${p.name} down`}><Trend up={false} /></button>
         {p.span === 1 && <button className="btn" onClick={() => set({ ...layout, rail: inRail ? layout.rail.filter((x) => x !== p.id) : [...layout.rail, p.id] })}
           title="On wide screens (1440px and up), show this in the right-hand column">{inRail ? 'Main area' : 'Side column'}</button>}
         <button className="btn" onClick={() => set({ ...layout, hidden: [...layout.hidden, p.id] })}>Hide</button>
@@ -60,6 +63,27 @@ function useWide() {
   const [wide, setWide] = useState(() => window.matchMedia(q).matches);
   useEffect(() => { const m = window.matchMedia(q), f = () => setWide(m.matches); m.addEventListener('change', f); return () => m.removeEventListener('change', f); }, []);
   return wide;
+}
+
+// Packs the board like a well-kept page: the grid has small fixed rows, and each panel spans as many as its content
+// needs (re-measured whenever anything resizes), so with dense flow a short panel lets the next one sit right under
+// it instead of leaving a gap. No stretching, no holes.
+const ROW = 8, GAP = 16;
+function usePacked(ref, deps) {
+  useLayoutEffect(() => {
+    const grid = ref.current;
+    if (!grid) return undefined;
+    const fit = () => {
+      for (const cell of grid.children) {
+        const h = [...cell.children].reduce((t, c) => t + c.getBoundingClientRect().height, 0) + (cell.children.length - 1) * 8;
+        cell.style.gridRowEnd = `span ${Math.max(1, Math.ceil((h + GAP) / (ROW + GAP)))}`;
+      }
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    for (const cell of grid.children) for (const c of cell.children) ro.observe(c);
+    return () => ro.disconnect();
+  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 // Getting started: shown on the dashboard until every required step is done or it's dismissed.
@@ -81,7 +105,7 @@ export function SetupChecklist() {
       <ol className="setupsteps">
         {d.steps.map((s) => (
           <li key={s.key} className={s.done ? 'done' : ''}>
-            <span className="setupcheck" aria-hidden="true">{s.done ? '✓' : ''}</span>
+            <span className="setupcheck" aria-hidden="true">{s.done ? <Check size={11} /> : ''}</span>
             <span className="tmain"><a href={s.href}><b>{s.label}</b></a>{s.optional && <span className="small muted"> (optional)</span>}
               <span className="small muted">{s.detail}</span></span>
             {!s.done && s.confirm && <button className="linkbtn small" onClick={() => act('home-ok')}>{s.confirm}</button>}
@@ -95,7 +119,9 @@ export default function Dashboard(props) {
   const wide = useWide();
   const [layout, setLayout] = useState(null);
   const [editing, setEditing] = useState(false);
+  const mainRef = useRef(null), railRef = useRef(null);
   useEffect(() => { api('/settings/dashboard').then((l) => setLayout(merge(l))); }, []);
+  usePacked(mainRef, [layout, editing, wide, props.extra]);
   if (!layout) return <DashboardSkeleton />;
 
   const save = (l) => { setLayout(l); api('/settings/dashboard', { method: 'PUT', body: JSON.stringify(l) }); };
@@ -104,7 +130,8 @@ export default function Dashboard(props) {
   const visible = layout.order.filter((id) => !layout.hidden.includes(id)).map((id) => byId[id]);
   // Side column only on wide screens; otherwise every panel flows in your order.
   const railIds = wide ? layout.rail : [];
-  const main = visible.filter((p) => !railIds.includes(p.id)), rail = visible.filter((p) => railIds.includes(p.id));
+  const lead = visible.filter((p) => p.lead && !railIds.includes(p.id));
+  const main = visible.filter((p) => !p.lead && !railIds.includes(p.id)), rail = visible.filter((p) => railIds.includes(p.id));
   const cell = (p, list) => (
     <div key={p.id} className={`dcell span${railIds.includes(p.id) ? 1 : p.span}`}>
       {editing && <Controls p={p} i={list.indexOf(p)} n={list.length} layout={layout} set={save} />}
@@ -126,8 +153,9 @@ export default function Dashboard(props) {
           <span className="btnrow">{layout.hidden.map((id) => byId[id] && (
             <button key={id} className="btn" onClick={() => save({ ...layout, hidden: layout.hidden.filter((x) => x !== id) })}>Show {byId[id].name}</button>))}</span></div>
       )}
+      {lead.length > 0 && <div className={`dlead${editing ? ' editing' : ''}`}>{lead.map((p) => cell(p, lead))}</div>}
       <div className={`dboard${rail.length ? ' has-rail' : ''}${editing ? ' editing' : ''}`}>
-        <div className="dmain">{main.map((p) => cell(p, main))}</div>
+        <div className="dmain" ref={mainRef}>{main.map((p) => cell(p, main))}</div>
         {rail.length > 0 && <div className="drail">{rail.map((p) => cell(p, rail))}</div>}
       </div>
     </>

@@ -1,5 +1,5 @@
-import { INCOME, SPENDING, usd } from './format.js';
-import { Hover, TipList } from './ui.jsx';
+import { usd } from './format.js';
+import { Hover, TipList, Trend } from './ui.jsx';
 
 export { usd } from './format.js'; // older imports get it from here
 
@@ -8,38 +8,10 @@ function Delta({ v, upIsGood = true, unit = '%', vs = 'vs. last month', hint = '
   if (v == null) return <span className="small muted">{none}</span>;
   const good = v >= 0 === upIsGood;
   return (
-    <span className="small">
-      <span className={good ? 'good' : 'bad'}>{v >= 0 ? '▲' : '▼'} {Math.abs(v).toFixed(1)}{unit}</span>
-      <br /><span className="muted" title={hint}>{vs}</span>
+    <span className="delta small">
+      <span className={good ? 'good' : 'bad'}><Trend up={v >= 0} /> {Math.abs(v).toFixed(1)}{unit}</span>{' '}
+      <span className="muted" title={hint}>{vs}</span>
     </span>
-  );
-}
-
-function Line({ data, color }) {
-  if (data.length < 2) return <svg className="spark" />;
-  const lo = Math.min(...data), span = Math.max(...data) - lo || 1;
-  const pts = data.map((v, i) => `${(i / (data.length - 1)) * 120},${40 - ((v - lo) / span) * 36}`).join(' ');
-  return <svg className="spark" viewBox="0 0 120 44"><polyline points={pts} fill="none" style={{ stroke: color }} strokeWidth="2" strokeLinejoin="round" /></svg>;
-}
-
-function Bars({ data, color }) {
-  const max = Math.max(...data, 1);
-  return (
-    <svg className="spark" viewBox="0 0 120 44">
-      {data.map((v, i) => { const h = Math.max((v / max) * 40, 2); return <rect key={i} x={i * 15 + 2} y={42 - h} width="10" height={h} rx="2" fill={color} opacity={0.35 + (i / data.length) * 0.65} />; })}
-    </svg>
-  );
-}
-
-function Ring({ pct }) {
-  const c = 2 * Math.PI * 26, p = Math.max(0, Math.min(100, pct ?? 0));
-  return (
-    <svg className="ring" viewBox="0 0 64 64">
-      <circle cx="32" cy="32" r="26" fill="none" style={{ stroke: 'var(--soft)' }} strokeWidth="6" />
-      <circle cx="32" cy="32" r="26" fill="none" style={{ stroke: 'var(--blue)' }} strokeWidth="6" strokeLinecap="round"
-        strokeDasharray={`${(c * p) / 100} ${c}`} transform="rotate(-90 32 32)" />
-      <text x="32" y="36" textAnchor="middle" style={{ fontSize: 13, fontWeight: 700, fill: 'var(--ink)' }}>{pct == null ? '—' : `${Math.round(pct)}%`}</text>
-    </svg>
   );
 }
 
@@ -52,35 +24,38 @@ const monthTip = (s, x, what) => <TipList title={what} rows={[
   [`All of ${monthName(s.prevMonth)}`, usd(x.lastMonth)],
 ]} note={s.early ? 'The % comparison starts on the 5th, when there are enough days to compare.' : 'The % compares the same number of days.'} />;
 
-export default function Cards({ s }) {
+// Where you stand, read first: one ruled strip, net worth largest, then what's free to spend and the month's spending
+// against the budget. Income lives in Cash flow and on hover in Reports.
+export default function Cards({ s, safe, budgets }) {
+  const budgeted = (budgets?.items ?? []).reduce((t, b) => t + (b.amount ?? 0), 0);
+  const free = safe && typeof safe.free === 'number' ? safe.free : null;
   return (
-    <div className="cards">
-      <div className="card">
-        <div className="row"><h3>Total net worth</h3><span className="chip" style={{ background: 'var(--soft)', color: 'var(--blue)' }}>↗</span></div>
-        <div className="big">{s.netWorth.ago == null ? usd(s.netWorth.value)
+    <section className="standing" aria-label="Where you stand">
+      <div className="stand lead">
+        <span className="slabel">Net worth</span>
+        <span className="sfig big">{s.netWorth.ago == null ? usd(s.netWorth.value)
           : <Hover className="quiet" tip={<TipList title="Net worth" rows={[['30 days ago', usd(s.netWorth.ago)], ['Today', usd(s.netWorth.value)],
-            ['Change', `${s.netWorth.value >= s.netWorth.ago ? '+' : '−'}${usd(Math.abs(s.netWorth.value - s.netWorth.ago))}`]]} />}>{usd(s.netWorth.value)}</Hover>}</div>
-        <div className="row"><Delta v={s.netWorth.change} vs="vs. 30 days ago" hint="Net worth now compared with 30 days ago" /><Line data={s.netWorth.spark} color="var(--blue)" /></div>
+            ['Change', `${s.netWorth.value >= s.netWorth.ago ? '+' : '−'}${usd(Math.abs(s.netWorth.value - s.netWorth.ago))}`]]} />}>{usd(s.netWorth.value)}</Hover>}</span>
+        <Delta v={s.netWorth.change} vs="vs. 30 days ago" hint="Net worth now compared with 30 days ago" />
       </div>
-      <div className="card">
-        <div className="row"><h3>Income this month</h3><span className="chip" style={{ background: `${INCOME}22`, color: INCOME }}>↓</span></div>
-        <div className="big"><Hover className="quiet" tip={monthTip(s, s.income, 'Income')}>{usd(s.income.value)}</Hover></div>
-        <div className="row"><Delta none={s.early ? 'Compared from the 5th' : undefined} v={s.income.change} /><Bars data={s.income.bars} color={INCOME} /></div>
+      <div className="stand">
+        <span className="slabel">Free to spend</span>
+        <span className="sfig big">{free == null ? '—' : <Hover className="quiet" tip={<TipList title="Free to spend" rows={[['Cash in everyday accounts', usd(safe.cash)],
+          ['Income still coming', `+${usd(safe.incomeTotal ?? 0)}`], ['Bills still due', `−${usd(safe.dueTotal ?? 0)}`], ['Card balances', `−${usd(safe.owed ?? 0)}`],
+          ['Cushion', `−${usd(safe.cushion ?? 0)}`]]} note="Through the end of the month. The Free to spend panel shows each item." />}>{usd(free)}</Hover>}</span>
+        <span className="small muted">left this month after bills</span>
       </div>
-      <div className="card">
-        <div className="row"><h3>Spending this month</h3><span className="chip" style={{ background: `${SPENDING}22`, color: SPENDING }}>◔</span></div>
-        <div className="big"><Hover className="quiet" tip={monthTip(s, s.spending, 'Spending')}>{usd(s.spending.value)}</Hover></div>
-        <div className="row"><Delta none={s.early ? 'Compared from the 5th' : undefined} v={s.spending.change} upIsGood={false} /><Bars data={s.spending.bars} color={SPENDING} /></div>
-      </div>
-      <div className="card">
-        <h3>Savings rate</h3>
-        <div className="row" style={{ alignItems: 'center' }}>
-          <div><div className="big"><Hover className="quiet" tip={<TipList title="Savings rate" rows={[['Income', usd(s.income.value)], ['Spending', usd(s.spending.value)],
+      <div className="stand">
+        <span className="slabel">Spent this month</span>
+        <span className="sfig big"><Hover className="quiet" tip={monthTip(s, s.spending, 'Spending')}>{usd(s.spending.value)}</Hover></span>
+        {budgeted > 0 && <span className="small muted">of <span className="amt">{usd(budgeted)}</span> budgeted</span>}
+        <span className="small">
+          <Delta none={s.early ? 'Compared from the 5th' : undefined} v={s.spending.change} upIsGood={false} />
+          {s.savings.rate != null && <> · <Hover className="quiet" tip={<TipList title="Savings rate" rows={[['Income', usd(s.income.value)], ['Spending', usd(s.spending.value)],
             ['Kept', `${s.income.value >= s.spending.value ? '' : '−'}${usd(Math.abs(s.income.value - s.spending.value))}`]]}
-            note="Share of this month's income you didn't spend. Transfers, savings and card payments aren't spending." />}>{s.savings.rate == null ? '—' : `${Math.round(s.savings.rate)}%`}</Hover></div><Delta none={s.early ? 'Compared from the 5th' : undefined} v={s.savings.change} unit=" pts" /></div>
-          <Ring pct={s.savings.rate} />
-        </div>
+            note="Share of this month's income you didn't spend. Transfers, savings and card payments aren't spending." />}><span className="muted">{Math.round(s.savings.rate)}% kept</span></Hover></>}
+        </span>
       </div>
-    </div>
+    </section>
   );
 }

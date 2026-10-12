@@ -1,5 +1,9 @@
 import { createRoot } from 'react-dom/client';
-import '@fontsource-variable/inter'; // bundled, works offline
+// The one typeface (bundled, works offline): Latin subsets only; its figures are equal-width, so money lines up.
+import '@fontsource/m-plus-1p/latin-400.css';
+import '@fontsource/m-plus-1p/latin-500.css';
+import '@fontsource/m-plus-1p/latin-700.css';
+import '@fontsource/m-plus-1p/latin-800.css';
 import './styles.css';
 import App from './App.jsx';
 

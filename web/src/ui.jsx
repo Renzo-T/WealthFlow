@@ -2,6 +2,34 @@
 import { useState, useRef, Component } from 'react';
 import { createPortal } from 'react-dom';
 
+// The Mizo Money seal: a round ink stamp with an M, like a hanko pressed on a planner page. The logo only; vermillion
+// is never used for meaning (red stays "bad / money out").
+export function Seal({ size = 30 }) {
+  return (
+    <svg className="seal" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="15" fill="var(--seal)" />
+      <circle cx="16" cy="16" r="12.6" fill="none" stroke="var(--seal-ink)" strokeWidth="1" opacity=".55" />
+      <path d="M9.6 21.6V10.8l6.4 7 6.4-7v10.8" fill="none" stroke="var(--seal-ink)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// Up / down marker for a change (drawn, so it matches the icon set; the number beside it carries the meaning).
+export const Trend = ({ up }) => (
+  <svg className="trend" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+    <path d={up ? 'M5 1.5L9 8.5H1z' : 'M5 8.5L1 1.5h8z'} fill="currentColor" />
+  </svg>
+);
+
+// Small drawn icons in the same stroke as the navigation, for controls that used to be text glyphs.
+const ico = (d, size = 14) => (
+  <svg width={size} height={size} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>
+);
+export const Chevron = ({ dir = 'right', size }) => ico(<path d={dir === 'left' ? 'M8.5 3L4.5 7l4 4' : 'M5.5 3l4 4-4 4'} />, size);
+export const Check = ({ size }) => ico(<path d="M3 7.5l2.6 2.6L11 4.5" />, size);
+export const Close = ({ size = 12 }) => ico(<path d="M3.5 3.5l7 7M10.5 3.5l-7 7" />, size);
+export const Repeat = ({ size = 12 }) => ico(<><path d="M3 6.2A4 4 0 0110.4 4.6M11 3v2.2H8.8" /><path d="M11 7.8A4 4 0 013.6 9.4M3 11V8.8h2.2" /></>, size);
+
 // A card with a header row: title on the left, actions (links, toggles, legends) on the right.
 export function Panel({ title, actions, className = '', children, ...rest }) {
   return (

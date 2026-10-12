@@ -466,3 +466,19 @@ test('holdings: the day\'s change uses the last price recorded before this one, 
   assert.deepEqual([h.low, h.high, h.range_since], [90, 105, ago(30)]); // the one from 400 days ago is outside the year
   db.prepare("DELETE FROM holdings WHERE security_id = 's1'").run(); db.prepare('DELETE FROM holding_prices').run();
 });
+
+test('month spread: each day\'s spending on one fixed dot scale, with bills and paydays stamped, and nothing yet for days ahead', async () => {
+  const { step } = await import('../server/spread.js');
+  assert.deepEqual([0, 5, 29.99, 30, 200, 5000].map(step), [0, 1, 2, 3, 5, 7]); // fixed thresholds, not relative to the month
+  const today = new Date().toLocaleDateString('en-CA'), month = today.slice(0, 7);
+  tx('chk', today, 42.5, 'GROCER', { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_GROCERIES' });
+  tx('chk', today, -500, 'TRANSFER IN', { primary: 'TRANSFER_IN' }); // not spending
+  classify();
+  const s = (await get(`/month-spread?month=${month}`)).body;
+  const d = s.days.find((x) => x.date === today);
+  assert.equal(d.today, true);
+  assert.equal(d.spent, 42.5);
+  assert.equal(d.step, 3);
+  assert.equal(s.days.length, new Date(+month.slice(0, 4), +month.slice(5), 0).getDate());
+  for (const f of s.days.filter((x) => x.future)) assert.equal(f.spent, null);
+});

@@ -7,6 +7,7 @@ import { cashFlow, topCategories, allocation, upcoming, flow, accountFlow, holdi
 import { classify, CATEGORIES, GROUPS, NOT_SPENDING, pickerGroups, peerOf, SPEND_SQL, reviewSince, historyStart, historyCapped } from '../categories.js';
 import { describe } from '../describe.js';
 import { accountHistory } from '../summary.js';
+import { monthSpread } from '../spread.js';
 import { bills, calendar, seriesKey, freeToSpend, paycheckCandidates, paycheckRule, markPaycheckHandled } from '../recurring.js';
 import { budgetMonth } from '../budget.js';
 import { whatChanged, groupChanges, frequentSpend, watchlist, addWatch, topMerchants } from '../watch.js';
@@ -216,6 +217,11 @@ router.put('/settings/cushion', (req, res) => {
   res.json({ amount: v });
 });
 router.get('/investments/summary', (_req, res) => res.json(investmentSummary()));
+// The dashboard's month spread: each day's spending and its bills and paydays (spread.js).
+router.get('/month-spread', (req, res) => {
+  const m = /^\d{4}-\d{2}$/.test(req.query.month ?? '') ? req.query.month : new Date().toLocaleDateString('en-CA').slice(0, 7);
+  res.json(monthSpread(m));
+});
 router.get('/bills/calendar', (req, res) => {
   const m = /^\d{4}-\d{2}$/.test(req.query.month ?? '') ? req.query.month : new Date().toLocaleDateString('en-CA').slice(0, 7);
   res.json(calendar(m));

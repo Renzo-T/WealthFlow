@@ -125,11 +125,17 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
   `classify()` turns the bank side into a transfer so the spending isn't counted twice.
 
 ## UI conventions
+- The visual system is **DESIGN.md** (the "Planner Page" world: indigo cover rail, ruled paper, one typeface M PLUS 1p
+  with equal-width figures, vermillion seal as the logo only) with tokens in `.impeccable/design.json`; PRODUCT.md holds
+  product truth and `.impeccable/surfaces/` the dashboard's direction contract. Read DESIGN.md before UI work.
 - Building blocks in `web/src/ui.jsx`: `Panel` (card + header), `PageHeader`, `Amt` (amount that "Hide amounts"
-  blurs). Prefer classes over inline styles; inline styles are for data-driven colours only.
+  blurs), `Seal` (logo), drawn icons (`Trend`, `Chevron`, `Check`, `Close`, `Repeat`; never text glyphs as icons).
+  Prefer classes over inline styles; inline styles are for data-driven colours only.
+- Dashboard: `lead` panels (where you stand, the month spread `MonthSpread.jsx` + `server/spread.js`, the
+  Needs you / Coming up / Budget sheet `Glance.jsx`) run full width; the rest pack into grid rows (`usePacked`).
 - Money (`web/src/format.js`): cents (`usd2`) for individual transactions and bills, whole dollars (`usd`) for totals,
   `usdCompact` on chart axes, real minus sign via `signed`.
-- Colours: theme tokens in `styles.css` `:root` (light + dark). Chart series `SERIES` (4 hues) were checked for
-  colour-blind separation in both themes; anything beyond four is grey. Green/red mean in/out or good/bad only.
+- Colours: theme tokens in `styles.css` `:root` (light + dark). Chart series `SERIES` are theme variables `--s1..--s4`,
+  validated for colour-blind separation against each theme's own surface; anything beyond four is grey. Green/red mean in/out or good/bad only.
 - Charts measure their width (`useWidth`) so text stays the same size; Sankeys are capped at 1000px.
 - Estimated or incomplete data is always marked (dashed net worth history, partial months, "est" amounts).

@@ -1,12 +1,12 @@
 import { usd, label, SPENDING, NEUTRAL } from './format.js';
 import CategoryIcon from './CategoryIcon.jsx';
-import { Panel, EmptyState, Hover, TipList } from './ui.jsx';
+import { Panel, EmptyState, Hover, TipList, Trend } from './ui.jsx';
 const monthName = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'long' });
 
 // Change vs the same days of last month (null = too little to compare, or before the 5th). Spending going up is
 // shown in red, down in green.
 const Chg = ({ v }) => (v == null ? null : Math.abs(v) < 1 ? <span className="small muted">same</span>
-  : <span className={`small ${v > 0 ? 'bad' : 'good'}`} title="vs the same days of last month">{v > 0 ? '↑' : '↓'} {Math.round(Math.abs(v))}%</span>);
+  : <span className={`small ${v > 0 ? 'bad' : 'good'}`} title="vs the same days of last month"><Trend up={v > 0} /> {Math.round(Math.abs(v))}%</span>);
 
 export default function Categories({ c, changes = {} }) {
   return (

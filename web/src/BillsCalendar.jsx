@@ -3,7 +3,7 @@ import { api } from './api.js';
 import { INCOME, SPENDING } from './format.js';
 import CategoryIcon from './CategoryIcon.jsx';
 import { billAmount } from './Bills.jsx';
-import { Panel, tipText } from './ui.jsx';
+import { Panel, tipText, Chevron } from './ui.jsx';
 
 const ymd = (d) => d.toLocaleDateString('en-CA');
 const shift = (m, k) => { const [y, mo] = m.split('-').map(Number); return ymd(new Date(y, mo - 1 + k, 1)).slice(0, 7); };
@@ -36,9 +36,9 @@ export default function BillsCalendar({ compact = false, onDay, selected }) {
   const grid = (
     <>
       <div className="calnav">
-        <button className="linkbtn" onClick={() => setMonth(shift(month, -1))} aria-label="Previous month">‹</button>
+        <button className="linkbtn" onClick={() => setMonth(shift(month, -1))} aria-label="Previous month"><Chevron dir="left" /></button>
         <b className={compact ? 'small' : undefined}>{new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</b>
-        <button className="linkbtn" onClick={() => setMonth(shift(month, 1))} aria-label="Next month">›</button>
+        <button className="linkbtn" onClick={() => setMonth(shift(month, 1))} aria-label="Next month"><Chevron /></button>
       </div>
       <div className={`calgrid${compact ? ' compact' : ''}`}>
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <span key={i} className="calhead">{d}</span>)}

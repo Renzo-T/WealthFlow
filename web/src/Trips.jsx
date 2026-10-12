@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from './api.js';
 import { usd, usd2, shortDate, SERIES, NEUTRAL } from './format.js';
-import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, Close } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 
 // "Sep 7 – 12, 2026", "Nov 16 – Dec 1, 2025", "Dec 28, 2025 – Jan 3, 2026".
@@ -41,7 +41,7 @@ function Suggest({ title, items, trip, onTrip, reload, label }) {
       {items.map((b) => (
         <span key={b.id} className="chippair">
           <button className="chipbtn" onClick={() => onTrip(b.id, trip.id)} title={`Add to ${trip.name}`}>+ {label(b)}</button>
-          <button className="chipx" onClick={() => onTrip(b.id, 'none')} title="Not part of this trip" aria-label={`${b.name}: not part of this trip`}>×</button>
+          <button className="chipx" onClick={() => onTrip(b.id, 'none')} title="Not part of this trip" aria-label={`${b.name}: not part of this trip`}><Close /></button>
         </span>))}
       {items.length > 1 && <span className="tripbookall">
         <button className="linkbtn small" onClick={() => all(trip.id)}>Add all</button>
@@ -88,7 +88,7 @@ function TripCard({ trip, reload }) {
         <div className="trow small" key={t.id}>
           <span className="rowicon"><CategoryIcon group={t.grp} sub={t.category} size={22} /><span className="tmain"><b>{t.name}</b><span className="muted">{shortDate(t.date)} · {t.category}</span></span></span>
           <span className="btnrow"><b className="amt">{usd2(t.amount)}</b>
-            <button className="linkbtn" onClick={() => onTrip(t.id, 'none')} aria-label={`Not part of ${trip.name}`} title="Not part of this trip">×</button></span>
+            <button className="linkbtn" onClick={() => onTrip(t.id, 'none')} aria-label={`Not part of ${trip.name}`} title="Not part of this trip"><Close /></button></span>
         </div>
       ))}
     </section>
