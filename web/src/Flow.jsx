@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from './api.js';
-import { usd2, INCOME, SPENDING, SERIES, NEUTRAL } from './format.js';
+import { usd, usd2, INCOME, SERIES, NEUTRAL } from './format.js';
 import AccountFlow from './AccountFlow.jsx';
 import Tip, { useTip } from './Tip.jsx';
 import { Panel, PageHeader, Skeleton } from './ui.jsx';
@@ -8,9 +8,12 @@ import { Panel, PageHeader, Skeleton } from './ui.jsx';
 const VIEW_KEY = 'wealthflow.flowView';
 const savedView = () => { try { return localStorage.getItem(VIEW_KEY) || 'groups'; } catch { return 'groups'; } };
 
-const W = 760, BAR = 12, LX = 190, RX = W - 190 - BAR, HX = W / 2 - 8, GAP = 10, SLOT = 30;
-// Colour by role; every bar is labelled, so colour never has to identify a category on its own.
-const GREEN = INCOME, AMBER = SERIES[1], TEAL = SERIES[2];
+const W = 760, BAR = 8, LX = 190, RX = W - 190 - BAR, HW = 12, HX = W / 2 - HW / 2, GAP = 12, SLOT = 34, TOP = 34;
+// Colour by role, never by rank: money in and money kept are green, spending is the planner's indigo ink, saving and
+// debt payments are grey, money taken from savings is ochre, refunds teal. Every bar is labelled, so colour never has to
+// tell one group from another on its own.
+const GREEN = INCOME, AMBER = SERIES[1], TEAL = SERIES[2], INK = 'var(--ink-dot)';
+const SMALL = 0.02; // spending groups under 2% of the total fold into "Everything else" (listed on hover)
 const monthName = (m) => new Date(m + '-01T00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 const short = (s) => (s.length > 24 ? s.slice(0, 23) + '…' : s);
 const band = (x0, a0, b0, x1, a1, b1) => {
@@ -28,17 +31,23 @@ function Sankey({ f, rename }) {
   const [hl, setHl] = useState(null); // 'l:<name>' or 'r:<name>'
   const [tip, show, hide] = useTip();
   const left = f.sources.map((s) => ({ ...s, color: s.saved ? AMBER : s.credit ? TEAL : GREEN }));
-  const right = f.categories.map((c) => ({ ...c, color: c.saved ? TEAL : /Savings|Debt/.test(c.name) ? NEUTRAL : SPENDING }));
   const total = left.reduce((s, x) => s + x.value, 0);
+  const role = (c) => (c.saved ? GREEN : /Savings|Debt/.test(c.name) ? NEUTRAL : INK);
+  const big = f.categories.filter((c) => c.saved || /Savings|Debt/.test(c.name) || c.value >= total * SMALL);
+  const small = f.categories.filter((c) => !big.includes(c));
+  const rest = small.length > 1 ? [{ name: 'Everything else', value: small.reduce((s, c) => s + c.value, 0), rest: small }] : small;
+  const spend = [...big.filter((c) => !c.saved && role(c) === INK), ...rest];
+  const right = [...spend, ...big.filter((c) => !spend.includes(c))].map((c) => ({ ...c, color: c.rest ? NEUTRAL : role(c) }));
   const n = Math.max(left.length, right.length);
-  const k = Math.max(160, n * 26) / total; // px per dollar: the hub is at least 160px tall
+  const k = Math.max(180, n * 28) / total; // px per dollar: the hub is at least 180px tall
   const hub = total * k;
   // A thin bar sits at the top of its slot so the band stays attached; the label is centred in the slot.
   const slots = (nodes) => nodes.reduce((s, x) => s + Math.max(SLOT, x.value * k) + GAP, -GAP);
-  const H = Math.max(hub, slots(left), slots(right)) + 4;
-  const hubTop = (H - hub) / 2;
+  const body = Math.max(hub, slots(left), slots(right)) + 4;
+  const H = body + TOP; // room above for the hub's label
+  const hubTop = TOP + (body - hub) / 2;
   const stack = (nodes) => {
-    let y = (H - slots(nodes)) / 2, h = hubTop;
+    let y = TOP + (body - slots(nodes)) / 2, h = hubTop;
     return nodes.map((x) => {
       const hgt = Math.max(2, x.value * k), slot = Math.max(SLOT, hgt);
       const r = { ...x, y, hgt, hy: h, hh: x.value * k, mid: y + slot / 2 };
@@ -47,7 +56,7 @@ function Sankey({ f, rename }) {
     });
   };
   const L = stack(left), R = stack(right);
-  const op = (id) => (hl == null ? 0.28 : hl === id ? 0.6 : 0.08);
+  const op = (id) => (hl == null ? 0.3 : hl === id ? 0.62 : 0.07);
   const income = f.income || total;
   // Hover a band, bar or label: highlight it and explain it. Spending groups open their transactions on click.
   const on = (side, x) => ({
@@ -58,23 +67,30 @@ function Sankey({ f, rename }) {
         <div className="muted">{x.saved ? 'Spent beyond income this period' : x.credit ? 'Refunds and cash back' : `${pctOf(x.value, income)} of income`}</div>
       </> : <>
         <b>{x.name}</b><div>{usd2(x.value)} <span className="muted">· {pctOf(x.value, income)} of income</span></div>
+        {x.rest && <ul>{x.rest.map((s) => <li key={s.name}><span>{s.name}</span><span>{usd2(s.value)}</span></li>)}</ul>}
         {x.subs?.length > 0 && <ul>{x.subs.map((s) => <li key={s.name}><span>{s.name}</span><span>{usd2(s.value)}</span></li>)}</ul>}
-        {!x.saved && <div className="muted">Click to see these transactions</div>}
+        {!x.saved && !x.rest && <div className="muted">Click to see these transactions</div>}
       </>);
     },
     onMouseLeave: () => { setHl(null); hide(); },
-    onClick: side === 'r' && !x.saved ? () => { window.location.hash = `#/transactions?category=${encodeURIComponent(`g:${x.name}`)}&from=${f.from}&to=${lastDay(f.to)}`; } : undefined,
-    style: { cursor: side === 'r' && !x.saved ? 'pointer' : 'default' },
+    onClick: side === 'r' && !x.saved && !x.rest ? () => { window.location.hash = `#/transactions?category=${encodeURIComponent(`g:${x.name}`)}&from=${f.from}&to=${lastDay(f.to)}`; } : undefined,
+    style: { cursor: side === 'r' && !x.saved && !x.rest ? 'pointer' : 'default' },
   });
   return (
     <>
-    <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Where your money came from and where it went">
-      {L.map((x) => <path key={'l' + x.name} d={band(LX + BAR, x.y, x.y + x.hgt, HX, x.hy, x.hy + x.hh)} fill={x.color} opacity={op(`l:${x.name}`)} {...on('l', x)} />)}
-      {R.map((x) => <path key={'r' + x.name} d={band(HX + 16, x.hy, x.hy + x.hh, RX, x.y, x.y + x.hgt)} fill={x.color} opacity={op(`r:${x.name}`)} {...on('r', x)} />)}
-      <rect x={HX} y={hubTop} width="16" height={hub} rx="3" style={{ fill: 'var(--hub)' }} />
+    <svg className="chart sankey" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Where your money came from and where it went">
+      {/* The streams draw in once, left to right (the flow itself is the motion); reduced-motion shows them at once. */}
+      <defs><clipPath id="sankey-draw"><rect className="sankey-draw" x="0" y="0" width={W} height={H} /></clipPath></defs>
+      <g clipPath="url(#sankey-draw)">
+        {L.map((x) => <path key={'l' + x.name} className="ribbon" d={band(LX + BAR, x.y, x.y + x.hgt, HX, x.hy, x.hy + x.hh)} fill={x.color} opacity={op(`l:${x.name}`)} {...on('l', x)} />)}
+        {R.map((x) => <path key={'r' + x.name} className="ribbon" d={band(HX + HW, x.hy, x.hy + x.hh, RX, x.y, x.y + x.hgt)} fill={x.color} opacity={op(`r:${x.name}`)} {...on('r', x)} />)}
+      </g>
+      <rect x={HX} y={hubTop} width={HW} height={hub} rx={HW / 2} style={{ fill: 'var(--ink-dot)' }} />
+      <text x={W / 2} y={hubTop - 18} textAnchor="middle" className="fl hubname">{f.label ?? 'This period'}</text>
+      <text x={W / 2} y={hubTop - 5} textAnchor="middle" className="amtsvg">{usd(total)} in</text>
       {L.map((x) => (
         <g key={'ln' + x.name}>
-          <rect x={LX} y={x.y} width={BAR} height={x.hgt} rx="2" fill={x.color} {...on('l', x)} />
+          <rect x={LX} y={x.y} width={BAR} height={x.hgt} rx={Math.min(BAR / 2, x.hgt / 2)} fill={x.color} {...on('l', x)} />
           <text x={LX - 8} y={x.mid - 2} textAnchor="end" className={`fl${x.key ? ' click' : ''}`}
             onClick={x.key ? () => rename(x.key, x.name) : undefined}><title>{x.key ? 'Click to rename' : x.name}</title>{short(x.name)}</text>
           <text x={LX - 8} y={x.mid + 11} textAnchor="end">{usd2(x.value)}</text>
@@ -82,7 +98,7 @@ function Sankey({ f, rename }) {
       ))}
       {R.map((x) => (
         <g key={'rn' + x.name}>
-          <rect x={RX} y={x.y} width={BAR} height={x.hgt} rx="2" fill={x.color} {...on('r', x)} />
+          <rect x={RX} y={x.y} width={BAR} height={x.hgt} rx={Math.min(BAR / 2, x.hgt / 2)} fill={x.color} {...on('r', x)} />
           <text x={RX + BAR + 8} y={x.mid - 2} className="fl" {...on('r', x)}>{short(x.name)}</text>
           <text x={RX + BAR + 8} y={x.mid + 11}>{usd2(x.value)} · {pctOf(x.value, total)}</text>
         </g>
@@ -142,7 +158,7 @@ export default function Flow() {
               {f.moved > 0 && <span>Moved between your accounts <b className="muted">{usd2(f.moved)}</b></span>}
             </div>
             {view === 'groups'
-              ? (f.income + f.spending > 0 ? <div className="flowchart"><Sankey f={f} rename={rename} /></div> : <div className="empty">No income or spending in this period.</div>)
+              ? (f.income + f.spending > 0 ? <div className="flowchart"><Sankey key={sel} f={{ ...f, label: period }} rename={rename} /></div> : <div className="empty">No income or spending in this period.</div>)
               : acc ? <div className="flowchart"><AccountFlow data={acc} rename={rename} /></div> : <Skeleton h={420} r={12} />}
             {view === 'accounts' && <p className="small muted foot">
               Transfers going both ways between two accounts are shown as the net amount. "Kept in accounts" and "From account balances"
