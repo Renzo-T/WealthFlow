@@ -7,7 +7,7 @@ import { cashFlow, topCategories, allocation, upcoming, flow, accountFlow, holdi
 import { classify, CATEGORIES, GROUPS, NOT_SPENDING, pickerGroups, peerOf, SPEND_SQL, reviewSince, historyStart, historyCapped } from '../categories.js';
 import { describe } from '../describe.js';
 import { accountHistory } from '../summary.js';
-import { monthSpread } from '../spread.js';
+import { monthSpread, monthReplay } from '../spread.js';
 import { bills, calendar, seriesKey, freeToSpend, paycheckCandidates, paycheckRule, markPaycheckHandled } from '../recurring.js';
 import { budgetMonth } from '../budget.js';
 import { whatChanged, groupChanges, frequentSpend, watchlist, addWatch, topMerchants } from '../watch.js';
@@ -221,6 +221,11 @@ router.get('/investments/summary', (_req, res) => res.json(investmentSummary()))
 router.get('/month-spread', (req, res) => {
   const m = /^\d{4}-\d{2}$/.test(req.query.month ?? '') ? req.query.month : new Date().toLocaleDateString('en-CA').slice(0, 7);
   res.json(monthSpread(m));
+});
+// Money flow's month replay: cash in everyday accounts day by day, with paydays and bills (spread.js).
+router.get('/month-replay', (req, res) => {
+  const m = /^\d{4}-\d{2}$/.test(req.query.month ?? '') ? req.query.month : new Date().toLocaleDateString('en-CA').slice(0, 7);
+  res.json(monthReplay(m));
 });
 router.get('/bills/calendar', (req, res) => {
   const m = /^\d{4}-\d{2}$/.test(req.query.month ?? '') ? req.query.month : new Date().toLocaleDateString('en-CA').slice(0, 7);

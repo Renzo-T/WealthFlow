@@ -3,7 +3,7 @@ import { api } from './api.js';
 import { usd2, usd, signed, label, shortDate, SERIES, tint } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
-import { Panel, PageHeader, Skeleton, Hover, TipList, Repeat, Close } from './ui.jsx';
+import { Panel, PageHeader, Skeleton, Hover, TipList, Repeat, Close, tipText } from './ui.jsx';
 
 const txIcon = (t) => (t.to_account ? { group: t.shown_grp === 'Transfer' ? 'Transfer' : t.shown_grp, kind: t.shown_grp === 'Transfer' ? 'swap' : undefined }
   : { group: t.shown_grp ?? t.grp, sub: t.shown ?? t.category });
@@ -137,8 +137,8 @@ function PeoplePanel({ data, cats, reload }) {
               <span className="small muted">{shortDate(r.date)} · {r.amount < 0 ? 'paid you' : 'you paid'}</span></span>
             <span className={`tamt${r.amount < 0 ? ' good' : ''}`}>{signed(-r.amount)}</span>
             <span className="peeract">
-              {r.amount < 0 && best && <button className="btn sm" onClick={() => paidBack(r, best.id)} title={`${best.name}, ${shortDate(best.date)}: ${usd2(best.amount)}`}>
-                Paid back {best.name.length > 18 ? `${best.name.slice(0, 17)}…` : best.name} {usd2(best.amount)}{best.split ? ` ÷ ${best.split}` : ''}</button>}
+              {r.amount < 0 && best && <button className="btn sm" onClick={() => paidBack(r, best.id)} title={tipText(`${best.name}, ${shortDate(best.date)}: ${usd2(best.amount)}`)}>
+                Paid back {best.name.length > 18 ? `${best.name.slice(0, 17)}…` : best.name} <span className="amt">{usd2(best.amount)}</span>{best.split ? ` ÷ ${best.split}` : ''}</button>}
               {r.amount < 0 && r.candidates.length > (best ? 1 : 0) && <select className="sm" defaultValue="" onChange={(e) => e.target.value && paidBack(r, e.target.value)} aria-label="Paid back which charge">
                 <option value="" disabled>Paid back…</option>
                 {r.candidates.map((c) => <option key={c.id} value={c.id}>{c.name} · {shortDate(c.date)} · {usd2(c.amount)}{c.split ? ` (÷ ${c.split})` : ''}</option>)}

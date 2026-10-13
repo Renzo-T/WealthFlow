@@ -131,6 +131,8 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
 - Building blocks in `web/src/ui.jsx`: `Panel` (card + header), `PageHeader`, `Amt` (amount that "Hide amounts"
   blurs), `Seal` (logo), drawn icons (`Trend`, `Chevron`, `Check`, `Close`, `Repeat`; never text glyphs as icons).
   Prefer classes over inline styles; inline styles are for data-driven colours only.
+- Money flow: the Sankey (`Flow.jsx`) plus the month replay (`MonthReplay.jsx` + `monthReplay()` in `server/spread.js`): cash in
+  everyday accounts day by day, paydays and bills that moved it, days ahead from scheduled items only.
 - Dashboard: `lead` panels (where you stand, the month spread `MonthSpread.jsx` + `server/spread.js`, the
   Needs you / Coming up / Budget sheet `Glance.jsx`) run full width; the rest pack into grid rows (`usePacked`).
 - Money (`web/src/format.js`): cents (`usd2`) for individual transactions and bills, whole dollars (`usd`) for totals,

@@ -502,3 +502,23 @@ test('backup download: named after the app, keeps 5 downloaded copies, and never
   const csv = await fetch(`${base}/transactions.csv`);
   if (csv.status === 200) assert.match(csv.headers.get('content-disposition'), /mizo-money-transactions-/);
 });
+
+test('month replay: cash in everyday accounts each day, rewound from today\'s balance, flat ahead with nothing scheduled', async () => {
+  account('sav', { subtype: 'savings', balance: 9999 }); // savings isn't everyday cash
+  const today = new Date().toLocaleDateString('en-CA'), month = today.slice(0, 7);
+  tx('chk', today, -500, 'PAYROLL ACME CORP', { primary: 'INCOME', detailed: 'INCOME_WAGES' });
+  tx('chk', today, 42.5, 'GROCER', { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_GROCERIES' });
+  tx('card', today, 80, 'DINER'); // on a card: not cash yet
+  classify();
+  const r = (await get(`/month-replay?month=${month}`)).body;
+  assert.ok(r.accounts.includes('chk') && !r.accounts.includes('sav') && !r.accounts.includes('card'));
+  assert.equal(r.days.length, new Date(+month.slice(0, 4), +month.slice(5), 0).getDate());
+  const i = r.days.findIndex((d) => d.today);
+  assert.equal(r.days[i].cash, 2500);
+  assert.equal(r.days[i].in, 500);
+  assert.equal(r.days[i].out, 42.5);
+  assert.equal(i > 0 ? r.days[i - 1].cash : r.start, 2042.5); // the day before: today's money in and out undone
+  for (const d of r.days.filter((x) => x.future)) assert.equal(d.cash, 2500); // no paydays or bills scheduled
+  assert.equal(r.low.cash, Math.min(...r.days.map((d) => d.cash).filter((c) => c != null)));
+  assert.deepEqual((await get('/month-replay?month=2999-01')).body.days, []); // a month that hasn't started
+});

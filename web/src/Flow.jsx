@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from './api.js';
 import { usd, usd2, INCOME, SERIES, NEUTRAL } from './format.js';
 import AccountFlow from './AccountFlow.jsx';
+import MonthReplay from './MonthReplay.jsx';
 import Tip, { useTip } from './Tip.jsx';
 import { Panel, PageHeader, Skeleton } from './ui.jsx';
 
@@ -174,6 +175,7 @@ export default function Flow() {
           </>
         )}
       </Panel>
+      <MonthReplay month={sel.startsWith('month=') ? sel.slice(6) : undefined} />
     </>
   );
 }

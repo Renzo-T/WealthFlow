@@ -974,3 +974,37 @@ input:hover, select:hover { border-color: var(--hub); }
 /* Changed since your last visit (Cards.jsx): a quiet note under the figure. */
 .since { display: block; }
 .since .amt { font-weight: 700; }
+
+/* The month, replayed (MonthReplay.jsx): planner columns behind one stepped cash line, stamps on their days. */
+.replaypanel .rp-read { display: grid; grid-template-columns: auto 1fr auto; align-items: end; gap: .4rem 1.6rem; padding: .2rem 0 .9rem; border-bottom: 1px solid var(--line); margin-bottom: .6rem; }
+.rp-read > div:first-child { display: grid; gap: .2rem; min-width: 15rem; }
+.rp-fig { font-size: 2rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.rp-day { display: flex; flex-wrap: wrap; gap: .25rem 1rem; align-self: end; padding-bottom: .3rem; min-height: 1.4em; }
+.rp-sum { display: flex; gap: 1.2rem; justify-self: end; padding-bottom: .3rem; }
+.rp-sum b { color: var(--ink); }
+.replaybtn { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .8rem; }
+.replaybtn:disabled { opacity: .55; cursor: default; }
+.chart.replay { animation: none; }
+.replay .rp-weekend { fill: var(--surface-2); }
+.replay .rp-today { fill: var(--soft); }
+.replay .rp-hover { fill: var(--ink); opacity: .05; }
+.replay .rp-line { fill: none; stroke: var(--blue); stroke-width: 2.5; stroke-linejoin: round; }
+.replay .rp-line.ahead { stroke-width: 2; stroke-dasharray: 5 4; opacity: .6; }
+.replay .rp-head { stroke: var(--ink); stroke-width: 1; opacity: .35; }
+.replay .rp-zero { stroke: var(--red); stroke-width: 1; opacity: .6; }
+.replay .rp-cushion { stroke: var(--line-strong); stroke-dasharray: 3 3; }
+.replay .rp-low circle { fill: var(--card); stroke: var(--ink); stroke-width: 2; }
+.replay .rp-low text { fill: var(--ink); font-weight: 700; }
+.replay text.rp-label { fill: var(--ink); font-size: 11.5px; font-weight: 600; opacity: 0; transition: opacity .3s ease-out; }
+.replay text.rp-label.on { opacity: 1; }
+.replay text.rp-label tspan { font-weight: 800; }
+.replay text.rp-label tspan.in { fill: var(--green); }
+.replay .rp-stamp rect { fill: none; stroke: var(--hub); stroke-width: 1.5; stroke-dasharray: 2.5 2; }
+.replay .rp-stamp.done rect { stroke: var(--blue); fill: var(--soft); stroke-dasharray: none; }
+.replay .rp-stamp.in rect { stroke: var(--green); }
+.replay .rp-stamp.in.done rect { fill: color-mix(in srgb, var(--green) 14%, var(--card)); }
+.replay .rp-stamp text { font-size: 9px; font-weight: 800; fill: var(--blue); }
+.replay .rp-stamp.in text { fill: var(--green); }
+.replay .rp-stamp { opacity: 0; transition: opacity .25s ease-out; }
+.replay .rp-stamp.on { opacity: 1; }
+.replay text.rp-daynum.today { fill: var(--blue); font-weight: 800; }

@@ -381,7 +381,7 @@ export function paycheckRule(cadence, last) {
 
 // Safe to spend: cash in checking-type accounts minus the bills due before your next paycheck. Payday comes from a
 // detected salary (or other regular income) schedule; without one, the next 30 days are used, and the result says so.
-const SPENDABLE = new Set(['checking', 'cash management', 'prepaid', 'paypal']);
+export const SPENDABLE = new Set(['checking', 'cash management', 'prepaid', 'paypal']);
 // Free to spend this month: what you could spend between now and the end of the month without coming up short.
 // Cash in everyday accounts, plus income still expected this month, minus bills still due this month, minus what you
 // owe on cards (already spent; card-payment bills aren't counted again), minus a cushion you choose.
