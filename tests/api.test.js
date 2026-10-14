@@ -522,3 +522,17 @@ test('month replay: cash in everyday accounts each day, rewound from today\'s ba
   assert.equal(r.low.cash, Math.min(...r.days.map((d) => d.cash).filter((c) => c != null)));
   assert.deepEqual((await get('/month-replay?month=2999-01')).body.days, []); // a month that hasn't started
 });
+
+test('getting started: once every step has been done, something new to sort doesn\'t bring the checklist back', async () => {
+  await put('/budgets/Groceries', { amount: 300 });
+  await post('/setup/home-ok');
+  await post('/bills', { name: 'Acme Corp payroll', direction: 'in', amount: 2400, rule: { kind: 'semi', a: 1, b: 15 } });
+  const steps = (await get('/setup')).body.steps;
+  assert.deepEqual(steps.filter((s) => !s.optional && !s.done).map((s) => s.key), [], 'every required step done');
+  assert.equal((await get('/setup')).body.dismissed, true);
+  tx('ven', new Date().toLocaleDateString('en-CA'), 25, 'Alex Rivera "for the thing"'); // a new payment with a person to sort
+  classify();
+  const s = (await get('/setup')).body;
+  assert.equal(s.steps.find((x) => x.key === 'sort').done, false); // still counted...
+  assert.equal(s.dismissed, true); // ...but the checklist stays away
+});

@@ -387,14 +387,17 @@ function reviewGroups() {
 router.get('/review', (_req, res) => res.json(reviewGroups()));
 
 // Getting started: a short checklist on the dashboard for a new setup. Each step is worked out from the data
-// (nothing to tick by hand except "home looks right"); it disappears when everything is done or you dismiss it.
+// (nothing to tick by hand except "home looks right"); it disappears when everything is done or you dismiss it. Once
+// every required step has been done it stays gone (setup_complete): later things to sort, like a new payment with a
+// person, show under Needs you instead of bringing the whole checklist back.
 const flag = (k) => db.prepare('SELECT value FROM meta WHERE key = ?').get(k)?.value === '1';
 router.get('/setup', (_req, res) => {
   const n = (sql, ...a) => db.prepare(sql).get(...a).n;
   const r = reviewGroups(), since = reviewSince();
   const toSort = r.in.length + r.out.length + n("SELECT COUNT(*) n FROM transactions WHERE cat_source = 'person' AND date >= ?", since);
   const banks = n('SELECT COUNT(*) n FROM items');
-  const income = bills().some((b) => b.direction === 'in' && !b.hidden && !b.ended && ['Salary', 'Income'].includes(b.category));
+  // A detected paycheck, or money coming in that you added yourself on the Bills page (those have no category).
+  const income = bills().some((b) => b.direction === 'in' && !b.hidden && !b.ended && (['Salary', 'Income'].includes(b.category) || b.source === 'manual'));
   const steps = [
     { key: 'banks', label: 'Connect your banks', done: banks > 0, detail: banks ? `${banks} connected` : 'Checking, cards, and any brokerage or retirement accounts', href: '#/accounts' },
     { key: 'sort', label: 'Sort what Mizo Money couldn\'t', done: banks > 0 && toSort === 0, detail: toSort ? `${toSort} waiting` : 'Unmatched transfers and payments with people', href: '#/transactions' },
@@ -403,7 +406,9 @@ router.get('/setup', (_req, res) => {
     { key: 'home', label: 'Check where home is', done: flag('setup_home_ok') || n('SELECT COUNT(*) n FROM home_bases') > 0, detail: 'Used to spot trips', href: '#/trips', confirm: 'Looks right' },
     { key: 'goal', label: 'Add a goal', done: n('SELECT COUNT(*) n FROM goals') > 0, detail: 'An emergency fund, a trip, a down payment', href: '#/goals', optional: true },
   ];
-  res.json({ dismissed: flag('setup_dismissed'), steps });
+  if (!flag('setup_complete') && steps.every((s) => s.optional || s.done))
+    db.prepare("INSERT INTO meta (key, value) VALUES ('setup_complete', '1') ON CONFLICT (key) DO UPDATE SET value = '1'").run();
+  res.json({ dismissed: flag('setup_dismissed') || flag('setup_complete'), steps });
 });
 router.post('/setup/:action', (req, res) => {
   const key = { dismiss: 'setup_dismissed', 'home-ok': 'setup_home_ok' }[req.params.action];
