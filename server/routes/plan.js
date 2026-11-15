@@ -17,13 +17,29 @@ router.get('/budgets', (_req, res) => {
   res.json({ items: budgetGroups(), suggestions: { count: todo.length, total: todo.reduce((s, c) => s + c.suggested, 0) } });
 });
 
-// The budget page for one month (YYYY-MM): budget, actual and remaining per category, grouped.
+// The last month you closed out (meta closed_month, YYYY-MM), or null.
+const closedMonth = () => db.prepare("SELECT value FROM meta WHERE key = 'closed_month'").get()?.value ?? null;
+
+// The budget page for one month (YYYY-MM): budget, actual and remaining per category, grouped. closed: that month
+// (or a later one) has been closed out, so the page stops offering to close it.
 router.get('/budget', (req, res) => {
   const m = /^\d{4}-\d{2}$/.test(req.query.month ?? '') ? req.query.month : iso(new Date()).slice(0, 7);
-  res.json(budgetMonth(m));
+  const closed = closedMonth();
+  res.json({ ...budgetMonth(m), closed: closed != null && closed >= m });
 });
 
 const MONTH = /^\d{4}-\d{2}$/;
+
+// Close out a finished month: records it in meta (closed_month) and nothing else. Never moves back to an earlier month.
+router.post('/budget/close', (req, res) => {
+  const m = req.body.month;
+  if (!MONTH.test(m ?? '')) return bad(res, 'Which month?');
+  if (m >= iso(new Date()).slice(0, 7)) return bad(res, 'Only a finished month can be closed out.');
+  const closed = closedMonth();
+  if (closed == null || m > closed)
+    db.prepare("INSERT INTO meta (key, value) VALUES ('closed_month', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value").run(m);
+  res.json({ ok: true, closed_month: closed != null && closed > m ? closed : m });
+});
 const setOverride = (month, item, value) => {
   const amount = value === '' || value == null ? null : num(value);
   if (amount == null) db.prepare('DELETE FROM budget_overrides WHERE month = ? AND item = ?').run(month, item);

@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { api } from './api.js';
 import { usd, usd2, shortDate, SERIES, NEUTRAL } from './format.js';
-import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, Trend } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, Trend, Est } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 
 const mon = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'short' });
@@ -11,6 +11,11 @@ const recall = (k, d) => { try { return JSON.parse(localStorage.getItem(`wf.repo
 
 // ---------- Month by month ----------
 // Each cell is shaded by how it compares with the row's biggest month, so unusual months stand out.
+// A partial month's figure is pencil (<Est>); the Hover, when there is one, sits outside so its tip still works.
+function Figure({ partial, tip, children }) {
+  const fig = partial ? <Est why="Incomplete: missing history from at least one bank.">{children}</Est> : children;
+  return tip ? <Hover className="quiet" tip={tip}>{fig}</Hover> : fig;
+}
 function Cell({ v, max, partial, current, behind, avg, title, month }) {
   const share = max > 0 ? Math.max(0, v) / max : 0;
   const empty = Math.abs(v) < 0.5;
@@ -21,7 +26,7 @@ function Cell({ v, max, partial, current, behind, avg, title, month }) {
       partial ? 'Missing history from at least one bank.' : null].filter(Boolean).join(' ') || null} /> : null;
   return (
     <td className={`r amt rcell${partial ? ' partial' : ''}${current ? ' current' : ''}`} style={{ '--share': share }}>
-      {empty ? <span className="muted">—</span> : tip ? <Hover className="quiet" tip={tip}>{usd(v)}</Hover> : usd(v)}
+      {empty ? <span className="muted">—</span> : <Figure partial={partial} tip={tip}>{usd(v)}</Figure>}
     </td>
   );
 }
@@ -72,7 +77,7 @@ function MonthTable() {
           {other.length > 0 && <><tr className="rsep"><td colSpan={d.months.length + 2}>Saving & debt</td></tr>{section(other)}</>}
         </tbody>
       </table>
-      {d.partial.some(Boolean) && <p className="small muted foot">Faded months are missing history from at least one bank, so they're incomplete and left out of the average.</p>}
+      {d.partial.some(Boolean) && <p className="small muted foot">Grey dashed figures and faded headings are months missing history from at least one bank, so they're incomplete and left out of the average.</p>}
     </Panel>
   );
 }
@@ -100,7 +105,7 @@ function Subscriptions() {
                 note={s.next ? `Next around ${shortDate(s.next)}.` : null} />}>{s.name}</Hover> : s.name}</b><span className="small muted">{s.frequency} · {s.category}{s.account ? ` · ${s.account}` : ''}{s.last ? ` · last ${shortDate(s.last)}` : ''}</span></span></span>
             <span className="r">{s.change && <Hover tip={<TipList title="Price change" rows={[['Before', usd2(s.change.from)], ['Now', usd2(s.change.to)]]} note={`Since ${shortDate(s.change.since)}`} />}>
               <span className={`pchange ${s.change.to > s.change.from ? 'up' : 'down'}`}><Trend up={s.change.to > s.change.from} /> {usd2(Math.abs(s.change.to - s.change.from))}</span></Hover>}</span>
-            <span className="r"><b className="amt">{usd2(s.amount)}</b>{s.estimate && <sup className="est">est</sup>}<div className="small muted amt"><Hover className="quiet" tip={<TipList rows={[['A month', usd2(s.monthly)], ['A year', usd2(s.yearly)]]}
+            <span className="r">{s.estimate ? <Est why="Estimate: the amount varies"><b className="amt">{usd2(s.amount)}</b></Est> : <b className="amt">{usd2(s.amount)}</b>}<div className="small muted amt"><Hover className="quiet" tip={<TipList rows={[['A month', usd2(s.monthly)], ['A year', usd2(s.yearly)]]}
               note={s.frequency === 'Monthly' ? null : `${s.frequency}, spread over the year.`} />}>{usd(s.yearly)} a year</Hover></div></span>
           </div>
         ))}
@@ -163,7 +168,7 @@ export default function Reports() {
   const pick = useCallback((t) => { setTab(t); remember('tab', t); }, []);
   return (
     <>
-      <PageHeader title="Reports" sub="Spending month by month, what you pay for on repeat, and how the year went.">
+      <PageHeader title="Reports" sub="Spending month by month, what you pay on repeat, and how the year went.">
         <div className="ranges">{TABS.map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => pick(k)}>{l}</button>)}</div>
       </PageHeader>
       <div className="mt">{tab === 'months' ? <MonthTable /> : tab === 'subscriptions' ? <Subscriptions /> : <YearInReview />}</div>

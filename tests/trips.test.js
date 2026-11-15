@@ -92,6 +92,7 @@ test('several homes at once: a purchase is away only when it is away from all of
   shop('2026-08-10', 30, 'PIKE PLACE CHOWDER', { city: 'Seattle', region: 'WA' });
   shop('2026-08-11', 20, 'SEATTLE COFFEE', { city: 'Seattle', region: 'WA' });
   shop('2026-08-12', 25, 'DICKS DRIVE-IN', { city: 'Seattle', region: 'WA' });
+  db.prepare("UPDATE items SET created_at = '2026-06-01'").run(); // review window from March, whatever today is
   classify();
   assert.equal(suggestTrips(), 1); // March was at a home; August (after it ended) was a trip
   assert.equal(tripsSummary()[0].start, '2026-08-10');

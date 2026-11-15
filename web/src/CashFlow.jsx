@@ -29,8 +29,8 @@ export default function CashFlow({ data }) {
           const x0 = L + i * gw + gw / 2;
           return (
             <g key={d.month} opacity={(d.partial ? 0.4 : 1) * (on == null || on === i ? 1 : 0.55)}>
-              <rect x={x0 - bw - 1} y={y(d.income)} width={bw} height={H - B - y(d.income)} rx="3" fill={INCOME} />
-              <rect x={x0 + 1} y={y(d.spending)} width={bw} height={H - B - y(d.spending)} rx="3" fill={SPENDING} />
+              <rect className="cf-bar" style={{ '--i': i }} x={x0 - bw - 1} y={y(d.income)} width={bw} height={H - B - y(d.income)} rx="3" fill={INCOME} />
+              <rect className="cf-bar" style={{ '--i': i }} x={x0 + 1} y={y(d.spending)} width={bw} height={H - B - y(d.spending)} rx="3" fill={SPENDING} />
               <text x={x0} y={H - 7} textAnchor="middle">{new Date(d.month + '-01T00:00').toLocaleDateString('en-US', { month: 'short' })}</text>
               <rect x={L + i * gw} y={T} width={gw} height={H - T} fill="transparent" onMouseMove={(e) => { setOn(i); show(e, <>
                 <b>{monthLabel(d.month)}</b>

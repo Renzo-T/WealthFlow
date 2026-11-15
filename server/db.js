@@ -134,6 +134,9 @@ if (!db.prepare('PRAGMA table_info(items)').all().some((c) => c.name === 'no_inv
 // Liabilities (card statements): consent, and whether the bank can't provide it.
 if (!db.prepare('PRAGMA table_info(items)').all().some((c) => c.name === 'liabilities_consented'))
   db.exec('ALTER TABLE items ADD COLUMN liabilities_consented INTEGER DEFAULT 0; ALTER TABLE items ADD COLUMN no_liabilities INTEGER DEFAULT 0;');
+// The card's purchase APR as a percent (24.99 = 24.99%), from Liabilities. NULL when the bank sends none.
+if (!db.prepare('PRAGMA table_info(card_statements)').all().some((c) => c.name === 'purchase_apr'))
+  db.exec('ALTER TABLE card_statements ADD COLUMN purchase_apr REAL');
 // Whether the user has consented to Investments on this Item (from Plaid /item/get, refreshed on every sync).
 if (!db.prepare('PRAGMA table_info(items)').all().some((c) => c.name === 'investments_consented'))
   db.exec('ALTER TABLE items ADD COLUMN investments_consented INTEGER DEFAULT 0');

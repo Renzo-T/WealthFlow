@@ -135,7 +135,8 @@ test('trips: add, rename, move a purchase on and off, delete; home bases validat
 
 // ---------- Paychecks ----------
 test('answering "how often are you paid?" adds recurring income that sets payday', async () => {
-  tx('chk', '2026-09-17', -3000, 'DIRECT DEPOSIT ACME CORP, INCDIR DEP (Cash)', { primary: 'INCOME', detailed: 'INCOME_SALARY' });
+  const recent = new Date(Date.now() - 10 * 864e5).toLocaleDateString('en-CA'); // inside the 45-day window, whatever today is
+  tx('chk', recent, -3000, 'DIRECT DEPOSIT ACME CORP, INCDIR DEP (Cash)', { primary: 'INCOME', detailed: 'INCOME_SALARY' });
   classify();
   const [c] = (await get('/bills/paychecks')).body;
   assert.ok(c, 'a paycheck to ask about');
@@ -203,6 +204,39 @@ test('rollover carries unspent money forward (overspending reduces it)', async (
   await put('/budget-rollover/Fees', { on: false });
   const off = (await get('/budget?month=2026-10')).body.expenses.flatMap((g) => g.categories).find((c) => c.category === 'Fees');
   assert.equal(off.carry, 0);
+});
+
+// ---------- Close the month ----------
+test('closing out last month: the prompt goes away, only that is recorded, and it never moves back', async () => {
+  const d = new Date(), ym = (k) => new Date(d.getFullYear(), d.getMonth() + k, 1).toLocaleDateString('en-CA').slice(0, 7);
+  const [now, last, before] = [ym(0), ym(-1), ym(-2)];
+  await put('/budgets/Groceries', { amount: 300 });
+  tx('card', `${last}-08`, 420, 'ACME GROCERY', { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_GROCERIES' });
+  classify();
+  const tables = () => ['budgets', 'budget_groups', 'budget_overrides', 'budget_rollover'].map((t) => db.prepare(`SELECT * FROM ${t}`).all());
+  const strip = ({ closed, ...b }) => b;
+  const was = { tables: tables(), last: (await get(`/budget?month=${last}`)).body, now: (await get(`/budget?month=${now}`)).body };
+  assert.equal(was.last.closed, false); // not closed yet: the page offers "Close out"
+  // Skipping it changes nothing: just looking leaves no trace.
+  assert.equal(db.prepare("SELECT COUNT(*) n FROM meta WHERE key = 'closed_month'").get().n, 0);
+
+  assert.equal((await post('/budget/close', { month: now })).status, 400); // this month isn't finished
+  assert.equal((await post('/budget/close', { month: 'last' })).status, 400);
+  const r = await post('/budget/close', { month: last });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.closed_month, last);
+  const after = { last: (await get(`/budget?month=${last}`)).body, now: (await get(`/budget?month=${now}`)).body };
+  assert.equal(after.last.closed, true); // the prompt goes away
+  assert.equal((await get(`/budget?month=${before}`)).body.closed, true); // and earlier months count as closed too
+  assert.equal(after.now.closed, false);
+  // Closing records the month and nothing else: budgets and the numbers are as they were.
+  assert.deepEqual(tables(), was.tables);
+  assert.deepEqual(strip(after.last), strip(was.last));
+  assert.deepEqual(strip(after.now), strip(was.now));
+
+  // Closing an earlier month afterwards doesn't move it back.
+  assert.equal((await post('/budget/close', { month: before })).body.closed_month, last);
+  assert.equal(db.prepare("SELECT value FROM meta WHERE key = 'closed_month'").get().value, last);
 });
 
 // ---------- Trips in the budget, rules, the "unsure" filter ----------
@@ -276,6 +310,7 @@ test('getting started: steps tick off from the data; "looks right" and hide stic
   let s = (await get('/setup')).body;
   const step = (k) => s.steps.find((x) => x.key === k);
   assert.equal(step('banks').done, true); // a bank is connected in these tests
+  assert.equal(step('banks').href, '#/networth'); // banks are connected on the merged Accounts & net worth page
   assert.equal(step('budget').done, false);
   await put('/budgets/Groceries', { amount: 300 });
   await post('/setup/home-ok');
@@ -535,4 +570,39 @@ test('getting started: once every step has been done, something new to sort does
   const s = (await get('/setup')).body;
   assert.equal(s.steps.find((x) => x.key === 'sort').done, false); // still counted...
   assert.equal(s.dismissed, true); // ...but the checklist stays away
+});
+
+test('notices setting: off by default, the three kinds and the bill threshold round-trip, a bad threshold is refused', async () => {
+  let s = (await get('/settings/notify')).body;
+  assert.equal(s.enabled, false);
+  assert.deepEqual(s.kinds, { signin: true, bill: true, free: true });
+  assert.equal(s.billMin, 200);
+  assert.equal(typeof s.supported, 'boolean');
+  // What Settings › App sends: the switch, one checkbox, the amount from a number box (a string).
+  s = (await put('/settings/notify', { enabled: true, kinds: { free: false }, billMin: '350' })).body;
+  assert.deepEqual({ enabled: s.enabled, kinds: s.kinds, billMin: s.billMin }, { enabled: true, kinds: { signin: true, bill: true, free: false }, billMin: 350 });
+  s = (await get('/settings/notify')).body;
+  assert.equal(s.kinds.free, false);
+  assert.equal(s.billMin, 350);
+  const r = await put('/settings/notify', { billMin: -1 });
+  assert.equal(r.status, 400);
+  assert.match(r.body.error_message, /0 or more/);
+  assert.equal((await get('/settings/notify')).body.billMin, 350);
+  s = (await put('/settings/notify', { enabled: false })).body;
+  assert.equal(s.enabled, false);
+  assert.equal(s.kinds.free, false); // turning it off keeps your choices for next time
+});
+
+test('card interest: the Net worth page gets the APR and a monthly estimate only for a card still carrying a balance past its due date', async () => {
+  const day = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toLocaleDateString('en-CA'); };
+  const stmt = db.prepare(`INSERT INTO card_statements (account_id, last_statement_balance, last_statement_date, next_due_date, minimum_payment,
+    last_payment_amount, last_payment_date, purchase_apr) VALUES (?,?,?,?,?,?,?,?)`);
+  const card = (id, bal) => account(id, { type: 'credit', subtype: 'credit card', balance: bal });
+  card('late', 1200); stmt.run('late', 900, day(-40), day(-15), 35, 50, day(-20), 24.99); // paid 50 of 900, due date gone
+  card('paid', 1200); stmt.run('paid', 900, day(-40), day(-15), 0, 900, day(-20), 24.99); // paid in full
+  card('noapr', 1200); stmt.run('noapr', 900, day(-40), day(-15), 35, 50, day(-20), null); // the bank sent no APR
+  card('early', 1200); stmt.run('early', 900, day(-5), day(20), 35, 0, day(-30), 24.99); // not due yet
+  const by = Object.fromEntries((await get('/networth')).body.accounts.map((a) => [a.id, a]));
+  assert.deepEqual([by.late.apr, by.late.interest_month], [24.99, 24.99]); // 1,200 × 24.99% ÷ 12
+  for (const id of ['paid', 'noapr', 'early', 'chk']) assert.deepEqual([id, by[id].apr, by[id].interest_month], [id, null, null]);
 });

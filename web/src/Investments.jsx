@@ -139,7 +139,7 @@ export default function Investments() {
 
   return (
     <>
-      <PageHeader title="Investments" sub="Holdings across your linked brokerage, retirement and HSA accounts." />
+      <PageHeader title="Investments" sub="What you hold, across brokerage, retirement and HSA accounts." />
       {pending.length > 0 && <div className="note">
         {pending.join(', ')} {pending.length > 1 ? 'are' : 'is'} connected with investment access, but Plaid hasn't sent holdings yet.
         The first download can take a few hours after connecting; Mizo Money checks again automatically.</div>}

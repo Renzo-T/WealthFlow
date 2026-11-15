@@ -3,7 +3,7 @@ import { api } from './api.js';
 import { DashboardSkeleton, Trend, Check } from './ui.jsx';
 import Cards from './Cards.jsx';
 import MonthSpread from './MonthSpread.jsx';
-import Glance from './Glance.jsx';
+import Glance, { comingCount } from './Glance.jsx';
 import NetWorthChart from './NetWorthChart.jsx';
 import AssetAllocation from './AssetAllocation.jsx';
 import Upcoming from './Upcoming.jsx';
@@ -17,7 +17,7 @@ import { defaultLayout, mergeLayout } from './layout.js';
 
 // Every dashboard panel, in default order. `span` is its width in a 3-column row (3 = full width); `rail` means it
 // sits in the right-hand column on wide screens by default. To add a panel: add it here; saved layouts pick it
-// up at its default position automatically. `lead` panels (where you stand, the month spread) run full width above the
+// up at its default position automatically. `hidden` panels start hidden for new or reset layouts only (a saved layout keeps what it shows). `lead` panels (where you stand, the month spread) run full width above the
 // rest, side column included, in your order.
 export const PANELS = [
   { id: 'cards', name: 'Where you stand', span: 3, lead: true, render: ({ s, extra }) => <Cards s={s} safe={extra.safe} budgets={extra.budgets} /> },
@@ -25,16 +25,16 @@ export const PANELS = [
   { id: 'glance', name: 'Needs you, coming up, budget', span: 3, lead: true, render: ({ extra }) => <Glance todo={extra.todo} upcoming={extra.upcoming} budgets={extra.budgets} /> },
   { id: 'insight', name: 'What changed', span: 3, render: ({ extra }) => <InsightStrip changed={extra.insights?.changed} todo={extra.todo} /> },
   { id: 'networth', name: 'Net worth chart', span: 2, render: ({ s }) => <NetWorthChart history={s.history} /> },
-  { id: 'allocation', name: 'Asset allocation', span: 1, render: ({ extra }) => <AssetAllocation a={extra.allocation} /> },
-  { id: 'investments', name: 'Investments', span: 1, render: ({ extra }) => <InvestmentsCard d={extra.invest} /> },
-  { id: 'upcoming', name: 'Upcoming bills & income', span: 1, rail: true, render: ({ extra }) => <Upcoming items={extra.upcoming} calendar={false} skip={5} /> },
-  { id: 'safe', name: 'Free to spend', span: 1, rail: true, render: ({ extra, reload }) => <SafeToSpendPanel d={extra.safe} reload={reload} /> },
+  { id: 'allocation', hidden: true, name: 'Asset allocation', span: 1, render: ({ extra }) => <AssetAllocation a={extra.allocation} /> },
+  { id: 'investments', hidden: true, name: 'Investments', span: 1, render: ({ extra }) => <InvestmentsCard d={extra.invest} /> },
+  { id: 'upcoming', hidden: true, name: 'Upcoming bills & income', span: 1, rail: true, render: ({ extra }) => <Upcoming items={extra.upcoming} calendar={false} skip={comingCount(extra.todo)} /> },
+  { id: 'safe', hidden: true, name: 'Free to spend', span: 1, rail: true, render: ({ extra, reload }) => <SafeToSpendPanel d={extra.safe} reload={reload} /> },
   { id: 'recent', name: 'Recent transactions', span: 1, render: ({ extra }) => <RecentTransactions items={extra.recent} /> },
   { id: 'cashflow', name: 'Cash flow', span: 1, render: ({ extra }) => <CashFlow data={extra.cashflow} /> },
-  { id: 'top', name: 'Top spending', span: 1, rail: true, render: ({ extra }) => <Categories c={extra.categories} changes={extra.insights?.groupChanges} /> },
+  { id: 'top', hidden: true, name: 'Top spending', span: 1, rail: true, render: ({ extra }) => <Categories c={extra.categories} changes={extra.insights?.groupChanges} /> },
   { id: 'watchlist', name: 'Watchlist', span: 2, render: ({ extra, reload }) => <WatchlistPanel data={extra.watchlist} reload={reload} /> },
-  { id: 'frequent', name: 'Frequent spending', span: 1, render: ({ extra }) => <FrequentPanel items={extra.insights?.frequent ?? []} early={extra.insights?.changed?.reason === 'early'} /> },
-  { id: 'projection', name: 'Net worth projection', span: 2, render: ({ s, extra }) => <ProjectionPanel s={s} cashflow={extra.cashflow} /> },
+  { id: 'frequent', hidden: true, name: 'Frequent spending', span: 1, render: ({ extra }) => <FrequentPanel items={extra.insights?.frequent ?? []} early={extra.insights?.changed?.reason === 'early'} /> },
+  { id: 'projection', hidden: true, name: 'Net worth projection', span: 2, render: ({ s, extra }) => <ProjectionPanel s={s} cashflow={extra.cashflow} /> },
   { id: 'goals', name: 'Goals', span: 2, render: ({ extra }) => <GoalsPanel items={extra.goals} /> },
 ];
 const DEFAULT = defaultLayout(PANELS);

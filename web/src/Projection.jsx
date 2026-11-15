@@ -13,13 +13,17 @@ export function Legend({ series }) {
   return <div className="legend">{[...series].reverse().map((s) => <span key={s.key}><i className="dot" style={{ background: s.color }} />{s.label} ({s.rate}%)</span>)}</div>;
 }
 
-export function ProjectionChart({ series, years }) {
+export function ProjectionChart({ series, years, target = null, real = true }) {
   const [hover, setHover] = useState(null);
   const [ref, W] = useWidth(720);
   const all = series.flatMap((s) => s.values);
   const lo = Math.min(0, ...all);
   let hi = Math.max(...all);
   hi = hi === lo ? lo + 1 : hi + (hi - lo) * 0.05;
+  // The target rule is drawn only when it is within reach of the lines (up to a quarter above the top one);
+  // a target far out of range would flatten the scenarios, and the table says "not within N years" for it.
+  const showTarget = target > lo && target <= Math.max(...all) * 1.25;
+  if (showTarget && target > hi) hi = target + (target - lo) * 0.05;
   const x = (i) => L + (i * (W - L - R)) / years;
   const y = (v) => T + ((hi - v) * (H - T - B)) / (hi - lo);
   const path = (vals) => vals.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
@@ -36,10 +40,17 @@ export function ProjectionChart({ series, years }) {
   return (
     <>
     <div ref={ref} />
-    <svg className="chart" width={W} height={H} viewBox={`0 0 ${W} ${H}`} onMouseMove={move} onMouseLeave={() => setHover(null)} role="img" aria-label="Net worth projection">
+    <svg className="chart" width={W} height={H} viewBox={`0 0 ${W} ${H}`} onMouseMove={move} onMouseLeave={() => setHover(null)} role="img" aria-label={`Net worth projection in ${real ? "today's" : 'future'} dollars`}>
       {[0, 1, 2, 3, 4].map((k) => { const v = lo + ((hi - lo) * k) / 4; return <g key={k}><line className="grid" x1={L} x2={W - R} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{compact.format(v)}</text></g>; })}
       {labels.map((i) => <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? 'start' : i === years ? 'end' : 'middle'}>{i === 0 ? 'Now' : `${i}y`}</text>)}
-      {series.map((s) => <path key={s.key} d={path(s.values)} fill="none" stroke={s.color} strokeWidth="2.5" strokeLinejoin="round" />)}
+      {showTarget && <g className="tgt">
+        <line x1={L} x2={W - R} y1={y(target)} y2={y(target)} />
+        <text x={W - R} y={y(target) - 5} textAnchor="end">Target {compact.format(target)}</text>
+      </g>}
+      <g className="draw">
+        <path className="band" d={band} />
+        {series.map((s) => <path key={s.key} d={path(s.values)} fill="none" stroke={s.color} strokeWidth="2.5" strokeLinejoin="round" />)}
+      </g>
       {hover != null && <g>
         <line className="grid" x1={x(hover)} x2={x(hover)} y1={T} y2={H - B} />
         {series.map((s) => <circle key={s.key} cx={x(hover)} cy={y(s.values[hover])} r="4.5" fill={s.color} style={{ stroke: 'var(--card)' }} strokeWidth="2" />)}
@@ -59,12 +70,13 @@ export function ProjectionChart({ series, years }) {
 
 export function ProjectionPanel({ s, cashflow, wide }) {
   const [a] = useAssumptions();
-  const { series, monthly, avg, years } = buildSeries(a, s.netWorth.value, cashflow);
+  const { series, monthly, avg, years, inflation, real, target } = buildSeries(a, s.netWorth.value, cashflow);
   return (
-    <Panel className={wide ? 'wide' : ''} title="Net worth projection" actions={<><Legend series={series} /><a href="#/forecast">Adjust</a></>}>
-      <ProjectionChart series={series} years={years} />
+    <Panel className={wide ? 'wide' : ''} title="Net worth projection" actions={<><Legend series={series} /><a href="#/plan">Adjust</a></>}>
+      <ProjectionChart series={series} years={years} target={target} real={real} />
       <p className="small muted foot amt">
-        Adds {usd(monthly)} a month{a.monthly !== '' ? '' : avg == null ? ' (no full month of data from every bank yet)' : ` (your recent average is ${usd(avg)})`}. A projection, not a prediction.
+        Adds {usd(monthly)} a month{a.monthly !== '' ? '' : avg == null ? ' (no full month of data from every bank yet)' : ` (your recent average is ${usd(avg)})`}.
+        {' '}{real ? `In today's dollars, at ${inflation}% inflation.` : 'In future dollars, with no allowance for inflation.'} A projection, not a prediction.
       </p>
     </Panel>
   );

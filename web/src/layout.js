@@ -1,7 +1,8 @@
 // Dashboard layout logic, kept free of React so it can be tested (tests/layout.test.js).
-// A layout is { order: [ids], hidden: [ids], rail: [ids] }; panels are [{ id, rail? }] in default order.
+// A layout is { order: [ids], hidden: [ids], rail: [ids] }; panels are [{ id, rail?, hidden? }] in default order.
+// `hidden: true` on a panel means it starts hidden for a new or reset layout (it stays listed under Customize).
 
-export const defaultLayout = (panels) => ({ order: panels.map((p) => p.id), hidden: [], rail: panels.filter((p) => p.rail).map((p) => p.id) });
+export const defaultLayout = (panels) => ({ order: panels.map((p) => p.id), hidden: panels.filter((p) => p.hidden).map((p) => p.id), rail: panels.filter((p) => p.rail).map((p) => p.id) });
 
 // A saved layout with any panels it doesn't know about added (just before the panel that follows them by default,
 // or at the end if nothing does) and ids that no longer exist dropped, so a saved layout never hides new features.
@@ -19,7 +20,8 @@ export function mergeLayout(saved, panels) {
   const isNew = (id) => !(saved.order ?? []).includes(id);
   return {
     order,
-    hidden: (saved.hidden ?? []).filter((id) => known.has(id)),
+    // Saved panels keep whatever you chose; only panels new to the saved layout follow their own default.
+    hidden: [...(saved.hidden ?? []).filter((id) => known.has(id)), ...panels.filter((p) => p.hidden && isNew(p.id)).map((p) => p.id)],
     rail: [...(saved.rail ?? []).filter((id) => known.has(id)), ...panels.filter((p) => p.rail && isNew(p.id)).map((p) => p.id)],
   };
 }

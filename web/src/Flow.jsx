@@ -134,8 +134,8 @@ export default function Flow() {
   return (
     <>
       <PageHeader title="Money flow" sub={view === 'groups'
-        ? 'Where your money came from and where it went, grouped like your budget. Transfers between your own accounts are left out.'
-        : 'How money moved: where income landed and which of your accounts it passed through. Hover a band for the amount; switch to By budget group to see what the spending was.'} />
+        ? 'Income and spending by budget group, leaving out transfers between your accounts.'
+        : 'How money moved from income, through your accounts, to spending and savings.'} />
       <Panel className="mt" actions={<>
         <div className="ranges">
           <button className={view === 'groups' ? 'on' : ''} onClick={() => pick('groups')}>By budget group</button>

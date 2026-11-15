@@ -13,6 +13,7 @@ import { budgetMonth } from '../budget.js';
 import { whatChanged, groupChanges, frequentSpend, watchlist, addWatch, topMerchants } from '../watch.js';
 
 import { assignTrips } from '../trips.js';
+import { cardInterest } from '../debt.js';
 const router = Router();
 
 router.get('/items', (_req, res) =>
@@ -46,6 +47,7 @@ router.get('/networth', (_req, res) => {
   const accounts = db.prepare(`SELECT a.*, a.name AS bank_name, ${ACCT} AS name, i.institution FROM accounts a
     LEFT JOIN items i ON i.id = a.item_id ORDER BY i.institution, COALESCE(a.nickname, a.name)`).all();
   const hist = accountHistory(accounts, 30);
+  const interest = cardInterest(); // only cards carrying a balance past their due date, with an APR from the bank
   res.json({
     accounts: accounts.map((a) => {
       const h = hist[a.id] ?? [];
@@ -53,7 +55,7 @@ router.get('/networth', (_req, res) => {
       // daily snapshot there's no history: no change to report yet, just when tracking started.
       const realFrom = h.find((p) => !p.est)?.date ?? null;
       const untracked = a.type === 'investment' && (!realFrom || realFrom > h[0]?.date);
-      return { ...a, spark: untracked ? h.filter((p) => !p.est).map((p) => p.balance) : h.map((p) => p.balance), estimated: h.some((p) => p.est),
+      return { ...a, apr: interest[a.id]?.apr ?? null, interest_month: interest[a.id]?.interest_month ?? null, spark: untracked ? h.filter((p) => !p.est).map((p) => p.balance) : h.map((p) => p.balance), estimated: h.some((p) => p.est),
         change: untracked ? null : h.length > 1 ? h.at(-1).balance - h[0].balance : 0, tracking_since: untracked ? realFrom ?? new Date().toLocaleDateString('en-CA') : null };
     }),
     manual: db.prepare('SELECT * FROM manual_assets ORDER BY id').all(),
@@ -61,7 +63,7 @@ router.get('/networth', (_req, res) => {
   });
 });
 
-// The Accounts page: each account's activity. Money in/out this month is the account's own movements (transfers
+// The Net worth page's account details: each account's activity. Money in/out this month is the account's own movements (transfers
 // included, split parts not double-counted); first/last show how far back the bank's history goes.
 router.get('/accounts/activity', (_req, res) => {
   const month = new Date().toLocaleDateString('en-CA').slice(0, 7);
@@ -399,12 +401,12 @@ router.get('/setup', (_req, res) => {
   // A detected paycheck, or money coming in that you added yourself on the Bills page (those have no category).
   const income = bills().some((b) => b.direction === 'in' && !b.hidden && !b.ended && (['Salary', 'Income'].includes(b.category) || b.source === 'manual'));
   const steps = [
-    { key: 'banks', label: 'Connect your banks', done: banks > 0, detail: banks ? `${banks} connected` : 'Checking, cards, and any brokerage or retirement accounts', href: '#/accounts' },
+    { key: 'banks', label: 'Connect your banks', done: banks > 0, detail: banks ? `${banks} connected` : 'Checking, cards, and any brokerage or retirement accounts', href: '#/networth' },
     { key: 'sort', label: 'Sort what Mizo Money couldn\'t', done: banks > 0 && toSort === 0, detail: toSort ? `${toSort} waiting` : 'Unmatched transfers and payments with people', href: '#/transactions' },
     { key: 'paycheck', label: 'Tell it about your paycheck', done: income && paycheckCandidates().length === 0, detail: 'So Upcoming and Free to spend know payday', href: '#/bills' },
     { key: 'budget', label: 'Set up a budget', done: n('SELECT (SELECT COUNT(*) FROM budgets) + (SELECT COUNT(*) FROM budget_groups WHERE amount IS NOT NULL) n') > 0, detail: 'Suggestions are filled in from your bills and spending', href: '#/budget' },
     { key: 'home', label: 'Check where home is', done: flag('setup_home_ok') || n('SELECT COUNT(*) n FROM home_bases') > 0, detail: 'Used to spot trips', href: '#/trips', confirm: 'Looks right' },
-    { key: 'goal', label: 'Add a goal', done: n('SELECT COUNT(*) n FROM goals') > 0, detail: 'An emergency fund, a trip, a down payment', href: '#/goals', optional: true },
+    { key: 'goal', label: 'Add a goal', done: n('SELECT COUNT(*) n FROM goals') > 0, detail: 'An emergency fund, a trip, a down payment', href: '#/plan', optional: true },
   ];
   if (!flag('setup_complete') && steps.every((s) => s.optional || s.done))
     db.prepare("INSERT INTO meta (key, value) VALUES ('setup_complete', '1') ON CONFLICT (key) DO UPDATE SET value = '1'").run();

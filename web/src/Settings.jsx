@@ -21,6 +21,37 @@ function HistorySetting() {
   );
 }
 
+// "Tell me when something needs me" (Windows): a notification after a sync for the few things that can't wait.
+// Off by default. The words never include an amount or account number, since they can show on the lock screen.
+function NotifySetting() {
+  const [n, setN] = useState(null), [err, setErr] = useState('');
+  useEffect(() => { api('/settings/notify').then(setN).catch(() => {}); }, []);
+  if (!n?.supported) return null;
+  const save = async (body) => {
+    setErr('');
+    const r = await api('/settings/notify', { method: 'PUT', body: JSON.stringify(body) });
+    if (r.error_message) setErr(r.error_message); else setN(r);
+  };
+  const kind = (k) => ({ type: 'checkbox', checked: n.kinds[k], onChange: (e) => save({ kinds: { [k]: e.target.checked } }) });
+  return <>
+    <label className="check mt"><input type="checkbox" checked={n.enabled} onChange={(e) => save({ enabled: e.target.checked })} />
+      Tell me when something needs me</label>
+    <p className="small muted">After it checks your banks, Mizo Money can show a Windows notification for these, once each. The notification
+      never shows an amount, a balance or an account number, because it can appear on your lock screen.</p>
+    {n.enabled && <>
+      <label className="check"><input {...kind('signin')} /> A bank needs me to sign in again</label>
+      <div className="row wraprow mid">
+        <label className="check"><input {...kind('bill')} /> A large bill is due tomorrow</label>
+        <span className="small muted">Large means $<input className="mini" type="number" min="0" step="50" defaultValue={n.billMin} key={n.billMin}
+          aria-label="Smallest bill to tell me about" onBlur={(e) => Number(e.target.value) !== n.billMin && save({ billMin: e.target.value })}
+          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} /> or more</span>
+      </div>
+      <label className="check"><input {...kind('free')} /> Free to spend drops below zero</label>
+    </>}
+    {err && <p className="err">{err}</p>}
+  </>;
+}
+
 // The app: installing it as its own window (Chrome/Edge), and starting it when you sign in (Windows).
 const standalone = () => window.matchMedia('(display-mode: standalone)').matches;
 function AppSetting() {
@@ -68,6 +99,7 @@ function AppSetting() {
         <p className="small muted">When Mizo Money isn't running, the window shows a Start button instead of only saying so. Your browser asks
           before starting it the first time (you can let it always allow).
           {a.launcher.enabled && !a.launcher.here && ' It currently starts a copy in another folder; turn this off and on to use this one.'}</p>
+        <NotifySetting />
       </> : <p className="small muted">Starting at sign-in is only set up for Windows so far. Run <code>npm run app</code> to start it.</p>}
       {err && <p className="err">{err}</p>}
       <div className="row wraprow mid">
@@ -124,9 +156,9 @@ export default function Settings({ onChange }) {
   return (
     <>
       <PageHeader title="Settings" sub="Connections and backups for this copy of Mizo Money." />
-      <Panel className="mt" title={<>Banks <span className="badge">{sys?.plaidEnv ?? '…'}</span></>} actions={<a className="btn" href="#/accounts">Open Accounts</a>}>
+      <Panel className="mt" title={<>Banks <span className="badge">{sys?.plaidEnv ?? '…'}</span></>} actions={<a className="btn" href="#/networth">Open Net worth</a>}>
         <p className="small muted">{meta ? `${meta.items.length} of ${meta.max} Plaid connections used. ` : ''}Connecting, reconnecting and removing banks, and renaming or hiding
-          accounts, are on the Accounts page.</p>
+          accounts, are on the Net worth page (Accounts & net worth).</p>
       </Panel>
       <PlaidKeys banks={meta?.items.length ?? 0} onChange={() => api('/system').then(setSys)} />
       <AppSetting />

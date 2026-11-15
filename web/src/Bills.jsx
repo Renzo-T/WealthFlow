@@ -4,6 +4,7 @@ import { usd2, shortDate } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 import BillsCalendar from './BillsCalendar.jsx';
+import MonthSpread from './MonthSpread.jsx';
 import { Panel, PageHeader, PageSkeleton, Hover, TipList } from './ui.jsx';
 
 const SOURCE = { detected: 'Detected', plaid: 'From Plaid', card: 'Card statement', manual: 'Added by you' };
@@ -149,8 +150,9 @@ export default function Bills() {
 
   return (
     <>
-      <PageHeader title="Bills" sub="Recurring bills, autopays and income: found in your transactions, from Plaid, from card statements, or added by you. Your edits always win.">
+      <PageHeader title="Bills" sub="From your transactions, statements, Plaid or your own entries; your edits always win.">
         <button className="btn primary" onClick={() => setAdding(!adding)}>Add a bill</button></PageHeader>
+      <div className="mt"><MonthSpread month={new Date().toLocaleDateString('en-CA').slice(0, 7)} compact /></div>
       {adding && <Panel className="mt" title="Add a bill or recurring income">
         <Editor adding onSave={add} onCancel={() => setAdding(false)} /></Panel>}
       <PaycheckPrompt onDone={load} />
@@ -173,7 +175,7 @@ export default function Bills() {
       {showHidden && <section className="card scroll"><table className="t"><tbody>{hidden.map(row)}</tbody></table></section>}
       <p className="small muted mt">
         Detected schedules account for weekends and bank holidays: a bill due on a Saturday usually posts the next business day.
-        "~" amounts are estimates. Card payments use your statement balance once your bank shares card statements.</p>
+        Amounts in grey with a dashed underline are estimates. Card payments use your statement balance once your bank shares card statements.</p>
     </>
   );
 }

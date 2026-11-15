@@ -10,6 +10,7 @@ import { listBackups } from '../backup.js';
 import { assignTrips } from '../trips.js';
 import { startupStatus, setStartup, launcherStatus, setLauncher } from '../startup.js';
 import { updateStatus, refreshUpdate, setChecks } from '../updates.js';
+import { notifySettings, setNotifySettings } from '../notify.js';
 const router = Router();
 
 // How this copy is running ('app' = npm run app / started at sign-in; 'dev' = npm start), and starting at sign-in.
@@ -54,6 +55,12 @@ router.put('/settings/dashboard', (req, res) => {
   if (layout) db.prepare("INSERT INTO meta (key, value) VALUES ('dashboard_layout', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(JSON.stringify(layout));
   else db.prepare("DELETE FROM meta WHERE key = 'dashboard_layout'").run();
   res.json({ ok: true });
+});
+
+// "Tell me when something needs me" (notify.js): off by default; { enabled, kinds: { signin, bill, free }, billMin }.
+router.get('/settings/notify', (_req, res) => res.json(notifySettings()));
+router.put('/settings/notify', (req, res) => {
+  try { res.json(setNotifySettings(req.body ?? {})); } catch (e) { res.status(400).json({ error_message: e.message }); }
 });
 
 router.get('/backup/download', async (_req, res) => {

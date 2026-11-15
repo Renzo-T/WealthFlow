@@ -2,6 +2,8 @@
 
 A local, single-user finance dashboard on Plaid's free Trial plan: net worth, spending, budgets, goals, holdings, and a projection. Everything runs on your machine, and your data stays in a local SQLite file.
 
+<img alt="" src="docs/art/banner.jpg">
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dashboard-dark.png">
   <img alt="The Mizo Money dashboard: net worth, this month's income and spending, upcoming bills, asset allocation and cash flow" src="docs/screenshots/dashboard.png">

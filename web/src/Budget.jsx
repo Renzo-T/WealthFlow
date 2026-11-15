@@ -4,13 +4,15 @@ import Progress from './Progress.jsx';
 import { usd, label, usd2 } from './format.js';
 import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, amountsHidden, Chevron, Repeat, Close } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
+import CloseMonth from './CloseMonth.jsx';
+import MonthSpread from './MonthSpread.jsx';
 
 export function BudgetsPanel({ items, suggestions }) {
   const top = [...items].sort((a, b) => b.spent / b.amount - a.spent / a.amount).slice(0, 4);
   return (
     <Panel title="Budgets" actions={<a href="#/budget">Manage</a>}>
       {top.length === 0 && (
-        <EmptyState icon="plan" title="Plan your month" actions={<a className="btn primary linkbtn-solid" href="#/budget">Set up a budget</a>}>
+        <EmptyState art="budget" title="Plan your month" actions={<a className="btn primary linkbtn-solid" href="#/budget">Set up a budget</a>}>
           {suggestions?.count ? <>From your bills and recent spending, Mizo Money can fill in <b className="amt">{usd(suggestions.total)}</b> a month across {suggestions.count} categories. Adjust anything after.</>
             : 'Set amounts for categories like Groceries or Rent, and see how you\'re tracking as the month goes.'}
         </EmptyState>)}
@@ -26,6 +28,8 @@ export function BudgetsPanel({ items, suggestions }) {
 
 const monthName = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 const thisMonth = () => new Date().toLocaleDateString('en-CA').slice(0, 7);
+// From the 1st to the 10th, last month can be closed out (the sheet in CloseMonth.jsx).
+const closeWindow = (m) => { const d = new Date(); return d.getDate() <= 10 && m === new Date(d.getFullYear(), d.getMonth() - 1, 1).toLocaleDateString('en-CA').slice(0, 7); };
 // Remembered per browser: collapsed cards and how expenses are grouped. Storage can be unavailable; then defaults.
 const remember = (k, v) => { try { localStorage.setItem(`wf.budget.${k}`, JSON.stringify(v)); } catch { /* not available */ } };
 const recall = (k, d) => { try { return JSON.parse(localStorage.getItem(`wf.budget.${k}`)) ?? d; } catch { return d; } };
@@ -196,8 +200,10 @@ export default function Budget() {
   const [b, setB] = useState(null);
   const [view, setView] = useState(() => recall('view', 'group'));
   const [scope, setScope] = useState('all'); // edits apply to every month, or only this one
+  const [closing, setClosing] = useState(false); // the close-out sheet is open
   const load = useCallback(async () => setB(await api(`/budget?month=${month}`)), [month]);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => setClosing(false), [month]);
   if (!b) return <PageSkeleton />;
 
   // Edits go to every month, or (scope "month") only the month on screen.
@@ -246,7 +252,7 @@ Budgets apply to every month, so this clears them everywhere. Suggestions stay, 
 
   return (
     <>
-      <PageHeader title="Budget" sub="Plan each month by category. Amounts apply to every month unless you set one for a single month (&quot;Only …&quot;).">
+      <PageHeader title="Budget" sub="Amounts repeat every month unless you set one for a single month.">
         <div className="monthnav">
           <button className="iconbtn" onClick={() => setMonth(b.prev)} aria-label="Previous month"><Chevron dir="left" /></button>
           <b>{monthName(month)}</b>
@@ -258,6 +264,12 @@ Budgets apply to every month, so this clears them everywhere. Suggestions stay, 
           </span>
         </div>
       </PageHeader>
+      <div className="mt"><MonthSpread month={month} compact /></div>
+      {closeWindow(month) && b.month === month && (closing ? <CloseMonth b={b} onClose={() => { setClosing(false); load(); }} />
+        : !b.closed && <section className="card closeprompt mt">
+          <span><b>{monthName(month).split(' ')[0]} is over.</b> <span className="muted">Sort what's left, see how it went and set up {monthName(b.next).split(' ')[0]}.</span></span>
+          <button className="btn primary" onClick={() => setClosing(true)}>Close out {monthName(month).split(' ')[0]}</button>
+        </section>)}
       <div className="budgetgrid mt">
         <div className="bcol">
           <Strip title="Income" />

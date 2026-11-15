@@ -1,8 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from './api.js';
 import { usd, usd2, label, SERIES, NEUTRAL, shortDate, tint } from './format.js';
-import { Panel, PageHeader, PageSkeleton, Hover, TipList, tipText, Trend } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, tipText, Trend, Est } from './ui.jsx';
 import NetWorthChart from './NetWorthChart.jsx';
+import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
+
+// Accounts & net worth: the net worth chart and summary, every account by type (click one for this month's activity
+// and its settings), each bank's connection with what to do about it, and assets Plaid can't see.
+
+const monthName = new Date().toLocaleDateString('en-US', { month: 'long' });
 
 // Rename in place: saves on Enter or when the field loses focus. Empty restores the bank's name.
 export function Nickname({ a, saved }) {
@@ -86,14 +92,70 @@ function Spark({ data, estimated, debt }) {
 const avatarColor = (s) => SERIES[[...(s ?? '?')].reduce((h, c) => h + c.charCodeAt(0), 0) % SERIES.length];
 export const Avatar = ({ name }) => <span className="avatar" style={{ background: tint(avatarColor(name), 13), color: avatarColor(name) }}>{(name ?? '?')[0]}</span>;
 
-function AccountRow({ a, open, setOpen, saved }) {
+// A bank's connection, in words: working, needs you, failing (tried again on its own), or could share more.
+function BankStatus({ i }) {
+  const more = missing(i);
+  if (i.state === 'sign-in') return <span className="small bad" title={i.status}>Needs you to sign in again</span>;
+  if (i.state === 'error') return <span className="small hint" title={i.status}>Couldn't update: {i.reason}. Tried again at the next sync.</span>;
+  if (more.products) return <span className="small hint">Can also share {more.text}</span>;
+  return <span className="small good">Connected</span>;
+}
+
+function Banks({ meta, accounts, saved }) {
+  const remove = async (i) => {
+    if (!window.confirm(`Remove ${i.institution}?\n\nThis disconnects it from Plaid and deletes its accounts, transactions, and history from this app. On the Trial plan it does NOT free up a connection slot.`)) return;
+    let r = await api(`/items/${i.id}`, { method: 'DELETE' });
+    if (r.can_force && window.confirm(`Plaid couldn't remove it: ${r.error_message}\n\nRemove it anyway?`)) r = await api(`/items/${i.id}?force=1`, { method: 'DELETE' });
+    saved();
+  };
+  return (
+    <Panel className="mt-lg" title="Your banks">
+      {meta.items.map((i) => {
+        const more = missing(i);
+        const n = accounts.filter((a) => a.item_id === i.id).length;
+        return (
+          <div className="trow" key={i.id}>
+            <span className="rowicon"><Avatar name={i.institution} />
+              <span className="tmain"><b>{i.institution}</b>
+                <span><BankStatus i={i} /><span className="small muted"> · {n ? `${n} account${n > 1 ? 's' : ''}` : 'no accounts yet; a new connection can take a few minutes to fill in'}</span></span></span></span>
+            <span className="btnrow">
+              {i.state === 'sign-in' && <UpdateLink item={i} label="Reconnect" className="btn primary" />}
+              {i.state === 'ok' && more.products && <UpdateLink item={i} label="Approve" products={more.products} onDone={saved} />}
+              <button className="linkbtn" onClick={() => remove(i)}>Remove</button>
+            </span>
+          </div>
+        );
+      })}
+      {meta.items.length === 0 && <p className="small muted mt-0">No banks yet.</p>}
+      <p className="small muted foot">{meta.items.length} of {meta.max} Plaid connections used; on the Trial plan, removing one doesn't free its slot.
+        Updated from Plaid when the app starts and every {meta.autoSyncHours} hours while it's running{meta.lastSync ? ` (last: ${new Date(meta.lastSync).toLocaleString()})` : ''}.
+        Plaid gets new data from each bank on its own schedule, usually a few times a day for transactions and about once a day for investments.</p>
+    </Panel>
+  );
+}
+
+// This month's money in and out of one account, and how far back its history goes.
+function Activity({ a, act }) {
+  if (!act) return <span className="acctstat small muted">No transactions{a.type === 'investment' ? ' (holdings are on the Investments page)' : ''}</span>;
+  return (
+    <span className="acctstat small">
+      <span><span className="muted">{monthName} in</span> <b className="amt good">{usd2(act.month_in)}</b></span>
+      <span><span className="muted">out</span> <b className="amt">{usd2(act.month_out)}</b></span>
+      <span className="muted">{act.n} transactions since {shortDate(act.first)}{act.pending ? ` · ${act.pending} pending` : ''}</span>
+      <a className="linkbtn" href={`#/transactions?account=${encodeURIComponent(a.id)}`}>Transactions</a>
+    </span>
+  );
+}
+
+function AccountRow({ a, act, open, setOpen, saved }) {
   const toggle = async () => { await api(`/accounts/${a.id}`, { method: 'PATCH', body: JSON.stringify({ in_networth: !a.in_networth }) }); saved(); };
   return (
     <>
       <div className={`arow${a.in_networth ? '' : ' dim'}`} onClick={() => setOpen(open ? null : a.id)} role="button" tabIndex={0}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setOpen(open ? null : a.id)} aria-expanded={open}>
         <span className="rowicon"><Avatar name={a.institution} />
-          <span className="tmain"><b>{a.name}</b><span className="small muted">{cap(label(a.subtype || a.type))} · {a.institution}{a.mask ? ` ••${a.mask}` : ''}{a.in_networth ? '' : ' · not in net worth'}</span></span></span>
+          <span className="tmain"><b>{a.name}</b><span className="small muted">{cap(label(a.subtype || a.type))} · {a.institution}{a.mask ? ` ••${a.mask}` : ''}{a.in_networth ? '' : ' · not in net worth'}</span>
+          {a.interest_month != null && <span className="small muted">{a.apr}% APR · about <Est why="Estimate: balance × APR ÷ 12. Your bank charges on the daily balance."><b className="amt">{usd(a.interest_month)}</b></Est> a month in interest</span>}</span></span>
         <Spark data={a.spark} estimated={a.estimated} debt={isDebt(a)} />
         <span className="r"><b className="amt">{isDebt(a) && a.balance >= 0.005 ? '−' : ''}{usd2(a.balance)}</b><div>{a.spark?.length > 1 && a.change != null && Math.abs(a.change) >= 0.5
           ? <Hover className="quiet" tip={<TipList title={`${a.name}, last 30 days`} rows={[['30 days ago', usd2(a.spark[0])], ['Today', usd2(a.spark.at(-1))],
@@ -102,6 +164,7 @@ function AccountRow({ a, open, setOpen, saved }) {
       </div>
       {open && (
         <div className="aedit">
+          <Activity a={a} act={act} />
           <label className="lbl">Nickname<Nickname a={a} saved={saved} /></label>
           <label className="lbl">Type<AccountType a={a} saved={saved} /></label>
           <label className="check small"><input type="checkbox" checked={!!a.in_networth} onChange={toggle} /> Include in net worth
@@ -183,15 +246,21 @@ function Summary({ accounts, manual }) {
   );
 }
 
-export default function NetWorth() {
+export default function NetWorth({ onChange }) {
   const [d, setD] = useState(null);
   const [history, setHistory] = useState(null);
+  const [meta, setMeta] = useState(null), [activity, setActivity] = useState({});
   const [open, setOpen] = useState(null);
   const [f, setF] = useState({ name: '', value: '', kind: 'real_estate' });
   const [err, setErr] = useState('');
-  const load = useCallback(async () => { setD(await api('/networth')); setHistory((await api('/summary')).history); }, []);
+  const load = useCallback(async () => {
+    const [nw, sum, items, act] = await Promise.all([api('/networth'), api('/summary'), api('/items'), api('/accounts/activity')]);
+    setD(nw); setHistory(sum.history); setMeta(items); setActivity(act);
+  }, []);
   useEffect(() => { load(); }, [load]);
-  if (!d || !history) return <PageSkeleton />;
+  // Connecting, approving or removing a bank also changes the top bar's "needs attention" chip.
+  const saved = () => { load(); onChange?.(); };
+  if (!d || !history || !meta) return <PageSkeleton />;
 
   const add = async (e) => {
     e.preventDefault();
@@ -204,7 +273,10 @@ export default function NetWorth() {
 
   return (
     <>
-      <PageHeader title="Net worth" sub="Every linked account by type, plus anything Plaid can't see, like a house or a loan. Click an account to rename or adjust it." />
+      <PageHeader title="Accounts & net worth" sub="Grouped by type, with anything Plaid can't see, like a house or a loan.">
+        {meta.items.length < meta.max && <ConnectBank />}
+      </PageHeader>
+      {meta.items.length === 0 && <div className="card empty mt"><EmptyState art="banks" title="No banks yet">Connect a bank to see its accounts here.</EmptyState></div>}
       <div className="nwtop mt">
         <NetWorthChart history={history} />
         <Summary accounts={d.accounts} manual={d.manual} />
@@ -222,18 +294,19 @@ export default function NetWorth() {
         return (
           <Panel key={type} className="mt" title={<>{title} <Change v={change} debt={type === 'credit' || type === 'loan'} suffix=" in 30 days" since={since} /></>}
             actions={<b className="amt">{(type === 'credit' || type === 'loan') && total >= 0.5 ? '−' : ''}{usd(total)}</b>}>
-            {list.map((a) => <AccountRow key={a.id} a={a} open={open === a.id} setOpen={setOpen} saved={load} />)}
+            {list.map((a) => <AccountRow key={a.id} a={a} act={activity[a.id]} open={open === a.id} setOpen={setOpen} saved={load} />)}
           </Panel>
         );
       })}
       {d.accounts.some((a) => a.estimated) && <p className="small muted mt-sm">Dashed trend lines are estimated from transactions; investments are held at today's value until daily history builds up.</p>}
+      <Banks meta={meta} accounts={d.accounts} saved={saved} />
       <Panel className="mt-lg" title="Other assets and debts">
         <p className="small muted mt-0">Things Plaid can't see, like a house, a car or a personal loan. They count toward net worth and allocation. Update a value by removing and re-adding it.</p>
         <form className="form" onSubmit={add}>
           <label className="lbl">Name<input value={f.name} onChange={on('name')} placeholder="Home" required /></label>
           <label className="lbl">Value<input type="number" min="1" step="any" value={f.value} onChange={on('value')} placeholder="350000" required /></label>
           <label className="lbl">Kind<select value={f.kind} onChange={on('kind')}>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-          <button className="btn primary" type="submit">Add</button>
+          <button className="btn primary" type="submit">Add to net worth</button>
         </form>
         {err && <p className="bad small">{err}</p>}
         {d.manual.map((m) => (

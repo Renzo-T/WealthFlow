@@ -52,6 +52,10 @@ export const amountsHidden = () => document.body.classList.contains('privacy');
 export const tipText = (s) => (s && amountsHidden() ? s.replace(/[+−-]?\$\s?[\d,]+(\.\d+)?/g, '$•••') : s);
 export const Amt = ({ children, className = '' }) => <span className={`amt ${className}`.trim()}>{children}</span>;
 
+// Ink and pencil: a known figure is ink, an estimated one is pencil (muted, dashed underline). `why` says what makes it an
+// estimate, in words only (no dollar amounts). Put it inside an element Hide amounts blurs (.amt, .tamt, td.r, <Amt>).
+export const Est = ({ why, children, className = '' }) => <span className={`est-fig ${className}`.trim()} title={why}>{children}</span>;
+
 // ---- Loading placeholders: grey shapes in the real layout, so nothing jumps when data arrives.
 export const Skeleton = ({ h = 14, w = '100%', r = 8, className = '' }) => (
   <span className={`skel ${className}`.trim()} style={{ height: h, width: w, borderRadius: r }} aria-hidden="true" />
@@ -103,10 +107,12 @@ const EMPTY_ICONS = {
   chart: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></>,
   bag: <><path d="M5 8h14l-1 12H6L5 8z" /><path d="M9 8V6a3 3 0 016 0v2" /></>,
 };
-export function EmptyState({ icon = 'chart', title, children, actions }) {
+// `art` names a drawing in web/public/art (empty-<art>.webp) shown in place of the icon, for a page's main empty state.
+export function EmptyState({ icon = 'chart', art, title, children, actions }) {
   return (
-    <div className="estate">
-      <span className="estate-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{EMPTY_ICONS[icon]}</svg></span>
+    <div className={`estate${art ? ' has-art' : ''}`}>
+      {art ? <span className="estate-art" aria-hidden="true"><img src={`/art/empty-${art}.webp`} alt="" width="96" height="96" loading="lazy" /></span>
+        : <span className="estate-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{EMPTY_ICONS[icon]}</svg></span>}
       <div><b>{title}</b>{children && <p>{children}</p>}{actions && <div className="estate-actions">{actions}</div>}</div>
     </div>
   );

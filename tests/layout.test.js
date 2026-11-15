@@ -30,3 +30,28 @@ test('panels that no longer exist are dropped', () => {
   assert.deepEqual(l.hidden, []);
   assert.deepEqual(l.rail, []);
 });
+
+// Panels that start hidden for people with no saved layout (Customize still lists them).
+const WITH_HIDDEN = [{ id: 'cards' }, { id: 'networth' }, { id: 'allocation', hidden: true }, { id: 'upcoming', rail: true, hidden: true }, { id: 'recent' }];
+
+test('a saved layout is untouched by panels that are hidden by default', () => {
+  const saved = { order: ['recent', 'cards', 'networth', 'allocation', 'upcoming'], hidden: ['networth'], rail: ['upcoming'] };
+  const l = mergeLayout(saved, WITH_HIDDEN);
+  assert.deepEqual(l, saved, 'a layout that shows Allocation and Upcoming keeps showing them');
+  assert.deepEqual(mergeLayout({ order: saved.order, hidden: [], rail: [] }, WITH_HIDDEN).hidden, []);
+});
+
+test('no saved layout (or a reset) → panels marked hidden start hidden but stay in the order', () => {
+  const l = mergeLayout(null, WITH_HIDDEN);
+  assert.deepEqual(l.hidden, ['allocation', 'upcoming']);
+  assert.deepEqual(l.order, ['cards', 'networth', 'allocation', 'upcoming', 'recent']);
+  assert.deepEqual(defaultLayout(WITH_HIDDEN), l);
+});
+
+test('a hidden-by-default panel added later starts hidden in a saved layout; a normal new one does not', () => {
+  const later = [...WITH_HIDDEN, { id: 'extra', hidden: true }, { id: 'fresh' }];
+  const saved = { order: ['cards', 'networth', 'allocation', 'upcoming', 'recent'], hidden: [], rail: ['upcoming'] };
+  const l = mergeLayout(saved, later);
+  assert.deepEqual(l.hidden, ['extra']);
+  assert.ok(l.order.includes('extra') && l.order.includes('fresh'));
+});

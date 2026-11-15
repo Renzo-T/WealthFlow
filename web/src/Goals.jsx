@@ -106,8 +106,8 @@ function GoalCard({ g, accounts, reload, compact }) {
 
 export function GoalsPanel({ items }) {
   return (
-    <Panel title="Goals" actions={<a href="#/goals">Manage</a>}>
-      {items.length === 0 && <EmptyState icon="plan" title="Saving for something?" actions={<a className="btn linkbtn-solid" href="#/goals">Add a goal</a>}>
+    <Panel title="Goals" actions={<a href="#/plan">Manage</a>}>
+      {items.length === 0 && <EmptyState art="goals" title="Saving for something?" actions={<a className="btn linkbtn-solid" href="#/plan">Add a goal</a>}>
         Set a target, optionally tied to an account, and watch it fill up.</EmptyState>}
       <div className="goalgrid">{items.slice(0, 4).map((g) => <GoalCard key={g.id} g={g} compact />)}</div>
     </Panel>
@@ -159,7 +159,7 @@ export default function Goals() {
 
   return (
     <>
-      <PageHeader title="Goals" sub="Track savings targets by hand, or link a goal to an account and it follows the balance.">
+      <PageHeader title="Plan" sub="Savings goals, and where your net worth is heading.">
         <button className="btn primary" onClick={() => setAdding(adding ? null : {})}>{adding ? 'Cancel' : 'Add a goal'}</button>
       </PageHeader>
       {goals.length > 0 && <div className="cards goalcards">
@@ -174,7 +174,7 @@ export default function Goals() {
       </Panel>}
       <div className="goalsgrid mt">
         <div>
-          {goals.length === 0 && !adding && <Panel><EmptyState icon="plan" title="Saving for something?" actions={<button className="btn primary" onClick={() => setAdding({})}>Add a goal</button>}>
+          {goals.length === 0 && !adding && <Panel><EmptyState art="goals" title="Saving for something?" actions={<button className="btn primary" onClick={() => setAdding({})}>Add a goal</button>}>
             Set a target, optionally with a date or tied to an account, and watch it fill up. The ideas on the right are sized from your own spending.</EmptyState></Panel>}
           <div className="goalgrid">{goals.map((g) => <GoalCard key={g.id} g={g} accounts={accounts} reload={load} />)}</div>
         </div>

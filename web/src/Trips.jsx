@@ -67,7 +67,7 @@ function TripCard({ trip, reload }) {
           <label className="lbl">Name<input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required /></label>
           <label className="lbl">From<input type="date" value={f.start} onChange={(e) => setF({ ...f, start: e.target.value })} required /></label>
           <label className="lbl">To<input type="date" value={f.end} onChange={(e) => setF({ ...f, end: e.target.value })} required /></label>
-          <button className="btn primary" type="submit">Save</button><button className="btn" type="button" onClick={() => setEdit(false)}>Cancel</button>
+          <button className="btn primary" type="submit">Save trip</button><button className="btn" type="button" onClick={() => setEdit(false)}>Cancel</button>
         </form>
       ) : (
         <div className="row base"><span><b className="tripname">{trip.name}</b>{trip.place && <span className="small muted"> · {trip.place}</span>}</span>
@@ -152,7 +152,7 @@ function HomeAndAway({ home, settings, reload }) {
           </div>))}
         <div className="btnrow mt-sm">
           <button className="btn" onClick={() => setRows([...rows, { city: '', region: '', since: new Date().toLocaleDateString('en-CA') }])}>Add a home</button>
-          <button className="btn primary" onClick={() => saveHomes(rows)}>Save</button>
+          <button className="btn primary" onClick={() => saveHomes(rows)}>Save homes</button>
           {!inferred && <button className="linkbtn" onClick={() => saveHomes([])}>Work it out from my spending</button>}
           <button className="linkbtn" onClick={() => setEdit(false)}>Cancel</button>
         </div>
@@ -182,7 +182,7 @@ export default function Trips() {
   const thisYear = trips.filter((t) => t.start.startsWith(year)).reduce((s, t) => s + t.total, 0);
   return (
     <>
-      <PageHeader title="Trips" sub="What you spent away from home, trip by trip. Trips stay in your budget categories but are left out of month-to-month comparisons.">
+      <PageHeader title="Trips" sub="Spending away from home; confirmed trips are left out of month-to-month comparisons.">
         <button className="btn primary" onClick={() => setAdding(!adding)}>{adding ? 'Cancel' : 'Add a trip'}</button>
       </PageHeader>
       {adding && <Panel className="mt" title="New trip">
@@ -199,7 +199,7 @@ export default function Trips() {
         {suggested.map((t) => <Suggestion key={t.id} trip={t} reload={load} />)}
       </Panel>}
       {trips.length > 0 && <p className="small muted tripsum">{trips.length} trip{trips.length > 1 ? 's' : ''}{thisYear > 0 ? <> · <b className="amt">{usd(thisYear)}</b> on trips in {year}</> : null}</p>}
-      {trips.length === 0 && !suggested.length && <Panel className="mt"><EmptyState icon="chart" title="No trips yet">
+      {trips.length === 0 && !suggested.length && <Panel className="mt"><EmptyState art="trips" title="No trips yet">
         Trips show up when you make purchases away from home. You can also add one yourself.</EmptyState></Panel>}
       <div className="tripgrid">{trips.map((t) => <TripCard key={t.id} trip={t} reload={load} />)}</div>
       <HomeAndAway key={JSON.stringify(d.home) + JSON.stringify(d.settings)} home={d.home} settings={d.settings} reload={load} />

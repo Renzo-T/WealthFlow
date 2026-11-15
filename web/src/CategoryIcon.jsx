@@ -2,8 +2,10 @@
 // is a secondary cue from the shared palette (format.js), so it never has to tell categories apart on its own.
 import { SERIES, NEUTRAL, INCOME, tint } from './format.js';
 
-// Icons are inked in the planner's indigo; only money in (income, saving) keeps its green.
-const ink = (c) => (c === INCOME ? INCOME : 'var(--blue)');
+// Icons take their group's colour from GROUP below: one of the four chart hues, grey for neutral groups, green only
+// for money in (income, saving). The text label beside the icon carries identity; the colour is a secondary cue.
+// Neutral grey is read from the muted text colour so the glyph keeps 3:1 against its well in both themes.
+const ink = (c) => (c === NEUTRAL ? 'var(--muted)' : c);
 
 const I = {
   home: <><path d="M4 11l8-7 8 7" /><path d="M6 10v10h12V10" /></>,
@@ -41,7 +43,7 @@ export default function CategoryIcon({ group, sub, kind, size = 30 }) {
   const [icon0, color] = GROUP[group] ?? ['receipt', NEUTRAL];
   const icon = kind ?? SUB[sub] ?? icon0;
   return (
-    <span className="caticon" style={{ width: size, height: size, color: ink(color), background: tint(ink(color), 12) }} aria-hidden="true">
+    <span className="caticon" style={{ width: size, height: size, color: ink(color), background: tint(ink(color), 15) }} aria-hidden="true">
       <svg viewBox="0 0 24 24" width={size * 0.55} height={size * 0.55} fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{I[icon]}</svg>
     </span>
   );

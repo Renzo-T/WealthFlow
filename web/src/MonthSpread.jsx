@@ -36,12 +36,19 @@ function Day({ d, i }) {
   );
 }
 
-export default function MonthSpread() {
+// `month` makes the strip follow a page's own month (no arrows of its own); `compact` drops the title, legend and footer
+// for a slim strip under a page header. Same data (/month-spread) and the same dot scale either way.
+export default function MonthSpread({ month: fixed, compact = false }) {
   const thisMonth = new Date().toLocaleDateString('en-CA').slice(0, 7);
-  const [month, setMonth] = useState(thisMonth);
+  const [own, setOwn] = useState(thisMonth);
+  const month = fixed ?? own, setMonth = setOwn;
   const [d, setD] = useState(null);
-  useEffect(() => { let on = true; api(`/month-spread?month=${month}`).then((r) => on && setD(r)); return () => { on = false; }; }, [month]);
+  useEffect(() => { let on = true; api(`/month-spread?month=${month}`).then((r) => on && setD(r)).catch(() => {}); return () => { on = false; }; }, [month]);
   const due = d ? d.days.flatMap((x) => x.marks.filter((m) => !m.done && m.direction !== 'in')).reduce((s, m) => s + m.amount, 0) : 0;
+  const days = d && d.month === month
+    ? <div className="sdays" style={{ '--n': d.days.length }} key={month}>{d.days.map((x, i) => <Day key={x.date} d={x} i={i} />)}</div>
+    : <div className="sdays skelrow" aria-busy="true" />;
+  if (compact) return <section className="card panel spread compact" aria-label={`${monthName(month)}, day by day`}>{days}</section>;
   return (
     <Panel className="spread" title={<>{monthName(month)}<span className="asof">{month === thisMonth ? 'this month' : month < thisMonth ? 'past' : 'ahead'}</span></>}
       actions={<span className="spreadnav">
@@ -49,17 +56,17 @@ export default function MonthSpread() {
           <span><i className="lgdot" />Spent that day</span>
           <span><i className="stamp out done" />Bill paid</span><span><i className="stamp out" />Bill due</span><span><i className="stamp in done" />Money in</span>
         </span>
-        <button className="iconbtn" onClick={() => setMonth(shift(month, -1))} aria-label="Previous month"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 3L4.5 7l4 4" /></svg></button>
-        <button className="iconbtn" onClick={() => setMonth(shift(month, 1))} disabled={month >= shift(thisMonth, 1)} aria-label="Next month"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5.5 3l4 4-4 4" /></svg></button>
+        {fixed == null && <>
+          <button className="iconbtn" onClick={() => setMonth(shift(month, -1))} aria-label="Previous month"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 3L4.5 7l4 4" /></svg></button>
+          <button className="iconbtn" onClick={() => setMonth(shift(month, 1))} disabled={month >= shift(thisMonth, 1)} aria-label="Next month"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5.5 3l4 4-4 4" /></svg></button>
+        </>}
       </span>}>
-      {d ? <>
-        <div className="sdays" style={{ '--n': d.days.length }} key={month}>{d.days.map((x, i) => <Day key={x.date} d={x} i={i} />)}</div>
-        <div className="sfoot small muted">
-          <span>Spent so far <b className="amt">{usd(d.total)}</b></span>
-          {due > 0 && <span>Bills still due <b className="amt">{usd(due)}</b></span>}
-          <span className="sscale">Dots use one size scale for every month, so busy days compare at a glance.</span>
-        </div>
-      </> : <div className="sdays skelrow" aria-busy="true" />}
+      {days}
+      {d && <div className="sfoot small muted">
+        <span>Spent so far <b className="amt">{usd(d.total)}</b></span>
+        {due > 0 && <span>Bills still due <b className="amt">{usd(due)}</b></span>}
+        <span className="sscale">Dots use one size scale for every month, so busy days compare at a glance.</span>
+      </div>}
     </Panel>
   );
 }

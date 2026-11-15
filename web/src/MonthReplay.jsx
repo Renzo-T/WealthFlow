@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from './api.js';
 import { usd, usd2, usdCompact } from './format.js';
 import useWidth from './useWidth.js';
-import { Panel, Skeleton, EmptyState, Chevron } from './ui.jsx';
+import { Panel, Skeleton, EmptyState, Chevron, Est } from './ui.jsx';
 
 // The month, replayed: the cash in your everyday accounts at the end of each day, as one stepped line across the
 // month's days (planner columns, weekends tinted, today washed). Paydays step it up and bills step it down; they're
@@ -182,13 +182,13 @@ export default function MonthReplay({ month: wanted }) {
     <Panel className="mt replaypanel" title={title} actions={nav}>
       <div className="rp-read" aria-live="off">
         <div>
-          <span className="slabel">{d ? `Cash at the end of ${dayName(d.date)}` : 'Cash at the start of the month'}{d?.future ? ' (est.)' : ''}</span>
-          <span className="rp-fig amt">{cash == null ? '—' : usd(cash)}</span>
+          <span className="slabel">{d ? `Cash at the end of ${dayName(d.date)}` : 'Cash at the start of the month'}</span>
+          <span className="rp-fig amt">{cash == null ? '—' : d?.future ? <Est why="Estimate: from scheduled paydays and bills only">{usd(cash)}</Est> : usd(cash)}</span>
         </div>
         <div className="rp-day small">{pieces.length ? pieces : <span className="muted">{d?.future ? 'Nothing scheduled.' : d ? 'No money in or out.' : ''}</span>}</div>
         <div className="rp-sum small muted">
           {r.start != null && <span>Started at <b className="amt">{usd(r.start)}</b></span>}
-          {r.low && <span>Lowest <b className="amt">{usd(r.low.cash)}</b> on {shortDay(r.low.date)}{r.low.future ? ' (est.)' : ''}</span>}
+          {r.low && <span>Lowest <b className="amt">{r.low.future ? <Est why="Estimate: from scheduled paydays and bills only">{usd(r.low.cash)}</Est> : usd(r.low.cash)}</b> on {shortDay(r.low.date)}</span>}
           {last?.cash != null && <span>{last.future ? 'Ends near' : 'Ended at'} <b className="amt">{usd(last.cash)}</b></span>}
         </div>
       </div>

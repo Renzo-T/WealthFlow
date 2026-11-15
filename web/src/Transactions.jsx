@@ -317,7 +317,7 @@ export default function Transactions() {
   const cols = editing ? 5 : 4;
   return (
     <>
-      <PageHeader title="Transactions" sub="Search, filter, and fix categories. Transfers between your own accounts show as one row. Click a row for details.">
+      <PageHeader title="Transactions" sub="Transfers between your own accounts show as one row.">
         <button className={`btn${editing ? ' primary' : ''}`} onClick={() => { setEditing(!editing); setSel(new Set()); }}>{editing ? 'Done' : 'Edit multiple'}</button>
       </PageHeader>
       <Review dir="in" items={review.in} decide={decide} cats={cats} />
@@ -433,9 +433,6 @@ export default function Transactions() {
               <dt>Total income</dt><dd className="amt good">{usd(summary.income)}</dd>
               <dt title="Net of refunds and cash back; transfers, savings and debt repayment aren't counted">Total spending</dt><dd className="amt">{usd(summary.spent)}</dd>
               {summary.largest_expense != null && <><dt>Largest expense</dt><dd className="amt">{usd2(summary.largest_expense)}</dd></>}
-              {summary.largest_income != null && <><dt>Largest income</dt><dd className="amt">{usd2(summary.largest_income)}</dd></>}
-              {summary.avg_expense != null && <><dt>Average expense</dt><dd className="amt">{usd2(summary.avg_expense)}</dd></>}
-              {summary.first && <><dt>First</dt><dd>{shortDate(summary.first)}, {summary.first.slice(0, 4)}</dd><dt>Last</dt><dd>{shortDate(summary.last)}, {summary.last.slice(0, 4)}</dd></>}
             </dl>
             <a className="btn csvbtn" href={`/api/transactions.csv?${filterQs}`}>Download CSV</a>
           </Panel>

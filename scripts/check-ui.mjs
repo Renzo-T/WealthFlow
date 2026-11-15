@@ -14,7 +14,8 @@ import { join } from 'node:path';
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const BASE = arg('url', 'https://localhost:3000');
 const WIDTH = Number(arg('width', 1440));
-const PAGES = ['dashboard', 'accounts', 'transactions', 'budget', 'bills', 'flow', 'trips', 'reports', 'networth', 'investments', 'forecast', 'goals', 'settings'];
+const PAGES = ['dashboard', 'transactions', 'budget', 'bills', 'flow', 'trips', 'reports', 'networth', 'investments', 'plan', 'settings'];
+const MOVED = { accounts: 'networth', goals: 'plan', forecast: 'plan' }; // as in web/src/App.jsx
 // Chrome first: headless Edge can stall (no frames drawn) while your own Edge window is open.
 const CANDIDATES = [process.env.BROWSER,
   'C:/Program Files/Google/Chrome/Application/chrome.exe', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
@@ -136,6 +137,18 @@ for (const scheme of ['light', 'dark']) {
       process.stdout.write(`${problems.some((p) => p.startsWith(`${page} (${scheme})`)) ? '✖' : '✔'} ${page} (${scheme}) ${r.title ? `— ${r.title}` : ''}\n`);
     } catch (e) { problems.push(`${page} (${scheme}): ${e.message}`); console.log(`✖ ${page} (${scheme}) — ${e.message}`); }
   }
+}
+// Pages merged into another: their old addresses must land on the new page.
+for (const [old, now] of Object.entries(MOVED)) {
+  try {
+    await send('Page.navigate', { url: 'about:blank' });
+    await sleep(100);
+    await send('Page.navigate', { url: `${BASE}/#/${old}` });
+    await sleep(2500);
+    const hash = (await send('Runtime.evaluate', { returnByValue: true, expression: 'location.hash' })).result.value;
+    if (hash !== `#/${now}`) problems.push(`#/${old}: lands on ${hash || '(nothing)'}, not #/${now}`);
+    process.stdout.write(`${hash === `#/${now}` ? '✔' : '✖'} #/${old} → ${hash}\n`);
+  } catch (e) { problems.push(`#/${old}: ${e.message}`); }
 }
 ws.close();
 if (problems.length) { console.log(`\n${problems.length} problem${problems.length > 1 ? 's' : ''}:\n- ${problems.join('\n- ')}`); done(1); }

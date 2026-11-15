@@ -31,6 +31,7 @@ step('Copying the app');
 fs.cpSync('server', path.join(out, 'server'), { recursive: true });
 fs.mkdirSync(path.join(out, 'scripts'));
 fs.copyFileSync('scripts/app.mjs', path.join(out, 'scripts', 'app.mjs'));
+fs.copyFileSync('scripts/open-page.mjs', path.join(out, 'scripts', 'open-page.mjs')); // clicking a notification (notify.js)
 for (const f of ['package.json', 'package-lock.json']) fs.copyFileSync(f, path.join(out, f));
 fs.writeFileSync(path.join(out, 'PORTABLE'),
   'This copy keeps your data in your user\'s app-data folder (on Windows, %LOCALAPPDATA%\\Mizo Money), not in this folder,\r\n' +

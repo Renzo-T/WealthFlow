@@ -31,8 +31,8 @@ was categorized) rather than presenting a polished black box.
 - Light and dark themes, following the system unless chosen.
 
 ## Capabilities and Constraints
-- Pages: Dashboard, Accounts, Transactions, Budget, Bills, Money flow, Trips, Reports, Net worth, Investments,
-  Forecast, Goals, Settings. Functionality and data behaviour stay as they are; visual work must not change numbers.
+- Pages: Dashboard, Transactions, Budget, Bills, Money flow, Trips, Reports, Net worth (accounts and connections are
+  on it), Investments, Plan (goals, then the forecast), Settings. Functionality and data behaviour stay as they are; visual work must not change numbers.
 - React + Vite UI (`web/`), Express + node:sqlite API; desktop-first, no phone layout (narrow windows collapse the
   sidebar to icons).
 - Estimated or incomplete data is always marked; green/red mean in/out or good/bad only.
@@ -41,8 +41,8 @@ was categorized) rather than presenting a polished black box.
 
 ## Brand Commitments
 - The name is **Mizo Money** (renamed from WealthFlow; internal identifiers still use the old name).
-- There is no logo yet; one is needed (the current mark is a generic rising-chart icon).
-- Undecided: tagline (the current "Your money. In focus." is not binding).
+- The logo is the vermillion seal (`Seal` in `web/src/ui.jsx`, per DESIGN.md); it is the only use of vermillion.
+- Tagline (decided): "Your personal finance dashboard, running on this computer." It is the page description in `web/index.html` and the app manifest. "Your money. In focus." is retired.
 
 ## Evidence on Hand
 - Real screens of every page, rendered from an invented demo household (`npm run demo`), in `docs/screenshots/`.

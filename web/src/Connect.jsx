@@ -46,7 +46,7 @@ function useHostedLink() {
 function Waiting({ state, cancel }) {
   if (state === 'opening') return <span className="small muted">Opening Plaid…</span>;
   if (state === 'waiting') return <span className="row gap small">Finish connecting in the Plaid tab… <button className="btn" onClick={cancel}>Cancel</button></span>;
-  return <span className="row gap small">{state} {state !== 'Finishing…' && <button className="btn" onClick={cancel}>OK</button>}</span>;
+  return <span className="row gap small">{state} {state !== 'Finishing…' && <button className="btn" onClick={cancel}>Dismiss</button>}</span>;
 }
 
 // Embedded Link with a token in hand: opens at once. `resume` = the bank just redirected back to /oauth; reopen Link

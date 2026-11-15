@@ -3,7 +3,7 @@ import { api } from './api.js';
 import { INCOME, SPENDING } from './format.js';
 import CategoryIcon from './CategoryIcon.jsx';
 import { billAmount } from './Bills.jsx';
-import { Panel, tipText, Chevron } from './ui.jsx';
+import { Panel, tipText, Chevron, Est } from './ui.jsx';
 
 const ymd = (d) => d.toLocaleDateString('en-CA');
 const shift = (m, k) => { const [y, mo] = m.split('-').map(Number); return ymd(new Date(y, mo - 1 + k, 1)).slice(0, 7); };
@@ -63,7 +63,7 @@ export default function BillsCalendar({ compact = false, onDay, selected }) {
         {list.map((x) => (
           <div className="trow" key={x.key + x.date}>
             <span className="rowicon"><CategoryIcon {...billIcon(x)} size={28} /><b className="small">{x.name}</b></span>
-            <span className={`tamt small${x.direction === 'in' ? ' good' : ''}`}>{billAmount(x)}{x.estimate && <sup className="est">est</sup>}</span>
+            <span className={`tamt small${x.direction === 'in' ? ' good' : ''}`}>{x.estimate ? <Est why="Estimate: the amount varies">{billAmount(x)}</Est> : billAmount(x)}</span>
           </div>
         ))}
       </div>

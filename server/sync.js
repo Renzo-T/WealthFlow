@@ -4,6 +4,7 @@ import { decrypt } from './crypto.js';
 import { classify, friendly } from './categories.js';
 import { refreshTrips } from './trips.js';
 import { autoBackup } from './backup.js';
+import { notifyAfterSync } from './notify.js';
 
 // Upsert, not replace: keeps the user's manual category. classify() fills in category and transfer_pair.
 const upsertTx = db.prepare(`INSERT INTO transactions
@@ -51,6 +52,16 @@ const fundName = (n) => {
   return i > 0 && /\b(trust|funds?|series|portfolios?)\b/i.test(n.slice(0, i)) ? n.slice(i + 3) : n;
 };
 const snapshot = db.prepare('INSERT OR REPLACE INTO balance_snapshots (date, account_id, balance) VALUES (?,?,?)');
+
+// Plaid Liabilities, liabilities.credit[].aprs: an array (empty when the bank has no APR data) of
+//   { apr_percentage: number (a percent, 15.24 = 15.24%), apr_type: 'balance_transfer_apr' | 'cash_apr' | 'penalty_apr' |
+//     'purchase_apr' | 'special', balance_subject_to_apr: number | null, interest_charge_amount: number | null }
+// We keep the purchase APR. Nothing usable (no array, no purchase entry, 0 or not a number) is NULL, never 0, so
+// a bank that sends no APR shows no interest line instead of "0%".
+export function purchaseApr(aprs) {
+  const p = Array.isArray(aprs) ? aprs.find((x) => x?.apr_type === 'purchase_apr' && Number(x.apr_percentage) > 0) : null;
+  return p ? Number(p.apr_percentage) : null;
+}
 
 export async function syncItem(item) {
   const access_token = decrypt(item.access_token);
@@ -107,10 +118,11 @@ export async function syncItem(item) {
       try {
         const { data: l } = await plaid.liabilitiesGet({ access_token });
         const ins = db.prepare(`INSERT OR REPLACE INTO card_statements (account_id, last_statement_balance, last_statement_date,
-          next_due_date, minimum_payment, last_payment_amount, last_payment_date) VALUES (?,?,?,?,?,?,?)`);
+          next_due_date, minimum_payment, last_payment_amount, last_payment_date, purchase_apr) VALUES (?,?,?,?,?,?,?,?)`);
         db.transaction(() => {
           for (const c of l.liabilities?.credit ?? []) ins.run(c.account_id, c.last_statement_balance ?? null, c.last_statement_issue_date ?? null,
-            c.next_payment_due_date ?? null, c.minimum_payment_amount ?? null, c.last_payment_amount ?? null, c.last_payment_date ?? null);
+            c.next_payment_due_date ?? null, c.minimum_payment_amount ?? null, c.last_payment_amount ?? null, c.last_payment_date ?? null,
+            purchaseApr(c.aprs));
         })();
       } catch (e) {
         // PRODUCT_NOT_READY right after approval is normal; the next sync (or the automatic one) tries again.
@@ -178,6 +190,10 @@ export function syncAll() {
     const results = await Promise.all(db.prepare('SELECT * FROM items').all().map(syncItem));
     db.prepare("INSERT INTO meta (key, value) VALUES ('last_sync', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
       .run(new Date().toISOString());
+    // "Tell me when something needs me": once every bank is done (and classified), in the background. Off unless
+    // turned on in Settings › App; a failed notification never fails the sync and is tried again next time.
+    notifyAfterSync().then((sent) => sent.length && console.log(`Notified: ${sent.map((n) => n.kind).join(', ')}`))
+      .catch((e) => console.error('Notification failed:', e.message));
     // First sync of the day also saves the day's backup; a failed backup never fails the sync.
     try { const f = await autoBackup(); if (f) console.log(`Backup saved: ${f}`); } catch (e) { console.error('Backup failed:', e.message); }
     return results;

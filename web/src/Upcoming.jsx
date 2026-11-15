@@ -3,7 +3,7 @@ import { shortDate } from './format.js';
 import { billAmount, PaycheckPrompt } from './Bills.jsx';
 import BillsCalendar, { billIcon } from './BillsCalendar.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
-import { Panel, Hover, TipList } from './ui.jsx';
+import { Panel, Hover, TipList, Est } from './ui.jsx';
 
 const inDays = (d) => {
   const n = Math.round((Date.parse(`${d}T00:00`) - Date.parse(`${new Date().toLocaleDateString('en-CA')}T00:00`)) / 864e5);
@@ -33,7 +33,7 @@ export default function Upcoming({ items: all, max = 8, calendar = true, skip = 
             <CategoryIcon {...billIcon({ ...r, card: r.can_card })} />
             <span className="tmain"><b title={r.name}>{r.name}</b><span className="small muted">{[r.frequency, r.account].filter(Boolean).join(' · ')}</span></span>
           </span>
-          <span className="r"><span className={`tamt${r.direction === 'in' ? ' good' : ''}`} title={r.estimate ? 'Estimate: the amount varies' : undefined}>{billAmount(r)}{r.estimate && <sup className="est">est</sup>}</span>
+          <span className="r"><span className={`tamt${r.direction === 'in' ? ' good' : ''}`}>{r.estimate ? <Est why="Estimate: the amount varies">{billAmount(r)}</Est> : billAmount(r)}</span>
             <div className="small muted" title={shortDate(r.next_date)}>{inDays(r.next_date)} · <span className={`kind ${r.direction === 'in' ? 'in' : ''}`}>{r.direction === 'in' ? 'Income' : 'Bill'}</span></div></span>
         </div>
       ))}

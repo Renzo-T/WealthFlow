@@ -58,6 +58,7 @@ export function FirstRun({ onDone }) {
         <p className="small muted">Keys are saved in Mizo Money's data folder on this computer, next to your database. Bank sign-ins are encrypted
           with a key that was created for you automatically.</p>
       </div>
+      <img className="firstart" src="/art/welcome.webp" alt="" width="1024" height="765" />
     </main>
   );
 }

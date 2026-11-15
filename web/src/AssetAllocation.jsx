@@ -11,15 +11,15 @@ export default function AssetAllocation({ a }) {
       {a.items.length === 0 ? <p className="small muted">Link an account with a positive balance to see your allocation.</p> : <>
         <div className="donut">
           <svg className="donutsvg" viewBox="0 0 140 140" role="img" aria-label="Asset allocation by account type">
-            <circle cx="70" cy="70" r={R} fill="none" style={{ stroke: 'var(--soft)' }} strokeWidth="16" />
+            <circle cx="70" cy="70" r={R} fill="none" style={{ stroke: 'var(--soft)' }} strokeWidth="18" />
             {a.items.map((i) => {
               const len = (C * i.share) / 100;
-              const el = <circle key={i.name} cx="70" cy="70" r={R} fill="none" stroke={allocColor(i.name)} strokeWidth="16"
+              const el = <circle key={i.name} className="seg" cx="70" cy="70" r={R} fill="none" stroke={allocColor(i.name)} strokeWidth="18"
                 strokeDasharray={`${Math.max(len - 1.5, 0)} ${C}`} strokeDashoffset={-offset} transform="rotate(-90 70 70)" />;
               offset += len;
               return el;
             })}
-            <text x="70" y="68" textAnchor="middle" style={{ fontSize: 14, fontWeight: 700, fill: 'var(--ink)' }}>{usd(a.total)}</text>
+            <text x="70" y="68" textAnchor="middle" style={{ fontSize: 16, fontWeight: 700, fill: 'var(--ink)' }}>{usd(a.total)}</text>
             <text x="70" y="84" textAnchor="middle" style={{ fontSize: 9, fill: 'var(--muted)' }}>Total assets</text>
           </svg>
           <ul className="legend2">

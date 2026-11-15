@@ -2,7 +2,7 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { db, reset, bank, account, tx, row } from './helpers.js';
 
-const { carryPending, removeTx, describeStatus, anyFailing } = await import('../server/sync.js');
+const { carryPending, removeTx, describeStatus, anyFailing, purchaseApr } = await import('../server/sync.js');
 
 beforeEach(() => { reset(); bank('b1'); account('card', { type: 'credit', subtype: 'credit card' }); bank('v', 'Venmo - Personal'); account('ven', { item: 'v' }); });
 
@@ -50,4 +50,46 @@ test('a bank whose last sync failed is noticed, so startup syncs again', () => {
   assert.equal(anyFailing(), false);
   db.prepare("UPDATE items SET status = 'INSTITUTION_DOWN' WHERE id = 'b1'").run();
   assert.equal(anyFailing(), true);
+});
+
+// ---------- card APR from Plaid Liabilities ----------
+// Plaid's credit liability: aprs is [{ apr_percentage (a percent), apr_type, balance_subject_to_apr, interest_charge_amount }],
+// empty when the bank has no APR data. We keep the purchase APR; anything else is NULL, never 0.
+test('purchaseApr picks the purchase rate and returns null when there is none to show', () => {
+  const apr = (apr_type, apr_percentage) => ({ apr_type, apr_percentage, balance_subject_to_apr: null, interest_charge_amount: null });
+  assert.equal(purchaseApr([apr('balance_transfer_apr', 15.24), apr('cash_apr', 27.95), apr('purchase_apr', 12.5), apr('special', 0)]), 12.5);
+  assert.equal(purchaseApr([apr('cash_apr', 27.95)]), null);
+  assert.equal(purchaseApr([apr('purchase_apr', 0)]), null);
+  assert.equal(purchaseApr([]), null);
+  assert.equal(purchaseApr(undefined), null);
+  assert.equal(purchaseApr(null), null);
+});
+
+test('a sync stores each card\'s purchase APR from a stubbed Liabilities response, and stores nothing when the bank sends none', async (t) => {
+  const { PlaidApi } = await import('plaid');
+  const { encrypt } = await import('../server/crypto.js');
+  const { syncItem } = await import('../server/sync.js');
+  account('card2', { type: 'credit', subtype: 'credit card' }); account('card3', { type: 'credit', subtype: 'credit card' });
+  db.prepare("UPDATE items SET access_token = ? WHERE id = 'b1'").run(encrypt('access-test'));
+  let credit = [
+    { account_id: 'card', last_statement_balance: 400, last_statement_issue_date: '2026-10-01', next_payment_due_date: '2026-10-26', minimum_payment_amount: 35,
+      aprs: [{ apr_percentage: 15.24, apr_type: 'balance_transfer_apr' }, { apr_percentage: 24.99, apr_type: 'purchase_apr', balance_subject_to_apr: 400, interest_charge_amount: 7 }] },
+    { account_id: 'card2', last_statement_balance: 90, aprs: [] },
+    { account_id: 'card3', last_statement_balance: 10 }, // no aprs field at all
+  ];
+  const acct = (account_id, current) => ({ account_id, name: account_id, mask: null, type: 'credit', subtype: 'credit card', balances: { current, iso_currency_code: 'USD' } });
+  t.mock.method(PlaidApi.prototype, 'transactionsSync', async () => ({ data: { added: [], modified: [], removed: [], next_cursor: 'c', has_more: false } }));
+  t.mock.method(PlaidApi.prototype, 'accountsGet', async () => ({ data: { accounts: [acct('card', 400), acct('card2', 90), acct('card3', 10)] } }));
+  t.mock.method(PlaidApi.prototype, 'itemGet', async () => ({ data: { item: { consented_products: ['transactions', 'liabilities'] } } }));
+  t.mock.method(PlaidApi.prototype, 'liabilitiesGet', async () => ({ data: { liabilities: { credit } } }));
+  t.mock.method(PlaidApi.prototype, 'transactionsRecurringGet', async () => { throw new Error('not enough history'); });
+
+  assert.equal((await syncItem(db.prepare("SELECT * FROM items WHERE id = 'b1'").get())).status, 'ok');
+  const apr = () => Object.fromEntries(db.prepare('SELECT account_id, purchase_apr FROM card_statements').all().map((r) => [r.account_id, r.purchase_apr]));
+  assert.deepEqual(apr(), { card: 24.99, card2: null, card3: null });
+
+  // The bank stops sending it: the old figure goes rather than lingering.
+  credit = [{ account_id: 'card', last_statement_balance: 400, aprs: [] }];
+  await syncItem(db.prepare("SELECT * FROM items WHERE id = 'b1'").get());
+  assert.equal(apr().card, null);
 });

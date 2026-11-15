@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
 import Dashboard, { SetupChecklist } from './Dashboard.jsx';
 import Transactions from './Transactions.jsx';
 import Budget from './Budget.jsx';
@@ -9,10 +9,10 @@ import Forecast from './Forecast.jsx';
 import Investments from './Investments.jsx';
 import NetWorth from './NetWorth.jsx';
 import Settings from './Settings.jsx';
-import Accounts from './Accounts.jsx';
 import Flow from './Flow.jsx';
 import Bills from './Bills.jsx';
 import NavIcon from './NavIcon.jsx';
+import Jump from './Jump.jsx';
 import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
 import { FirstRun } from './PlaidSetup.jsx';
 import { api } from './api.js';
@@ -22,10 +22,19 @@ const HIDE_KEY = 'wealthflow.hideAmounts', THEME_KEY = 'wealthflow.theme';
 const systemDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* storage unavailable */ } } };
 const NAV = [
-  { id: 'dashboard', label: 'Dashboard' }, { id: 'accounts', label: 'Accounts' }, { id: 'transactions', label: 'Transactions' },
+  { id: 'dashboard', label: 'Dashboard' }, { id: 'transactions', label: 'Transactions' },
   { id: 'budget', label: 'Budget' }, { id: 'bills', label: 'Bills' }, { id: 'flow', label: 'Money flow' }, { id: 'trips', label: 'Trips' }, { id: 'reports', label: 'Reports' }, { id: 'networth', label: 'Net worth' },
-  { id: 'investments', label: 'Investments' }, { id: 'forecast', label: 'Forecast' },
-  { id: 'goals', label: 'Goals' }, { id: 'settings', label: 'Settings' },
+  { id: 'investments', label: 'Investments' }, { id: 'plan', label: 'Plan' }, { id: 'settings', label: 'Settings' },
+];
+// How the rail groups NAV. A heading shows as a divider when the rail is icons only; `rule` puts a divider above a
+// page that stands alone; the last group sits at the foot of the rail.
+const RAIL = [
+  { ids: ['dashboard'] },
+  { head: 'Spending', ids: ['transactions', 'budget', 'bills'] },
+  { head: 'Looking back', ids: ['flow', 'reports', 'trips'] },
+  { head: 'What you own', ids: ['networth', 'investments'] },
+  { ids: ['plan'], rule: true },
+  { ids: ['settings'], rule: true, foot: true },
 ];
 const ago = (iso) => {
   const m = Math.round((Date.now() - Date.parse(iso)) / 60000);
@@ -38,16 +47,26 @@ const syncSummary = (r) => {
   return [added ? `${added} new transaction${added === 1 ? '' : 's'}` : 'Up to date: nothing new from Plaid yet',
     failed.length ? `${failed.join(', ')} need${failed.length === 1 ? 's' : ''} attention` : ''].filter(Boolean).join('. ');
 };
+// Pages that were merged into another: old links (bookmarks, the setup checklist) land on the new one.
+const MOVED = { accounts: 'networth', goals: 'plan', forecast: 'plan' };
 function usePage() {
-  const get = () => window.location.hash.replace('#/', '').split('?')[0] || 'dashboard'; // "#/transactions?category=…" → transactions
+  const get = () => {
+    const [p, q] = window.location.hash.replace('#/', '').split('?'); // "#/transactions?category=…" → transactions
+    if (MOVED[p]) { window.history.replaceState(null, '', `#/${MOVED[p]}${q ? `?${q}` : ''}`); return MOVED[p]; }
+    return p || 'dashboard';
+  };
   const [p, setP] = useState(get);
-  useEffect(() => { const f = () => setP(get()); window.addEventListener('hashchange', f); return () => window.removeEventListener('hashchange', f); }, []);
-  return p;
+  const [qs, setQs] = useState(() => window.location.hash.split('?')[1] ?? '');
+  useEffect(() => {
+    const f = () => { setP(get()); setQs(window.location.hash.split('?')[1] ?? ''); };
+    window.addEventListener('hashchange', f); return () => window.removeEventListener('hashchange', f);
+  }, []);
+  return [p, qs];
 }
 
 export default function App() {
   const resume = window.location.pathname === '/oauth';
-  const page = usePage();
+  const [page, pageQs] = usePage();
   const [meta, setMeta] = useState({ items: [], max: 10 });
   const [s, setS] = useState(null);
   const [extra, setExtra] = useState(null);
@@ -101,17 +120,24 @@ export default function App() {
   if (setup && !setup.configured) return <FirstRun onDone={() => window.location.reload()} />;
   return (
     <div className="shell">
+      <Jump pages={NAV} />
       <aside className="side">
         <div className="logo"><Seal size={30} /><span className="wordmark">Mizo Money</span></div>
-        {NAV.map((n) => (
-          <button key={n.label} className={`nav${n.id === page ? ' on' : ''}`}
-            title={n.label} onClick={() => { window.location.hash = `#/${n.id}`; }}><NavIcon id={n.id} /><span className="navlabel">{n.label}</span></button>
+        {RAIL.map((g) => (
+          <Fragment key={g.ids[0]}>
+            {g.head && <div className="navgroup">{g.head}</div>}
+            {g.rule && <div className={`navrule${g.foot ? ' foot' : ''}`} />}
+            {g.ids.map((id) => NAV.find((n) => n.id === id)).map((n) => (
+              <button key={n.label} className={`nav${n.id === page ? ' on' : ''}`}
+                title={n.label} onClick={() => { window.location.hash = `#/${n.id}`; }}><NavIcon id={n.id} /><span className="navlabel">{n.label}</span></button>
+            ))}
+          </Fragment>
         ))}
       </aside>
       <main className="main">
         <div className="topbar">
           {update?.available && <a className="chip-link info" href="#/settings" title={`You have version ${update.version}. See Settings › Updates.`}>Version {update.latest} is available</a>}
-          {attention > 0 && <a className="chip-link" href="#/accounts" title="See Accounts">
+          {attention > 0 && <a className="chip-link" href="#/networth" title="See your banks on Accounts & net worth">
             {attention} bank{attention > 1 ? 's' : ''} need{attention > 1 ? '' : 's'} attention</a>}
           {meta.lastSync && (
             <span className="small muted" title={`Mizo Money checks Plaid when it starts and every ${meta.autoSyncHours} hours while it's running. Plaid gets new data from each bank on its own schedule (transactions a few times a day, investments about daily), so something new at your bank can take up to a day to show here.`}>
@@ -139,9 +165,10 @@ export default function App() {
           <div key={i.id} className="alert warn"><span title={i.status}>Couldn't update {i.institution}: {i.reason}. Mizo Money tries again on its own.</span>
             <button className="btn" onClick={refresh} disabled={busy}>{busy ? 'Trying…' : 'Try again'}</button></div>
         ))}
-        <PageBoundary key={page}>
-        {page === 'accounts' ? <Accounts onChange={load} /> : page === 'transactions' ? <Transactions /> : page === 'budget' ? <Budget /> : page === 'goals' ? <Goals /> : page === 'trips' ? <Trips /> : page === 'reports' ? <Reports />
-          : page === 'forecast' ? <Forecast /> : page === 'investments' ? <Investments /> : page === 'networth' ? <NetWorth />
+        {/* Transactions reads its filters from the address once, when it mounts: a new search must remount it. */}
+        <PageBoundary key={page === 'transactions' ? `${page}?${pageQs}` : page}>
+        {page === 'transactions' ? <Transactions /> : page === 'budget' ? <Budget /> : page === 'plan' ? <><Goals /><Forecast /></> : page === 'trips' ? <Trips /> : page === 'reports' ? <Reports />
+          : page === 'investments' ? <Investments /> : page === 'networth' ? <NetWorth onChange={load} />
             : page === 'settings' ? <Settings onChange={load} /> : page === 'flow' ? <Flow /> : page === 'bills' ? <Bills /> : <>
               <PageHeader title={new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} sub={`${greeting}. Here's where you stand.`} />
               {loaded && <SetupChecklist />}

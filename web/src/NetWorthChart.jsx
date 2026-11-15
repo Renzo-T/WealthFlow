@@ -48,8 +48,22 @@ export default function NetWorthChart({ history }) {
       <svg className="chart" width={W} height={H} viewBox={`0 0 ${W} ${H}`} onMouseMove={move} onMouseLeave={() => setHover(null)}>
         {[0, 1, 2, 3, 4].map((k) => { const v = lo + ((hi - lo) * k) / 4; return <g key={k}><line className="grid" x1={L} x2={W - R} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{compact.format(v)}</text></g>; })}
         {[0, 1, 2, 3, 4, 5].map((k) => { const i = Math.round((k * (data.length - 1)) / 5); return <text key={k} x={x(i)} y={H - 6} textAnchor={k === 0 ? 'start' : k === 5 ? 'end' : 'middle'}>{day(data[i].date)}</text>; })}
-        {runs.map((r, k) => <path key={k} d={path(r)} fill="none" style={{ stroke: 'var(--blue)' }} strokeLinejoin="round"
-          strokeWidth={r.est ? 1.75 : 2.5} strokeDasharray={r.est ? '5 4' : undefined} opacity={r.est ? 0.55 : 1} />)}
+        <defs>
+          <pattern id="nw-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" strokeWidth="1" style={{ stroke: 'var(--blue)' }} /></pattern>
+          <linearGradient id="nw-fade" gradientUnits="userSpaceOnUse" x1="0" y1={T} x2="0" y2={H - B}><stop offset="0" stopColor="#fff" /><stop offset="1" stopColor="#000" /></linearGradient>
+          <mask id="nw-mask" maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}><rect x="0" y="0" width={W} height={H} fill="url(#nw-fade)" /></mask>
+        </defs>
+        <g className="draw" key={range}>
+          <g mask="url(#nw-mask)">
+            {runs.filter((r) => !r.est).map((r, k) => <path key={k} className="nw-wash" d={`${path(r)} L${x(r.to).toFixed(1)},${H - B} L${x(r.from).toFixed(1)},${H - B} Z`} fill="url(#nw-hatch)" stroke="none" />)}
+          </g>
+          {runs.map((r, k) => <path key={k} d={path(r)} fill="none" style={{ stroke: 'var(--blue)' }} strokeLinejoin="round" strokeLinecap="round"
+            strokeWidth={r.est ? 1.75 : 2.75} strokeDasharray={r.est ? '5 4' : undefined} opacity={r.est ? 0.55 : 1} />)}
+          <g className="nw-end">
+            <circle className="nw-halo" cx={x(data.length - 1)} cy={y(data.at(-1).value)} r="12" style={{ fill: 'var(--blue)' }} />
+            <circle cx={x(data.length - 1)} cy={y(data.at(-1).value)} r="5" strokeWidth="2.5" style={{ fill: 'var(--card)', stroke: 'var(--blue)' }} />
+          </g>
+        </g>
         {h && <g>
           <line className="grid" x1={x(hover)} x2={x(hover)} y1={T} y2={H - B} />
           <circle cx={x(hover)} cy={y(h.value)} r="5" style={{ fill: 'var(--blue)', stroke: 'var(--card)' }} strokeWidth="2" />
