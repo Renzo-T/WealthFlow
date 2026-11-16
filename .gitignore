@@ -33,3 +33,4 @@ release/
 .impeccable/build/
 .impeccable/questions/
 .impeccable/hook.cache.json
+.playwright-mcp/
