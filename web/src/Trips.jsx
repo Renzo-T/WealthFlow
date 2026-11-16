@@ -3,6 +3,7 @@ import { api } from './api.js';
 import { usd, usd2, shortDate, SERIES, NEUTRAL } from './format.js';
 import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, Close } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
+import { TextStamp } from './Stamp.jsx';
 
 // "Sep 7 – 12, 2026", "Nov 16 – Dec 1, 2025", "Dec 28, 2025 – Jan 3, 2026".
 const range = (t) => {
@@ -73,7 +74,7 @@ function TripCard({ trip, reload }) {
         <div className="row base"><span><b className="tripname">{trip.name}</b>{trip.place && <span className="small muted"> · {trip.place}</span>}</span>
           <span className="btnrow"><button className="linkbtn" onClick={() => setEdit(true)}>Edit</button><button className="linkbtn" onClick={remove}>Delete</button></span></div>
       )}
-      <div className="small muted">{range(trip)} · {trip.days} day{trip.days > 1 ? 's' : ''}</div>
+      <div className="tripwhen"><TextStamp kind="out" ink={trip.id}>{range(trip)}</TextStamp><span className="small muted">{trip.days} day{trip.days > 1 ? 's' : ''}</span></div>
       <div className="tripnums">
         <div><span className="big amt">{usd(trip.total)}</span><span className="small muted">{trip.count} purchase{trip.count === 1 ? '' : 's'}</span></div>
         <div className="r"><b className="amt">{usd(trip.total / trip.days)}</b><span className="small muted">a day</span></div>

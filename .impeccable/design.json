@@ -883,7 +883,11 @@
       },
       "figure": {
         "displayName": "Figure",
-        "purpose": "Secondary headline figures (free to spend, spent this month, panel totals)."
+        "purpose": "Secondary figures (700, 1.6rem): summary cards, goal amounts, panel totals. 800 is kept for each page's lead figure only (standing strip, Budget's left to budget, the Money flow total)."
+      },
+      "rowLabel": {
+        "displayName": "Row label",
+        "purpose": "Table row labels (500), such as Reports' category rows; never bold."
       },
       "title": {
         "displayName": "Title",
@@ -1042,7 +1046,7 @@
   ],
   "narrative": {
     "northStar": "The Planner Page",
-    "overview": "Money is kept the way a careful person keeps a Japanese stationery planner: a cloth-bound indigo cover down the left, calm ruled pages with a faint dot grid, ink-dark figures, and the month always in view. The page is the instrument. Hierarchy comes from size, weight and hairline rules, not from colour, shadow or decoration, so the few things that carry colour (money in, money out, something that needs you) are read at once.\n\nDensity is that of a well-used planner, not a spreadsheet: content sits on white sheets with ruled rows and fixed columns, figures align on equal-width digits, and every page opens under a dated header rule. The one authored moment is the month spread inking in on the dashboard; everything else simply appears. Light and dark are equals: dark is the same planner at night, with its own validated steps (the indigo cover stays), never an inversion.\n\nThe world refuses the category default of a white card grid with a blue accent, glossy area charts and soft shadows. It also refuses the bank-app look, playfulness, spreadsheet density and hiding detail.",
+    "overview": "Money is kept the way a careful person keeps a Japanese stationery planner: a cloth-bound indigo cover down the left, calm ruled pages with a faint dot grid, ink-dark figures, and the month always in view. The page is the instrument. Hierarchy comes from size, weight and hairline rules, not from colour, shadow or decoration, so the few things that carry colour (money in, money out, something that needs you) are read at once.\n\nDensity is that of a well-used planner, not a spreadsheet: content sits on white sheets with ruled rows and fixed columns, figures align on equal-width digits, and every page opens under a dated header rule. The one authored moment is the month spread inking in on the dashboard; everything else simply appears. Light and dark are equals: dark is the same planner at night, with its own validated steps (the indigo cover stays), never an inversion.\n\nThe world refuses the category default of a white card grid with a blue accent, glossy area charts and soft shadows. It also refuses the bank-app look, decoration, spreadsheet density and hiding detail. Decoration is a planner detail that marks nothing: the planner's objects are welcome, each for one meaning (see The Earned Detail Rule).",
     "keyCharacteristics": [
       "An indigo cover rail holds the seal and the navigation; the page beside it is quiet paper with a 22px dot grid.",
       "One family (Atkinson Hyperlegible Next, chosen for legibility at small sizes) at four weights carries every level; figures are tabular everywhere.",
@@ -1052,6 +1056,11 @@
       "Estimated, partial and future data are always marked (dashed, faded, \"est\")."
     ],
     "rules": [
+      {
+        "name": "The Earned Detail Rule",
+        "body": "A planner object appears only when it marks something true about the data. It always means the same thing, and it appears nowhere else. If you can't say what it marks in one sentence, it doesn't go in. Materials (cloth weave, paper grain, dot grid, paper shadow) mark nothing; they stay quiet and never vary to signal anything.",
+        "section": "components"
+      },
       {
         "name": "The Meaning-Only Rule",
         "body": "Green and red mean money in/out or good/bad, nothing else. Category icons are inked in indigo; only income and saving keep green.",
@@ -1111,7 +1120,8 @@
       "**Don't** put a small line of label text above a heading as a kicker or eyebrow.",
       "**Don't** use text glyphs (×, ‹, ›, ●, ↻) as icons; draw them.",
       "**Don't** use more than four chart hues; the rest are grey.",
-      "**Don't** design a phone layout; narrow windows collapse the rail and stack columns."
+      "**Don't** design a phone layout; narrow windows collapse the rail and stack columns.",
+      "**Don't** add a planner object that marks nothing (rings, tape, clips, torn edges), or let a texture become a signal."
     ]
   }
 }

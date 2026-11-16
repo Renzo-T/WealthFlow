@@ -35,8 +35,10 @@ const remember = (k, v) => { try { localStorage.setItem(`wf.budget.${k}`, JSON.s
 const recall = (k, d) => { try { return JSON.parse(localStorage.getItem(`wf.budget.${k}`)) ?? d; } catch { return d; } };
 
 // Remaining as a pill: green = room left (or income still to come), red = over, grey = exactly on budget.
-function Remaining({ value, income }) {
+// Saving above its budget is "met": saving more than planned isn't overspending.
+function Remaining({ value, income, saving }) {
   const v = Math.round(value);
+  if (saving && v < 0) return <span className="pill ok" title={amountsHidden() ? 'Saved more than planned' : `${usd(-v)} more than planned`}>met</span>;
   const cls = v === 0 ? 'zero' : income || v > 0 ? 'ok' : 'over'; // income above budget is good news, not "over"
   return <span className={`pill amt ${cls}`}>{v < 0 ? '−' : ''}{usd(Math.abs(v))}</span>;
 }
@@ -55,10 +57,10 @@ function BudgetInput({ c, save }) {
 
 // Actual against budget. Green: on track. Amber: a flexible category ahead of an even pace for today. Red: over.
 // Income fills green as it arrives. The tick marks the even pace (flexible spending only).
-function Meter({ actual, budget, income, pace }) {
+function Meter({ actual, budget, income, pace, saving }) {
   if (!budget) return <div className="meter blank" />;
   const p = Math.min(100, (Math.max(0, actual) / budget) * 100);
-  const state = income ? 'ok' : actual > budget + 0.5 ? 'over' : pace != null && pace < 1 && p > pace * 100 + 10 ? 'ahead' : 'ok';
+  const state = income || saving ? 'ok' : actual > budget + 0.5 ? 'over' : pace != null && pace < 1 && p > pace * 100 + 10 ? 'ahead' : 'ok';
   return (
     <div className="meter"><i className={state} style={{ width: `${p}%` }} />
       {pace != null && pace > 0 && pace < 1 && <b style={{ left: `${pace * 100}%` }} title="An even pace for today" />}</div>
@@ -89,15 +91,16 @@ function Row({ c, income, progress, save, tags = true, inGroup = false, month, r
       <span className="r amt">{c.count ? <Hover tip={<TipList title={`${c.category}: ${c.count} transaction${c.count > 1 ? 's' : ''}`}
         rows={c.top.map((t) => [t.name, `${t.amount < 0 ? '−' : ''}${usd2(Math.abs(t.amount))}`, new Date(`${t.date}T00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })])}
         note={c.count > c.top.length ? `and ${c.count - c.top.length} more` : null} />}>{usd(c.actual)}</Hover> : usd(c.actual)}</span>
-      <span className="r">{inGroup ? null : avail != null ? <Remaining value={avail - c.actual} income={income} /> : <span className="small muted">no budget</span>}</span>
-      {!inGroup && <span className="bmeter"><Meter actual={c.actual} budget={avail} income={income} pace={!income && c.kind === 'flexible' ? progress : null} /></span>}
+      <span className="r">{inGroup ? null : avail != null ? <Remaining value={avail - c.actual} income={income} saving={c.saving} />
+        : c.saving && c.actual > 0.5 ? <Remaining value={-c.actual} saving /> : <span className="small muted">no budget</span>}</span>
+      {!inGroup && <span className="bmeter"><Meter actual={c.actual} budget={avail} income={income} saving={c.saving} pace={!income && c.kind === 'flexible' ? progress : null} /></span>}
     </div>
   );
 }
 
-// One card per group: a header row with the group's totals (click to collapse), its categories, and the
+// One group of the sheet: a title row with the group's totals (click to collapse), its categories, and the
 // categories with nothing in them behind "Show N unbudgeted".
-function GroupCard({ id, title, rows, income, progress, save, tags, clear, group, setWhole, month, resetMonth, setRollover }) {
+function GroupBlock({ id, title, rows, income, progress, save, tags, clear, group, setWhole, month, resetMonth, setRollover }) {
   const [open, setOpen] = useState(() => !recall(`closed.${id}`, false));
   const [more, setMore] = useState(false);
   const active = (c) => c.budget != null || Math.abs(c.actual) >= 0.5 || c.suggested;
@@ -107,21 +110,23 @@ function GroupCard({ id, title, rows, income, progress, save, tags, clear, group
   const whole = !!group?.whole;
   const budget = whole ? group.groupBudget ?? 0 : rows.reduce((s, c) => s + (c.budget ?? 0), 0), actual = rows.reduce((s, c) => s + c.actual, 0);
   const left = budget - actual;
+  const saving = rows.every((c) => c.saving);
   const toggle = () => { setOpen(!open); remember(`closed.${id}`, open); };
   // The group as one budget line (its amount, suggestion and spending), for the header's input and meter.
   const self = whole && { category: title, isGroup: true, budget: group.groupBudget, suggested: group.groupSuggested, basis: 'its categories', kind: group.kind,
     overridden: group.groupOverridden, usual: group.groupUsual };
   return (
-    <section className="card bcard">
+    <div className="bgroup">
       <div className={`bhead${whole ? ' whole' : ''}`}>
         <button className="btitle" onClick={toggle} aria-expanded={open}>
           <svg className={`chev${open ? ' open' : ''}`} viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>{title}</button>
         <span className="r amt bheadin">{self?.overridden && <span className="ftag mtag">{monthShort(month)} only<button className="tagx" onClick={() => resetMonth(self)} aria-label="Back to the usual amount"><Close /></button></span>}
           {whole ? <BudgetInput c={self} save={save} /> : budget ? usd(budget) : '—'}</span>
         <span className="r amt">{usd(actual)}</span>
-        <span className="r">{whole ? (group.groupBudget != null ? <Remaining value={left} income={income} /> : <span className="small muted">no budget</span>)
+        <span className="r">{whole ? (group.groupBudget != null ? <Remaining value={left} income={income} saving={saving} /> : <span className="small muted">no budget</span>)
+          : saving && budget && left < -0.5 ? <span className="good" title={amountsHidden() ? 'Saved more than planned' : `${usd(-left)} more than planned`}>met</span>
           : <span className={`amt ${!budget ? '' : left < -0.5 && !income ? 'bad' : 'good'}`}>{budget ? `${left < -0.5 ? '−' : ''}${usd(Math.abs(left))}` : ''}</span>}</span>
-        {whole && <span className="bmeter"><Meter actual={actual} budget={group.groupBudget} income={income} pace={!income && group.kind === 'flexible' ? progress : null} /></span>}
+        {whole && <span className="bmeter"><Meter actual={actual} budget={group.groupBudget} income={income} saving={saving} pace={!income && group.kind === 'flexible' ? progress : null} /></span>}
       </div>
       {open && shown.map((c) => <Row key={c.category} c={c} income={income} progress={progress} save={save} tags={tags} inGroup={whole} month={month} resetMonth={resetMonth} setRollover={setRollover} />)}
       {open && <div className="bfoot">
@@ -136,31 +141,59 @@ function GroupCard({ id, title, rows, income, progress, save, tags, clear, group
           categories: rows.filter((c) => c.budget != null && !c.isGroup).map((c) => c.category),
           groups: rows.filter((c) => c.budget != null && c.isGroup).map((c) => c.category) }, title)}>Clear</button>}
       </div>}
-    </section>
+    </div>
   );
 }
 
-const Strip = ({ title, children }) => (
-  <div className="bstrip"><span>{title}{children}</span><span className="r">Budget</span><span className="r">Actual</span><span className="r">Remaining</span></div>
+// The sheet's column heads (once, at the top) and a section's closing total, which sits on a double rule.
+const ColHeads = () => (
+  <div className="bcolhead" role="presentation"><span /><span className="r">Budget</span><span className="r">Actual</span><span className="r">Remaining</span></div>
 );
-const Total = ({ title, budget, actual, income }) => (
-  <section className="card btot">
-    <span>{title}</span><span className="r amt">{usd(budget)}</span><span className="r amt">{usd(actual)}</span>
-    <span className={`r amt ${budget - actual < -0.5 && !income ? 'bad' : 'good'}`}>{budget ? `${budget - actual < -0.5 ? '−' : ''}${usd(Math.abs(budget - actual))}` : ''}</span>
-  </section>
-);
+// Saved beyond plan (`extra`) isn't counted as over: remaining is against what was spent and planned saving.
+const Total = ({ title, budget, actual, income, extra = 0 }) => {
+  const left = budget - (actual - extra);
+  return (
+    <div className="btot">
+      <span>{title}</span><span className="r amt">{usd(budget)}</span><span className="r amt">{usd(actual)}</span>
+      <span className={`r amt ${left < -0.5 && !income ? 'bad' : 'good'}`}>{budget ? `${left < -0.5 ? '−' : ''}${usd(Math.abs(left))}` : ''}</span>
+      {extra > 0.5 && <span className="btotnote small muted">Includes <span className="amt">{usd(extra)}</span> saved beyond plan, not counted as over.</span>}
+    </div>
+  );
+};
+
+// The sheet's closing line: what's left of budgeted income once spending and saving are budgeted.
+function LeftLine({ b }) {
+  const left = b.leftToBudget, t = b.totals;
+  const none = !t.income && !t.expenses;
+  if (!t.income && t.expenses > 0) { // spending budgeted but no income: "left" would just be minus the spending
+    return (
+      <div className="bleft none">
+        <span><b>Budgeted for spending & saving</b><span className="small muted">Add your income above to see what's left to budget.</span></span>
+        <span className="big amt">{usd(t.expenses)}</span>
+      </div>
+    );
+  }
+  return (
+    <div className={`bleft ${left < 0 ? 'neg' : none ? 'none' : ''}`}>
+      <span><b><Hover tip={<TipList title="Left to budget" rows={[['Income budgeted', usd(t.income)], ['Spending & saving budgeted', `−${usd(t.expenses)}`]]}
+        note="Give every dollar of expected income a job: aim for $0 left." />}>{left < 0 ? 'Over budget' : none ? 'Nothing budgeted yet' : 'Left to budget'}</Hover></b></span>
+      <span className="big amt">{left < 0 ? '−' : ''}{usd(Math.abs(left))}</span>
+    </div>
+  );
+}
 
 // Side panel meters: one per line, same colours as the rows.
 function Split({ title, t, income, pace, sub }) {
   if (!t.budget) return <div className="bsplit"><div className="row"><span>{title}</span><span className="small muted">no budget yet</span></div>{sub && <div className="small muted">{sub}</div>}</div>;
-  const left = t.budget - t.actual;
+  const extra = t.extra ?? 0, left = t.budget - (t.actual - extra); // saved beyond plan isn't "over"
   return (
     <div className="bsplit">
       <div className="row"><span>{title}</span><span className="small muted amt">{usd(t.budget)} budget</span></div>
-      <Meter actual={t.actual} budget={t.budget} income={income} pace={pace} />
+      <Meter actual={t.actual - extra} budget={t.budget} income={income} pace={pace} />
       <div className="row small"><b className="amt">{usd(t.actual)} {income ? 'received' : 'spent'}</b>
         <span className={`amt ${left < -0.5 && !income ? 'bad' : left > 0.5 && !income && pace != null && t.actual / t.budget > pace + 0.1 ? 'warn' : 'good'}`}>
           {usd(Math.abs(left))} {left < -0.5 ? (income ? 'extra' : 'over') : income ? 'to come' : 'remaining'}</span></div>
+      {extra > 0.5 && <div className="small muted">Includes <span className="amt">{usd(extra)}</span> saved beyond plan, not counted as over.</div>}
     </div>
   );
 }
@@ -177,7 +210,7 @@ function SidePanel({ b }) {
       </div>
       {tab === 'summary' && <>
         <Split title="Income" t={{ budget: t.income, actual: t.incomeActual }} income />
-        <Split title="Spending & saving" t={{ budget: t.expenses, actual: t.expensesActual }} pace={b.progress} />
+        <Split title="Spending & saving" t={{ budget: t.expenses, actual: t.expensesActual, extra: t.savedExtra }} pace={b.progress} />
       </>}
       {tab === 'income' && b.income.categories.filter((c) => c.budget || Math.abs(c.actual) >= 0.5).map((c) => (
         <Split key={c.category} title={c.category} t={{ budget: c.budget ?? 0, actual: c.actual }} income />))}
@@ -241,10 +274,7 @@ Budgets apply to every month, so this clears them everywhere. Suggestions stay, 
     await api('/budgets/clear', { method: 'POST', body: JSON.stringify(which ?? {}) });
     load();
   };
-  const left = b.leftToBudget;
   const none = !b.totals.income && !b.totals.expenses;
-  // Spending budgeted but no income: "left to budget" would just be minus the spending, shown as "over budget".
-  const noIncome = !b.totals.income && b.totals.expenses > 0;
   const pickView = (v) => { setView(v); remember('view', v); };
   const cards = view === 'kind'
     ? KINDS.map(([k, title]) => ({ id: `k.${k}`, title, rows: b.expenses.flatMap(lines).filter((c) => kindOf(c) === k) }))
@@ -271,36 +301,30 @@ Budgets apply to every month, so this clears them everywhere. Suggestions stay, 
           <button className="btn primary" onClick={() => setClosing(true)}>Close out {monthName(month).split(' ')[0]}</button>
         </section>)}
       <div className="budgetgrid mt">
-        <div className="bcol">
-          <Strip title="Income" />
-          <GroupCard id="income" title="Income" rows={incomeRows} income progress={b.progress} save={save} clear={clear} group={b.income} setWhole={setWhole} {...extra} />
-          <Total title="Total income" budget={b.totals.income} actual={b.totals.incomeActual} income />
-          <Strip title="Expenses">
-            <span className="ranges bview">
+        <section className="card panel bsheet">
+          <div className="head bsheethead"><h2>Income and expenses</h2>
+            <span className="ranges bview" title="How expenses are grouped">
               <button className={view === 'group' ? 'on' : ''} onClick={() => pickView('group')}>By group</button>
               <button className={view === 'kind' ? 'on' : ''} onClick={() => pickView('kind')}>Fixed & flexible</button>
-            </span>
-          </Strip>
-          {cards.map((c) => <GroupCard key={c.id} id={c.id} title={c.title} rows={c.rows} progress={b.progress} save={save} tags={view !== 'kind'} clear={clear} group={c.group} setWhole={setWhole} {...extra} />)}
-          <Total title="Total spending & saving" budget={b.totals.expenses} actual={b.totals.expensesActual} />
-        </div>
-        <aside className="bside">
-          {noIncome ? <section className="card leftcard none">
-            <div className="big amt">{usd(b.totals.expenses)}</div>
-            <div>budgeted for spending & saving</div>
-            <div className="small muted">Add your income above to see what's left to budget.</div>
-          </section> : <section className={`card leftcard ${left < 0 ? 'neg' : none ? 'none' : ''}`}>
-            <div className="big amt">{left < 0 ? '−' : ''}{usd(Math.abs(left))}</div>
-            <div><Hover tip={<TipList title="Left to budget" rows={[['Income budgeted', usd(b.totals.income)], ['Spending & saving budgeted', `−${usd(b.totals.expenses)}`]]}
-              note="Give every dollar of expected income a job: aim for $0 left." />}>{left < 0 ? 'Over budget' : none ? 'Nothing budgeted yet' : 'Left to budget'}</Hover></div>
-          </section>}
+            </span></div>
+          <ColHeads />
+          <GroupBlock id="income" title="Income" rows={incomeRows} income progress={b.progress} save={save} clear={clear} group={b.income} setWhole={setWhole} {...extra} />
+          <Total title="Total income" budget={b.totals.income} actual={b.totals.incomeActual} income />
+          <div className="bsection">Expenses</div>
+          {cards.map((c) => <GroupBlock key={c.id} id={c.id} title={c.title} rows={c.rows} progress={b.progress} save={save} tags={view !== 'kind'} clear={clear} group={c.group} setWhole={setWhole} {...extra} />)}
+          <Total title="Total spending & saving" budget={b.totals.expenses} actual={b.totals.expensesActual} extra={b.totals.savedExtra} />
+          <LeftLine b={b} />
+        </section>
+        <aside className="bside ledger">
           <SidePanel b={b} />
+          <div className="bopts">
           <label className="check small btrips"><input type="checkbox" checked={b.trips.counted} onChange={async (e) => {
             await api('/settings/budget-trips', { method: 'PUT', body: JSON.stringify({ on: e.target.checked }) }); load(); }} />
             Count trips in these categories</label>
           {!b.trips.counted && b.trips.left_out > 0 && <p className="small muted btrips">Leaving out <b className="amt">{usd(b.trips.left_out)}</b> spent on <a href="#/trips">trips</a> this month.</p>}
           {!none && <button className="linkbtn bclearall" onClick={() => clear(null)}>Clear the whole budget</button>}
-          {todo.length > 0 && <Panel className="mt" title="Suggestions">
+          </div>
+          {todo.length > 0 && <Panel title="Suggestions">
             <p className="small muted mt-0">{todo.length} {todo.length === 1 ? 'line has' : 'lines have'} no budget yet. Suggestions come from your recurring bills and your average spending ({b.suggestedFrom.map((m) => monthName(m).split(' ')[0]).join(', ')}). They show as ≈ amounts in dashed boxes until you set them.</p>
             <button className="btn primary" onClick={suggest}>Fill in suggestions</button>
           </Panel>}

@@ -68,3 +68,19 @@ test('a group budgeted as one amount: its categories only show spending; the gro
   assert.equal(b.totals.expenses, 600);
   assert.equal(b.totals.flexible.budget, 600); // one flexible item
 });
+
+test('saving more than planned is "met", not over: a one-off move to an account of your own that isn\'t connected', () => {
+  db.prepare("INSERT INTO category_rules (pattern, category) VALUES ('TRANSFERRED TO', 'Investments')").run();
+  db.prepare("INSERT INTO budgets (category, amount) VALUES ('Groceries', 200)").run();
+  tx('card', '2026-09-03', 150, 'H-E-B', { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_GROCERIES' });
+  tx('chk', '2026-09-10', 28000, 'TRANSFERRED TO VS Z99-123456-1', { primary: 'TRANSFER_OUT', detailed: 'TRANSFER_OUT_ACCOUNT_TRANSFER' });
+  classify();
+  const b = budgetMonth('2026-09', TODAY);
+  const inv = cat(b, 'Investments');
+  assert.equal(inv.actual, 28000);
+  assert.equal(inv.saving, true);
+  assert.equal(cat(b, 'Groceries').saving, false);
+  assert.equal(b.totals.expensesActual, 28150); // still shown in full
+  assert.equal(b.totals.savedExtra, 28000); // but not counted as over
+  assert.ok(b.totals.expenses - (b.totals.expensesActual - b.totals.savedExtra) >= 0);
+});

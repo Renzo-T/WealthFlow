@@ -145,7 +145,7 @@ export default function Investments() {
         The first download can take a few hours after connecting; Mizo Money checks again automatically.</div>}
       {rows.length === 0 && pending.length === 0 && <div className="card empty mt">No holdings yet. Connect a brokerage or retirement account to see them here.</div>}
       {rows.length > 0 && <>
-        <div className="cards">
+        <div className="cards ruled">
           <div className="card"><h3>Total value</h3><div className="big">{usd0(total)}</div><div className="small muted"><Hover tip={<TipList title="By account" rows={byAccountAll.map((g) => [g.name, usd0(g.value), g.institution])} />}>{accounts} account{accounts === 1 ? "" : "s"}</Hover> · {positions.length} positions</div></div>
           <div className="card"><h3>Unrealized gain</h3>
             <div className={`big ${cost && knownValue - cost < 0 ? 'bad' : 'good'}`}>{cost ? signed(knownValue - cost) : '—'}</div>

@@ -1,9 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { api } from './api.js';
 import Progress from './Progress.jsx';
 import { usd } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
-import { Panel, PageHeader, EmptyState, PageSkeleton, Hover, TipList, Check } from './ui.jsx';
+import { Panel, PageHeader, EmptyState, PageSkeleton, Hover, TipList } from './ui.jsx';
+import { TextStamp } from './Stamp.jsx';
+import { statusText } from './goalStatus.js';
 
 const pct = (g) => (g.target ? Math.round((g.saved / g.target) * 100) : 0);
 const monthYear = (d) => new Date(`${d}T00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
@@ -23,6 +25,39 @@ function plan(g) {
     monthly: g.target_date ? left / monthsUntil(g.target_date) : null,
     eta: g.pace > 1 ? addMonths(left / g.pace) : null,
   };
+}
+
+// A reached goal: a stamp with the month it got there; just "Reached" when the month can't be known.
+function ReachedStamp({ g }) {
+  return <TextStamp kind="in" tilt>Reached{g.reached ? ` ${monthYear(g.reached)}` : ''}</TextStamp>;
+}
+
+// Edit, Remove and (for a goal you track by hand) the saved amount, behind one icon button.
+function RowMenu({ g, onEdit, onRemove, onSaved }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    const away = (e) => { if (!ref.current?.contains(e.target)) setOpen(false); };
+    const key = (e) => { if (e.key === 'Escape') { setOpen(false); ref.current?.querySelector('.rowmenu-btn')?.focus(); } };
+    document.addEventListener('mousedown', away); document.addEventListener('keydown', key);
+    return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', key); };
+  }, [open]);
+  const commit = (e) => { if (e.target.value !== '' && Number(e.target.value) !== g.saved) { onSaved(e.target.value); setOpen(false); } };
+  return (
+    <span className="rowmenu" ref={ref}>
+      <button type="button" className="rowmenu-btn" aria-label={`Actions for ${g.name}`} aria-haspopup="true" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="8" r="1.4" /><circle cx="8" cy="8" r="1.4" /><circle cx="12.5" cy="8" r="1.4" /></svg>
+      </button>
+      {open && <div className="rowmenu-pop" role="group" aria-label={`${g.name} actions`}>
+        {!g.account_id && <label className="small muted">Saved
+          <input className="mini" type="number" min="0" step="any" autoFocus defaultValue={g.saved} aria-label={`Saved for ${g.name}`}
+            onBlur={commit} onKeyDown={(e) => e.key === 'Enter' && commit(e)} /></label>}
+        <button type="button" onClick={() => { setOpen(false); onEdit(); }}>Edit</button>
+        <button type="button" onClick={() => { setOpen(false); onRemove(); }}>Remove</button>
+      </div>}
+    </span>
+  );
 }
 
 function Spark({ data }) {
@@ -60,10 +95,10 @@ function GoalForm({ initial, accounts, onSave, onCancel, submit }) {
 
 // One goal as a card: saved amount, progress, what's left, the monthly amount needed by its date, and
 // (for a linked account) the recent pace and when it would get there.
-function GoalCard({ g, accounts, reload, compact }) {
+function GoalCard({ g, accounts, reload }) {
   const [edit, setEdit] = useState(false);
   const [err, setErr] = useState('');
-  const p = compact ? {} : plan(g);
+  const p = plan(g);
   const done = g.saved >= g.target;
   const save = async (f) => {
     const r = await api(`/goals/${g.id}`, { method: 'PATCH', body: JSON.stringify(f) });
@@ -79,13 +114,14 @@ function GoalCard({ g, accounts, reload, compact }) {
     </div>
   );
   return (
-    <div className={`card goal${done ? ' done' : ''}`}>
-      <div className="row base"><b>{g.name}</b>{done ? <span className="donepill">Reached <Check size={11} /></span> : <span className="small muted">{pct(g)}%</span>}</div>
+    <div className={`card goal view${done ? ' done' : ''}`}>
+      <div className="row base"><b>{g.name}</b><span className="goalhead">{done ? <ReachedStamp g={g} /> : <span className="small muted">{pct(g)}%</span>}
+        <RowMenu g={g} onEdit={() => setEdit(true)} onRemove={remove} onSaved={(v) => save({ saved: v })} /></span></div>
       <div className="big amt">{usd(g.saved)}</div>
       <div className="small muted">of <span className="amt">{usd(g.target)}</span>{g.account ? ` · follows ${g.account}` : ''}</div>
       <Progress value={g.saved} max={g.target} />
-      <div className="small"><span className={`amt ${done ? 'good' : 'muted'}`}>{done ? `${usd(g.saved - g.target)} past the target` : `${usd(g.target - g.saved)} to go`}</span></div>
-      {!compact && <div className="goalplan small">
+      <div className="small">{statusText(g) && <span className={`amt ${done ? 'good' : 'muted'}`}>{statusText(g)}</span>}</div>
+      <div className="goalplan small">
         {g.target_date && !done && <div><span className="muted">By {monthYear(g.target_date)}</span><b className="amt">{usd(p.monthly)} a month</b></div>}
         {g.account_id && g.pace != null && <div><span className="muted">
           <Hover className="quiet" tip={<TipList title="Recent pace" rows={[['Change per month', `${g.pace >= 0 ? '+' : '−'}${usd(Math.abs(g.pace))}`]]}
@@ -93,13 +129,27 @@ function GoalCard({ g, accounts, reload, compact }) {
           <b className={`amt ${g.pace > 1 ? 'good' : ''}`}>{Math.abs(g.pace) < 1 ? 'no change' : `${g.pace > 0 ? '+' : '−'}${usd(Math.abs(g.pace))} a month`}</b></div>}
         {p.eta && <div><span className="muted">At that pace</span><b>{monthYear(p.eta)}</b></div>}
         {!g.target_date && !done && <button className="linkbtn" onClick={() => setEdit(true)}>Add a date to see what it takes each month</button>}
-      </div>}
-      {!compact && <Spark data={g.spark} />}
-      {!compact && <div className="row small goalfoot">
-        {!g.account_id ? <label className="muted">Saved <input className="mini" type="number" min="0" step="any" defaultValue={g.saved}
-          onBlur={(e) => Number(e.target.value) !== g.saved && save({ saved: e.target.value })} aria-label={`Saved for ${g.name}`} /></label> : <span />}
-        <span className="btnrow"><button className="linkbtn" onClick={() => setEdit(true)}>Edit</button><button className="linkbtn" onClick={remove}>Remove</button></span>
-      </div>}
+      </div>
+      <div className="goalsparkslot"><Spark data={g.spark} /></div>
+    </div>
+  );
+}
+
+// One goal on the dashboard as a ruled row: name, saved, target and what's left in fixed columns, the meter under it.
+function GoalRow({ g }) {
+  const done = g.saved >= g.target;
+  return (
+    <div className={`rl-item${done ? ' done' : ''}`}>
+      <div className="rl-row" role="row">
+        <span className="rl-namecell" role="cell"><b className="rl-name" title={g.name}>{g.name}</b>{g.account && <span className="small muted rl-sub">follows {g.account}</span>}</span>
+        <b className="rl-num amt" role="cell">{usd(g.saved)}</b>
+        <span className="rl-num amt" role="cell">{usd(g.target)}</span>
+        <span className={`rl-num amt ${done ? 'good' : 'muted'}`} role="cell">{statusText(g)}</span>
+      </div>
+      <div className="rl-meter">
+        <Progress value={g.saved} max={g.target} />
+        {done ? <ReachedStamp g={g} /> : <span className="small muted">{pct(g)}%</span>}
+      </div>
     </div>
   );
 }
@@ -109,7 +159,15 @@ export function GoalsPanel({ items }) {
     <Panel title="Goals" actions={<a href="#/plan">Manage</a>}>
       {items.length === 0 && <EmptyState art="goals" title="Saving for something?" actions={<a className="btn linkbtn-solid" href="#/plan">Add a goal</a>}>
         Set a target, optionally tied to an account, and watch it fill up.</EmptyState>}
-      <div className="goalgrid">{items.slice(0, 4).map((g) => <GoalCard key={g.id} g={g} compact />)}</div>
+      {items.length > 0 && (
+        <div className="rl rl-goals" role="table" aria-label="Goals">
+          <div className="rl-head" role="row">
+            <span role="columnheader" aria-label="Goal" />
+            {['Saved', 'Target', 'Status'].map((h) => <span key={h} role="columnheader">{h}</span>)}
+          </div>
+          {items.slice(0, 4).map((g) => <GoalRow key={g.id} g={g} />)}
+        </div>
+      )}
     </Panel>
   );
 }
@@ -162,7 +220,7 @@ export default function Goals() {
       <PageHeader title="Plan" sub="Savings goals, and where your net worth is heading.">
         <button className="btn primary" onClick={() => setAdding(adding ? null : {})}>{adding ? 'Cancel' : 'Add a goal'}</button>
       </PageHeader>
-      {goals.length > 0 && <div className="cards goalcards">
+      {goals.length > 0 && <div className="cards ruled goalcards">
         <div className="card"><h3>Saved toward goals</h3><div className="big amt">{usd(saved)}</div><div className="small muted">of <span className="amt">{usd(target)}</span> across {goals.length} goal{goals.length > 1 ? 's' : ''}</div></div>
         <div className="card"><h3>Reached</h3><div className="big">{reached} of {goals.length}</div><div className="small muted">{reached === goals.length ? 'All done. Time for a new one?' : `${goals.length - reached} in progress`}</div></div>
         <div className="card"><h3>Needed each month</h3><div className="big amt">{monthly ? usd(monthly) : '—'}</div>

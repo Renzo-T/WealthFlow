@@ -170,6 +170,10 @@ db.exec('CREATE TABLE IF NOT EXISTS budget_groups (grp TEXT PRIMARY KEY, amount 
 // A goal's optional target date (YYYY-MM-DD): the page shows the monthly amount needed to reach it.
 if (!db.prepare('PRAGMA table_info(goals)').all().some((c) => c.name === 'target_date'))
   db.exec('ALTER TABLE goals ADD COLUMN target_date TEXT');
+// The day a goal you enter amounts for was first seen at or over its target (YYYY-MM-DD). Goals that follow an account
+// read it from the balance history instead.
+if (!db.prepare('PRAGMA table_info(goals)').all().some((c) => c.name === 'reached_at'))
+  db.exec('ALTER TABLE goals ADD COLUMN reached_at TEXT');
 // Split transactions: each part is its own row (split_of = the original's id) with your category, and the original
 // is marked is_split (category "Split", not spending), so every total counts the parts instead. Raw per-account sums
 // (balances, bill detection) skip the parts.

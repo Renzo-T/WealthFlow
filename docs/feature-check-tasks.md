@@ -257,26 +257,8 @@ are one page, Plan), and the same list in `CLAUDE.md` or `README.md` wherever pa
 
 # Models, effort and prompts
 
-Recommendations, not rules: if a task comes back wrong twice, move it up one model rather than re-prompting.
-
-| Task | Model | Effort | Why |
-|---|---|---|---|
-| 1 Shorter default dashboard | Sonnet | medium | Small, but saved layouts must not change: needs careful tests |
-| 2 Transactions summary | Haiku | low | Delete four lines |
-| 3 Empty "Needs you" | Sonnet | low | Two layout states to check by eye |
-| 4 Accounts joins Net worth | Opus | high | Moves features between pages; easy to lose one |
-| 5 Forecast joins Goals | Sonnet | high | Mostly moving; redirects and page checks |
-| 6 Forecast you can trust | Sonnet | high | Money maths with unit tests |
-| 7 Keyboard search | Sonnet | medium | One self-contained component |
-| 8 Notifications | Opus | high | New table, privacy rule, Windows delivery that may not be possible |
-| 9 Card interest | Sonnet | high | Must read Plaid's documentation first |
-| 10 Close the month | Opus | high | New flow across budget, sorting and settings |
-| 11 Highlighter | Haiku | low | One rule removed, two added |
-| 12 Ink and pencil | Sonnet | medium | Many files, same small change; must miss none |
-| 13 Planner tabs | Haiku | medium | Markup and CSS |
-| 14 Month strip | Sonnet | medium | Reuses a component in two pages |
-| 15 Hero trace | Haiku | low | CSS only |
-| 16 Housekeeping | Haiku | low | Text edits |
+Each task's model and effort sit right above its prompt. If a task comes back wrong twice, move it up one model
+rather than re-prompting.
 
 ## The prompt every task starts with
 
@@ -293,23 +275,27 @@ Finish with: files changed, checks you ran with their results, and anything you 
 ## What to add for each task
 
 **Task 1**
+Model: Sonnet · Effort: medium
 ```text
 Before changing anything, read tests/layout.test.js and web/src/layout.js. The risk is changing a layout someone
 already saved: write the test for "a saved layout is untouched" first and watch it pass before and after.
 ```
 
 **Task 2**
+Model: Haiku · Effort: low
 ```text
 Only the txsummary panel in web/src/Transactions.jsx. Leave the API and every other part of the page alone.
 ```
 
 **Task 3**
+Model: Sonnet · Effort: low
 ```text
 Check both states by eye: the demo data (npm run demo -- <new folder>) has nothing to sort; to see the other state,
 pass a made-up todo item in the browser only, and do not leave test data in the code.
 ```
 
 **Task 4**
+Model: Opus · Effort: high
 ```text
 Start by listing everything the Accounts page lets a person do (read web/src/Accounts.jsx, Connect.jsx and
 AccountOptions.jsx) and show me that list in your report with where each one now lives. Search the whole repo for
@@ -322,12 +308,14 @@ On the merged page I can no longer <do X>. Restore it without bringing the Accou
 ```
 
 **Task 5**
+Model: Sonnet · Effort: high
 ```text
 Task 6 is already done; move the forecast as it is now. Search the repo for "#/goals" and "#/forecast" and for the
 page lists used by check:ui and the setup steps, and update each. Both old links must land on #/plan.
 ```
 
 **Task 6**
+Model: Sonnet · Effort: high
 ```text
 Write tests/projection.test.js first, with hand-worked numbers: for example 100,000 at 7% for 10 years with no
 contribution, in future dollars and in today's dollars at 3% inflation, and the year a target is crossed.
@@ -336,12 +324,14 @@ web/src/projection.js imports React's useState; keep the maths in functions the 
 ```
 
 **Task 7**
+Model: Sonnet · Effort: medium
 ```text
 Find the transaction search parameter in server/routes/data.js and how web/src/Transactions.jsx reads filters from
 the address before writing any code, and tell me what you found. Do not add a library. Test with the keyboard only.
 ```
 
 **Task 8**
+Model: Opus · Effort: high
 ```text
 Work in two parts and report after the first. Part 1: notices(), the "notified" table, the setting and its API, all
 tested; no delivery yet. Part 2: delivery on Windows without a new dependency. If you cannot make a toast appear
@@ -354,6 +344,7 @@ Part 1 looks right. Go on to Part 2.
 ```
 
 **Task 9**
+Model: Sonnet · Effort: high
 ```text
 First read Plaid's Liabilities documentation for the credit "aprs" field and quote the shape you will rely on. Then
 look at how server/sync.js stores statements now and how tests/sync.test.js stubs Plaid. A bank that sends no APR
@@ -361,6 +352,7 @@ must show nothing, never "0%". The interest figure is an estimate and must be ma
 ```
 
 **Task 10**
+Model: Opus · Effort: high
 ```text
 Before building, write me a half-page plan: which existing endpoints each of the four steps uses, the one new
 endpoint, and where "closed" is stored. Wait for my reply. The sheet is a checklist on one page, not a pop-up wizard.
@@ -371,34 +363,40 @@ Plan approved. Build it.
 ```
 
 **Task 11**
+Model: Haiku · Effort: low
 ```text
 CSS and one class in Glance.jsx. Show me light and dark screenshots of a dashboard with nothing to sort (no yellow
 anywhere) and with something to sort (one swipe).
 ```
 
 **Task 12**
+Model: Sonnet · Effort: medium
 ```text
 First list every place an estimate is marked today (search web/src for "est", "estimate", "partial", "≈") and show
 me the list. Then add <Est> and convert them one file at a time. Do not change which figures count as estimated.
 ```
 
 **Task 13**
+Model: Haiku · Effort: medium
 ```text
 Tasks 4 and 5 are done, so the menu has 11 items. Check the collapsed (icons only) rail as well as the full one.
 ```
 
 **Task 14**
+Model: Sonnet · Effort: medium
 ```text
 Read web/src/MonthSpread.jsx and server/spread.js first. The compact strip must use the same data and the same dot
 scale as the dashboard's. On Budget it follows the month arrows.
 ```
 
 **Task 15**
+Model: Haiku · Effort: low
 ```text
 CSS only if you can. Take screenshots at 1280 and 1440 wide in light and dark and confirm no line crosses any text.
 ```
 
 **Task 16**
+Model: Haiku · Effort: low
 ```text
 Text only. Do not change anything in PRODUCT.md beyond the two lines the task names.
 ```
@@ -467,28 +465,149 @@ before and after, in your report. Do not shorten explanations of how a number wa
 
 ## Models and prompts for Group D
 
-| Task | Model | Effort |
-|---|---|---|
-| 17 Voice written down | Sonnet | medium |
-| 18 Page subtitles | Haiku | medium |
-| 19 Empty states and notes | Sonnet | medium |
-
 Start each with "The prompt every task starts with" above, then add:
 
 **Task 17**
+Model: Sonnet · Effort: medium
 ```text
 Collect 20 real lines from web/src (subtitles, empty states, notes, tooltips) before writing, and build the rules
 from what the app already does well. Quote real lines as the examples. Do not change any code.
 ```
 
 **Task 18**
+Model: Haiku · Effort: medium
 ```text
 Read the "Voice and wording" section of DESIGN.md first. Check each new subtitle against what the page really does;
 if my suggested line is not true, write a true one and tell me. Show me a before and after table.
 ```
 
 **Task 19**
+Model: Sonnet · Effort: medium
 ```text
 Read the "Voice and wording" section of DESIGN.md first. Change as little as possible: most lines are already right.
 Never remove an explanation of where a number comes from. Show me a before and after list.
+```
+
+---
+
+# Group E: design and motion against DESIGN.md's own rules
+
+Found by comparing the dashboard and `web/src/styles.css` with the Named Rules and the Motion section of DESIGN.md.
+Each task appends CSS under `/* ---------- Rules pass: <task name> ---------- */`. Tasks 20 to 25 all touch
+`styles.css`, so run them one after another. Line numbers are from November 2026 and may have moved: search for the
+selector.
+
+## Task 20: Inner cards stop floating (S)
+
+**Files:** `web/src/styles.css`.
+
+`.goalgrid > .card:hover, .tripgrid > .card:hover, .watch:hover` lift 2px and take `--paper-shadow-up` (near line
+1066). The Hairline Rule says only whole sheets carry a shadow. Override: no `transform`, no `box-shadow` change on
+hover; the border goes from `--line` to `--line-strong` instead. Check that these inner cards carry no resting shadow
+either; if they do, remove it.
+
+**Done when:** hovering a goal, trip or watchlist card changes only its border, in light and dark.
+
+## Task 21: Remove the net worth trace from the hero (S)
+
+**Files:** `web/src/Cards.jsx`, `web/src/styles.css`, `DESIGN.md` (Standing Strip section).
+
+After the overlap fix the 30-day trace is a short dashed squiggle in the corner of the net worth cell and reads as a
+glitch. Remove the `Trace` component and its use, the `.herotrace` rules and the `trace-in` keyframes, and the
+sentence about it in DESIGN.md. The net worth figure, the "since" note and the 30-day change stay exactly as they are.
+
+**Done when:** no `herotrace` or `Trace` remains in `web/src`, and the hero cell shows cloth, label, figure and change.
+
+## Task 22: One motion rule that matches the code (S)
+
+**Files:** `DESIGN.md` (Motion section and the "Do" line about motion). No code.
+
+The rule says "animating opacity and transform only", but the line charts draw in with `clip-path`, the donut sweeps
+with `stroke-dasharray`, and the attention swipe grows `background-size`. Keep the code. Rewrite the rule: movement
+is opacity and transform, except that lines and marks may draw in once using clip or stroke; nothing animates layout
+(width, height, top, left, margin). Name the two things that may loop and why: the refresh icon while a sync runs and
+the loading shimmer, both of which stop when the work ends.
+
+**Done when:** every animation in `styles.css` is allowed by the rule as written. List them in your report.
+
+## Task 23: One curve, shorter count (S)
+
+**Files:** `web/src/styles.css`, `web/src/Cards.jsx`.
+
+- The hover tooltip (`hovin .12s ease-out`, near line 537) moves to `var(--ease)`, same duration.
+- Search `styles.css` for any other `ease-out`, `ease-in-out` or `linear` on something that is not the spinner or
+  the shimmer, and move it to `var(--ease)`.
+- `Counter` in `Cards.jsx` counts for 1100 ms on its own exponential curve. Shorten to 700 ms. Keep the curve (it is
+  the same shape as `--ease`) and keep the reduced-motion check.
+
+**Done when:** the report lists each timing changed, and nothing else moved.
+
+## Task 24: Hover tints, not wiggles (S)
+
+**Files:** `web/src/styles.css`, `DESIGN.md` if it describes these.
+
+Remove the hover scaling and rotation: `.logo:hover .seal` (near line 1056), `.sday:hover .sink i:not(.fut)` and
+`.sday:hover .stamp` (near lines 1136 to 1137), and their `transition` declarations if nothing else uses them. The
+seal keeps its resting tilt. The day column keeps its background tint on hover (`.sday:hover`, near line 884).
+
+**Done when:** pointing at the logo or a day moves nothing; the day still tints.
+
+## Task 25: One watched item or goal fills its panel (M)
+
+**Files:** `web/src/Insights.jsx` (`WatchlistPanel`), `web/src/Goals.jsx` (`GoalsPanel`), `web/src/styles.css`.
+
+On the dashboard, Watchlist and Goals each show one small bordered card in a wide sheet, leaving most of it empty.
+In these two dashboard panels only (not the Plan page's goal grid), show each item as a ruled row across the panel's
+full width: name on the left, the figures in fixed columns, the meter under the row, a 1px rule between rows, no
+inner border or background (the Fixed Columns and Hairline rules). Every figure and control that exists today stays
+(target editing, remove, pace tick, hover details).
+
+**Done when:** with one item and with four, the panel has no empty half; amounts still blur with Hide amounts; the
+dashboard packs with no gaps at 1280 and 1440 wide.
+
+## Models and prompts for Group E
+
+Start each with "The prompt every task starts with" above, then add:
+
+**Task 20**
+Model: Haiku · Effort: low
+```text
+CSS only. Show me light and dark screenshots of the Plan page with the pointer over a goal card; say plainly if you
+could not capture a hover state and checked the rule by reading it instead.
+```
+
+**Task 21**
+Model: Haiku · Effort: medium
+```text
+Delete only the trace. Before you finish, search web/src for "herotrace", "Trace" and "trace-in" and show me there are
+no matches. The net worth figure, its hover details and the count-up must behave exactly as before.
+```
+
+**Task 22**
+Model: Sonnet · Effort: medium
+```text
+No code changes. First list every @keyframes and every animation and transition in web/src/styles.css with what
+property it changes. Then write the rule so that list passes, and show me both.
+```
+
+**Task 23**
+Model: Haiku · Effort: medium
+```text
+Leave the refresh spinner and the loading shimmer exactly as they are. Show me a before and after line for each timing
+you change.
+```
+
+**Task 24**
+Model: Haiku · Effort: low
+```text
+Remove the hover scale and rotate rules only. The seal's resting tilt and the day column's hover tint stay.
+```
+
+**Task 25**
+Model: Sonnet · Effort: high
+```text
+Start by listing every figure, link and control in the dashboard's Watchlist and Goals panels today; that list is your
+checklist, and all of it must still be there. Change the dashboard panels only: the Plan page's goal cards stay as
+cards. Show me screenshots with one item and with several, at 1280 and 1440 wide, in light and dark. Use the demo
+household (npm run demo -- <new folder>) for screenshots, not real data.
 ```

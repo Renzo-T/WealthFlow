@@ -8,7 +8,7 @@ colors:
   indigo-ink: "#2d4a93"
   indigo-wash: "#e8ecf5"
   page-paper: "#f2f0e9"
-  dot-grid: "#cdcec3"
+  dot-grid: "#d9d9d0"
   sheet: "#fffefc"
   sheet-tint: "#f8f6f0"
   highlighter: "#ffe27a"
@@ -37,7 +37,7 @@ colors:
   night-indigo-ink: "#9db2ea"
   night-indigo-wash: "#222a40"
   night-paper: "#11141c"
-  night-dot-grid: "#232937"
+  night-dot-grid: "#191e23"
   night-sheet: "#181c27"
   night-sheet-tint: "#1d2230"
   night-highlighter: "#5a4c12"
@@ -78,8 +78,8 @@ typography:
     fontFeature: "tnum"
   figure:
     fontFamily: "'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "1.95rem"
-    fontWeight: 800
+    fontSize: "1.6rem"
+    fontWeight: 700
     lineHeight: 1.1
     letterSpacing: "-0.02em"
     fontFeature: "tnum"
@@ -168,14 +168,19 @@ components:
     rounded: "{rounded.pill}"
     padding: "0.1rem 0.45rem"
   stamp-due:
-    backgroundColor: "{colors.sheet}"
+    backgroundColor: "transparent"
     textColor: "{colors.pencil}"
     rounded: "{rounded.stamp}"
     size: "17px"
   stamp-paid:
-    backgroundColor: "{colors.indigo-wash}"
-    textColor: "{colors.indigo-ink}"
+    backgroundColor: "{colors.indigo-ink}"
+    textColor: "{colors.sheet}"
     rounded: "{rounded.stamp}"
+    size: "17px"
+  stamp-received:
+    backgroundColor: "{colors.money-in}"
+    textColor: "{colors.sheet}"
+    rounded: "{rounded.round}"
     size: "17px"
   seal:
     backgroundColor: "{colors.seal-vermillion}"
@@ -194,15 +199,17 @@ Money is kept the way a careful person keeps a Japanese stationery planner: a cl
 
 Density is that of a well-used planner, not a spreadsheet: content sits on white sheets with ruled rows and fixed columns, figures align on equal-width digits, and every page opens under a double header rule. Arrival is quiet but alive: sheets settle onto the page, meters fill and charts draw in once, and the month spread inks in on the dashboard; nothing loops. Light and dark are equals: dark is the same planner at night, with its own validated steps (the indigo cover stays), never an inversion.
 
-The world refuses the category default of a white card grid with a blue accent, glossy gradient area charts and floating, blurry cards. It also refuses the bank-app look, playfulness, spreadsheet density and hiding detail.
+The world refuses the category default of a white card grid with a blue accent, glossy gradient area charts and floating, blurry cards. It also refuses the bank-app look, decoration, spreadsheet density and hiding detail. Decoration is a planner detail that marks nothing: the planner's objects are welcome, each for one meaning (see The Earned Detail Rule under Components).
 
 **Key Characteristics:**
 - A woven indigo cover rail with a stitched edge holds the seal and the navigation; the page beside it is warm paper with a 22px dot grid and a fine grain.
 - One family (Atkinson Hyperlegible Next, chosen for legibility at small sizes) at four weights carries every level; figures are tabular everywhere.
 - Hairline rules separate; a soft paper shadow lets sheets rest on the page; 6px corners on every sheet and control.
+- Content that belongs together is one ruled sheet, divided by hairlines, not a row of neighbouring cards; the dot grid shows only where the page is empty.
 - Tracked uppercase labels name panels and figures; they are the titles, never a line above one.
-- The month spread: one wet-ink dot per day on a fixed size ramp, bills and paydays hand-stamped (slightly askew) on their dates.
-- Net worth sits on the cover cloth, the largest figure in the app, with a faint 30-day trace behind it.
+- The month spread: one wet-ink dot per day on a fixed size ramp, bills and paydays inked as stamps (slightly askew) on their dates.
+- Net worth sits on the cover cloth, the largest figure in the app.
+- Planner objects (stamps, the ribbon, the highlighter, index tabs, margin notes) each mark one true thing about the data and appear nowhere else.
 - Estimated, partial and future data are always marked, one way: ink for known figures, pencil for estimated ones (see Ink and pencil under Components).
 
 ## Colors
@@ -212,7 +219,7 @@ An ink-and-indigo planner palette on warm paper: nearly all of every screen is n
 ### Primary
 - **Cover Indigo** (cover-indigo; night: night-cover-indigo): the sidebar rail, the net worth cell of the standing strip, and the primary button fill in light mode. The cloth binding of the planner: on the rail, the net worth cell and primary buttons it carries a fine woven texture (two 1px repeating line patterns, 3px apart) over a gentle top-lit gradient.
 - **Cover Fold** (cover-fold): the active navigation item and the primary button's hover; a lighter fold of the same cloth.
-- **Indigo Ink** (indigo-ink): links, focus rings, the selected tab, the today marker in the spread, paid stamps, and budget meters. The pen colour of interaction.
+- **Indigo Ink** (indigo-ink): links, focus rings, the selected tab, the today marker in the spread, the ink of paid stamps, and budget meters. The pen colour of interaction.
 - **Indigo Wash** (indigo-wash): selected-row and today tint, tag and chip fills, empty-state icon wells.
 - **Highlighter** (highlighter; night: night-highlighter): attention only. A marker swipe behind the "Needs you" heading while something waits to be sorted, and behind the top bar's "banks need attention" chip (from 60% to 90% of the line height), and nowhere else. Text keeps well over 4.5:1 on it in both themes.
 
@@ -226,12 +233,12 @@ An ink-and-indigo planner palette on warm paper: nearly all of every screen is n
 - **Chart Series** (series-1 to series-4, then series-rest grey): four hues checked for colour-blind separation in each theme, with night steps of their own. A fifth series is grey.
 
 ### Neutral
-- **Page Paper** (page-paper) with **Dot Grid** (dot-grid): the warm page behind the sheets, dotted every 22px, with a fine noise grain over it (dark warm specks at about 9% in light, pale blue specks at about 5% at night).
+- **Page Paper** (page-paper) with **Dot Grid** (dot-grid): the warm page behind the sheets, dotted every 22px, with a fine noise grain over it (dark warm specks at about 9% in light, pale blue specks at about 5% at night). The dots are the empty page: they show in the margins, around the page header and below a short page, never as the gaps of a card grid inside one subject (see The One Sheet Rule).
 - **Sheet** (sheet) and **Sheet Tint** (sheet-tint): the warm white sheets content sits on; the tint marks weekends in the spread, day and group rows in tables, hover rows.
 - **Rule** (rule) and **Strong Rule** (rule-strong): hairlines between rows and sections; the strong rule outlines inputs and buttons.
 - **Ink** (ink): all text and figures, and the page header's double rule.
 - **Muted Ink** (ink-muted): secondary text, labels on figures, column heads.
-- **Pencil** (pencil): dashed stamps for bills still due, input hover borders.
+- **Pencil** (pencil): the dashed boxes of bills still due, input hover borders, margin notes.
 - **Ink Dot** (ink-dot): the spending dots in the month spread, each with a small top-left highlight and a soft shadow, like wet ink.
 
 ### Named Rules
@@ -249,13 +256,14 @@ An ink-and-indigo planner palette on warm paper: nearly all of every screen is n
 **Body Font:** Atkinson Hyperlegible Next
 **Label Font:** Atkinson Hyperlegible Next
 
-**Character:** One Japanese gothic family, chosen for its equal-width figures, carries every level by size and weight alone (400, 500, 700, 800; Latin subsets only). It reads like a planner's printed ruling: plain, even, a little formal.
+**Character:** One family, Atkinson Hyperlegible Next, chosen for legibility at small sizes and its equal-width figures, carries every level by size and weight alone (400, 500, 700, 800; Latin subsets only). It reads like a planner's printed ruling: plain, even, a little formal.
 
 ### Hierarchy
 - **Display** (800, 3.7rem, 1.1, -0.035em; 2.9rem below 1100px): the lead figure only, net worth in the standing strip, white on the cover cloth with a 2px dark text shadow.
 - **Headline** (800, 2.6rem, 1.1, -0.028em): the page title, which on the dashboard is the date. Plain ink, no marker.
 - **Standing figure** (800, 2.2rem, 1.1): free to spend and spent this month in the standing strip; Budget's "left to budget" figure is 2.6rem.
-- **Figure** (800, 1.95rem, 1.1): other headline figures (panel totals, summary cards).
+- **Figure** (700, 1.6rem, 1.1): secondary figures (`.big`: summary cards, goal amounts, panel totals). 800 is kept for each page's lead figure only (standing strip, Budget's left to budget, the Money flow total), so they never compete.
+- **Row label** (500): table row labels, such as Reports' category rows; never bold.
 - **Title** (600, 1.05rem): budget group headers, trip names, totals rows.
 - **Body** (400, 1rem, 1.45): rows, descriptions, controls.
 - **Small** (400, 0.8rem): row details, footnotes, dates, deltas.
@@ -275,6 +283,10 @@ A fixed 220px cover rail on the left (64px, icons only, below 1100px; it never d
 
 The dashboard runs lead sheets full width (the standing strip, the month spread, the Needs you / Coming up / Budget sheet), then a packed board of panels: a three-column grid with 8px auto rows so each panel takes the height its content needs, never stretched to a neighbour. At 1440px and wider a 340px side column appears and the board beside it uses two wider columns. Other pages pair a main column with a 280-320px side sheet that drops below at 1099px.
 
+**The One Sheet Rule.** Neighbouring sheets that belong together are one sheet, ruled into sections with hairlines (vertical between figures side by side, full-width horizontal between stacked sections), the way a planner rules a page. Separate sheets are for separate subjects: the dashboard's board of panels, goal and trip cards, Money flow's two views, Bills' table and its day sheet, Net worth's chart, what moved, banks and other assets, Investments' allocation and holdings. Two forms, in `styles.css` under "Ruled sheets":
+- **Ruled strip** (`.cards.ruled`): a row of figure sections in one sheet, equal columns, a vertical hairline between them (two columns with a horizontal rule in narrow windows). Plan's totals, Investments' totals, Reports' subscription and year figures, and the totals for Transactions' current filters (with Download CSV in the last section).
+- **Ledger** (`.ledger`): sheets stacked into one, each becoming a flat section under a full-width hairline. The dashboard's lead (standing strip, month spread, glance sheet and the "what changed" line) is one ledger, split back into separate sheets while you customize it; Reports' Subscriptions (figures over the list) and Year in review (figures over "Where it went" and "Highlights", in halves so the rules line up); Transactions (the totals strip over the table); Net worth's account groups (cash, cards, investments, loans); Budget's side column (summary, options, suggestions); and Settings, one section per setting. A ledger clips with `overflow: clip`, not `hidden`, so a sticky table head inside it still sticks to the window. A section inside a section is a band: Plan's forecast runs settings, your average (on the sheet tint) and the projection as ruled bands of one sheet.
+
 Rhythm: 1rem between sheets; 1.15rem by 1.3rem inside them; list rows of about 0.42-0.6rem separated by hairlines. Desktop-first: narrow windows collapse the rail and stack columns; there is no phone layout.
 
 **The Fixed Columns Rule.** Lists and tables are ruled rows with fixed columns; names truncate to one line with the full name on hover rather than reflowing the grid. In the transactions table a long group prefix ("Savings & investments ›") drops above its category menu rather than pushing the amount column out of the sheet.
@@ -284,7 +296,7 @@ Rhythm: 1rem between sheets; 1.15rem by 1.3rem inside them; list rows of about 0
 Paper on a desk. Sheets keep their 1px rule border and rest on the page with a soft, low paper shadow: a tight contact shadow plus a long, faint one pulled in under the sheet so it never reads as a floating card. Inside a sheet, separation is still hairlines only. The cover rail casts a shadow onto the page. Things that float above the page (tooltips) keep the stronger floating shadow.
 
 ### Shadow Vocabulary
-- **Paper** (`--paper-shadow`: `0 1px 0 rgba(27,32,48,.03), 0 1px 2px rgba(27,32,48,.06), 0 12px 28px -16px rgba(27,32,48,.28)`; night: an inset 3% white top edge, `0 1px 2px` black at .4 and `0 14px 30px -16px` black at .75): every sheet (cards, the standing strip, insight rows, the budget strip, explainers, Budget's left-to-budget card). A sheet inside a sheet has none.
+- **Paper** (`--paper-shadow`: `0 1px 0 rgba(27,32,48,.03), 0 1px 2px rgba(27,32,48,.06), 0 12px 28px -16px rgba(27,32,48,.28)`; night: an inset 3% white top edge, `0 1px 2px` black at .4 and `0 14px 30px -16px` black at .75): top-level sheets only (cards, ruled strips, ledgers, the budget strip, explainers, Budget's left-to-budget card). Anything that would be a sheet on its own (a card, the standing strip, an insight row, an explainer, a ruled strip) loses its shadow and its arrival motion inside another sheet; one rule in `styles.css` covers every pairing.
 - **Paper lifted** (`--paper-shadow-up`): goal, trip and watchlist cards on hover, with a 2px rise (0.3s).
 - **Floating card** (`--shadow`: `0 2px 6px rgba(27,32,48,.06), 0 14px 34px rgba(27,32,48,.12)`; night uses black at .3/.45): hover tooltips and chart tips only.
 - **Cover rail** (`6px 0 22px -8px rgba(12,17,34,.55)`): the rail onto the page.
@@ -297,7 +309,7 @@ Paper on a desk. Sheets keep their 1px rule border and rest on the page with a s
 
 ## Shapes
 
-Quietly squared stationery. Sheets, buttons, inputs, icon buttons and tooltips share a 6px corner; stamps are 4px squares; tags, pills and chips are fully round; the seal, dots and category icons are circles. Borders are 1px hairlines; the page header is a double rule (2px ink, then 1px at 30%); the month spread's top edge is a 1px ink rule. Meters (budget bars and group meters) are 7px tall and fully rounded. The rail's right edge is stitched: a 1.5px dashed line in white at 17%, 5px in from the edge. Dashed outlines mean "not yet": future days, bills still due, budget suggestions.
+Quietly squared stationery. Sheets, buttons, inputs, icon buttons and tooltips share a 6px corner; bill stamps are squares with a corner 16% of their size (about 3px), money-in stamps are round, so the shape says which way the money went without its colour; tags, pills and chips are fully round; the seal, dots and category icons are circles. Borders are 1px hairlines; the page header is a double rule (2px ink, then 1px at 30%); the month spread's top edge is a 1px ink rule. Meters (budget bars and group meters) are 7px tall and fully rounded. The rail's right edge is stitched: a 1.5px dashed line in white at 17%, 5px in from the edge. Dashed outlines mean "not yet": future days, bills still due, budget suggestions. Inked stamps have slightly uneven edges (a small fractal-noise displacement, about 1.2px, and ink density mottled between 88% and 100%, three seeds so neighbours differ); nothing else on the page is roughened.
 
 ## Components
 
@@ -319,7 +331,7 @@ Plain controls in the world's ink.
 - **Shadow Strategy:** the paper shadow; none for a sheet inside a sheet (see Elevation).
 - **Border:** 1px rule.
 - **Internal Padding:** 1.15rem 1.3rem; panel header (label title left, links or controls right) 0.75rem above content.
-- **Ruled sheets:** the standing strip and the glance sheet split one sheet into sections with vertical hairlines instead of separate cards.
+- **Ruled sheets:** the standing strip, the glance sheet, ruled strips and ledgers split one sheet into sections with hairlines instead of separate cards (see The One Sheet Rule under Layout).
 
 ### Inputs / Fields
 - **Style:** sheet fill, strong-rule 1px border, 6px corners, 0.5rem 0.75rem; standard selects, checkboxes and tabs (accent-color indigo).
@@ -328,24 +340,58 @@ Plain controls in the world's ink.
 - **Ink and pencil (`<Est>`, `.est-fig`):** a known figure is ink; an estimated, partial or future one is wrapped in `<Est why="…">`, which renders it in Muted Ink with a 1px dashed underline and a `title` saying why (words only, no amounts). Put it inside an element Hide amounts blurs (`.amt`, `.tamt`, `<Amt>`). No "est" superscripts, italics or faded cells on figures. Charts keep their own dashed lines and fades.
 
 ### Navigation
-- **Style:** the woven indigo cover rail (cloth over a gradient from a lighter fold at the top to cover indigo by 38%, and 18% darker at the foot), its stitched right edge and its shadow onto the page; seal and white 800 wordmark at the top; items 0.95rem in cover ink with 18px line icons.
+- **Style:** the woven indigo cover rail (cloth over a gradient from a lighter fold at the top to cover indigo by 38%, and 18% darker at the foot), its stitched right edge and its shadow onto the page; seal and white 800 wordmark at the top, closed by a small round dot in cover ink that sits on the baseline and never moves (ink on the first-run screen; never vermillion); items 0.95rem in cover ink with 18px line icons.
 - **States:** hover is a 6% white wash and white text, and the icon slides 2px right; active is a soft fold (cover fold lightened 14% at the top down to cover fold, with an inset white top edge and a small shadow) with white 700 text. Focus outline is white on the rail.
-- **Narrow windows:** 64px rail, seal and icons only.
+- **Active tab:** the active item is a divider tab standing out of the planner. Its fold (cloth over a light-to-fold gradient, the same cloth as the raised index tab) is square on the right and continues into a fold-coloured end that crosses the stitched edge and overhangs the page by about 5px with a small rounded end; the stitch is covered where it passes. It is drawn outside the item (absolute, no layout change), so the page and the item's text never move. The rail therefore doesn't clip its overflow, except in windows shorter than 760px where it scrolls and the tab is cut at the rail's edge. The collapsed rail does the same around the icon.
+- **Sync status:** at the rail's foot, one quiet line above the stitch and Settings: the refresh icon and "Synced 14 min ago" (0.8rem, rail ink), one button that checks Plaid now; while a sync runs the text reads "Checking for new data…" and only the icon spins. Its title explains how often Mizo Money checks. What a Refresh found ("3 new transactions", "Up to date…", banks needing attention) appears for a few seconds in the top bar, which otherwise holds the update and "banks need attention" chips, the theme toggle and Hide amounts.
+- **Narrow windows:** 64px rail, seal and icons only (the sync line shrinks to its icon, the time in its title); the active tab crosses the edge the same way.
+- **Groups:** every rail group starts with the stitch (the same dashed line as above Plan and Settings), its heading under it; in the narrow rail the heading is the stitch itself.
+
+### Planner Details (rule)
+**The Earned Detail Rule.** A planner object appears only when it marks something true about the data. It always means the same thing, and it appears nowhere else. The test is one sentence: "this marks …". If the sentence can't be written, or it names a look rather than a fact, the object doesn't go in. The Seal, Highlighter and Stamps rules are this rule applied to one object each.
+
+The objects in use, and the one thing each marks:
+
+| Object | Marks |
+|---|---|
+| Inked stamp | A dated fact that has happened: paid, received, reached, confirmed. |
+| Dashed pencil box or outline | Not yet: a bill still due, money expected, a day ahead, a suggestion. |
+| Wet-ink dot | A day's spending, sized by the amount. |
+| Highlighter | Something needs you. |
+| Ribbon bookmark | Today. |
+| Index tab | The section you are in. |
+| Margin note | How a figure was worked out. |
+| Date block | A day in the log. |
+| Pencil figure (`<Est>`) | An estimated, partial or future figure. |
+| Double rule | The top of a page. |
+| Cover cloth | The binding: navigation, the lead figure and the main action. |
+| Seal | The logo. |
+
+A new object needs a new row here before it is built, with a meaning no other row has. Two objects never share a meaning, and one object never takes a second.
+
+**Materials are not objects.** The cloth weave, the paper grain, the dot grid, the paper shadow, the uneven ink edges and the resting tilt of a stamp say what a thing is made of. They mark nothing and don't need to. They stay quiet (never the busiest thing on screen), they are the same everywhere, and they never vary to signal anything about one item.
+
+**Refused, because they mark nothing here:** binder rings, punched holes, tape, paper clips, torn or perforated edges, stickers, handwriting fonts, stains. Anything else from a stationery shop gets the same test.
 
 ### Standing Strip (signature)
 One ruled sheet in three sections (1.5fr / 1fr / 1fr), each padded 1.35rem 1.5rem 1.4rem. Net worth sits on the cover cloth (a 135° gradient from the cover fold to cover indigo, darkening at the far corner) in white at display size; its labels are cover ink, and green and red step lighter there (#8fe0b8, #ffa896) so deltas keep 4.5:1 on the indigo. Behind it, a faint white line traces the last 31 days of net worth (2px at 50%; at least 4% of net worth tall so a wobble isn't exaggerated; dashed if any day is estimated; faded where it passes behind the figure; drawn in left to right once). Free to spend and spent this month follow at standing-figure size. Each has a tracked label above, a small muted line or delta below, and a hover breakdown behind the figure. Each figure remembers its value from the last visit (this browser, at least 2 hours ago): when it has changed, the number counts to its new value once (1.1s exponential ease-out) and a note under it reads "+$412 since Fri" (green/red for net worth and free to spend, ink for spending).
 
 ### Month Spread (signature)
-The month across the full width, one column per day under a 1px ink top rule and vertical hairlines. Each past day carries one wet-ink dot sized on a fixed eight-step ramp (0, 5, 8, 11, 15, 19, 24, 30px) shared by every month; days ahead carry an 8px dashed circle. Bills and paydays are 17px square stamps with the payee's initial (or a count): dashed pencil while due, solid indigo on wash once paid (with a 1px pressed edge), green for money in. Stamps in day columns rest hand-pressed at a slight angle (-5°, every third column 4°, every 4n+1 column -2°); legend stamps stay straight. Hovering a day scales its dot and stamps to 1.12 and straightens the stamps (0.3s). Weekends take the sheet tint; today takes the indigo wash with a 2px indigo top edge. On load, dots ink in (0.6s, 18ms stagger by date) and stamps press in just after.
+The month across the full width, one column per day under a 1px ink top rule and vertical hairlines. Each past day carries one wet-ink dot sized on a fixed eight-step ramp (0, 5, 8, 11, 15, 19, 24, 30px) shared by every month; days ahead carry an 8px dashed circle. Bills and paydays are 17px ink stamps (`Stamp.jsx`; 14px in the compact strip and the legend). Once it has happened, a stamp is solid ink, indigo for a bill and green for money in, with the category's drawn line icon (the same icon as its category well; a card for card payments) knocked out in sheet colour, and slightly uneven ink edges. Bills are square, money in is round. While still due, it is an empty dashed pencil box (green dashed circle for money expected in), waiting for its stamp. A day with several items shows their count instead of an icon. The hover names each one beside a small stamp with the payee's initial. Inked stamps in day columns rest hand-pressed at a slight angle (-5°, every third column 4°, every 4n+1 column -2°); due boxes and legend stamps stay straight. Hovering a day scales its dot and stamps to 1.12 and straightens the stamps (0.3s). Weekends take the sheet tint; today takes the indigo wash, and a thin indigo-ink ribbon bookmark (5px, notched tail, a darker fold where it wraps the top rule) hangs from the top rule at the column's right edge, unrolling once on arrival; it replaces a "this month" pill (past and ahead months keep theirs). The compact strip keeps a 2px indigo top edge instead. On load, dots ink in (0.6s, 18ms stagger by date) and stamps press in just after.
+
+### Stamps (rule)
+A stamp means **a dated fact that has happened** (paid, received), or, as a dashed pencil box, a dated one still to come. Use it only for that: never for categories, labels or statuses that can change (those use the category well, a tag or text). One shared component (`Stamp.jsx`) everywhere. Places it appears: the month spread and replay; the Coming up rows on the dashboard (a due box at the start of each row, square for a bill, round for money in, matching the spread above); and the Bills page, where a bill whose latest charge has posted shows a 13px inked stamp with its date ("Paid Nov 1", "Received Nov 1") under the amount. A stamp can also read (`TextStamp` in `Stamp.jsx`): a small inked box, 3px corners, the word and date in sheet colour on a crisp layer over the ink. Two uses: a reached goal ("Reached Oct 2026", green, resting at -2°; "Reached" alone when the month can't be known) and a confirmed trip's dates (indigo, straight) on its card.
 
 ### Motion
-Every movement uses one curve, `--ease: cubic-bezier(.16, 1, .3, 1)`, plays once on arrival, and respects reduced motion. No page transitions, springs, loops or celebration.
-- **Sheets settle:** the page header (0.5s) and each sheet (0.55s) rise 8px and fade in; on the dashboard they stagger by cell order (60, 120, 170, then 220ms), and goal, trip, card and budget columns by position (60, 120, 170ms). Sheets inside sheets don't move. Only opacity and transform animate, never size, so the packed dashboard never reflows.
+Every movement uses one curve, `--ease: cubic-bezier(.16, 1, .3, 1)`, plays once on arrival, and respects reduced motion. No page transitions, springs or celebration.
+- **The rule:** movement is opacity and transform. Lines and marks may draw in once with `clip-path` or `stroke-dasharray`, and the attention highlighter may grow `background-size` once. Nothing animates layout (width, height, top, left, margin), so the packed dashboard never reflows. Colour and shadow may fade (0.15s) on hover and state change; that isn't movement.
+- **Two things may loop,** only while work is running, and both stop when it ends: the refresh icon while a sync runs (it spins) and the loading shimmer on placeholders.
+- **Sheets settle:** the page header (0.5s) and each sheet (0.55s) rise 8px and fade in; on the dashboard they stagger by cell order (60, 120, 170, then 220ms), and goal, trip, card and budget columns by position (60, 120, 170ms). Sheets inside sheets don't move. Nothing here changes size, so the packed dashboard never reflows.
 - **Attention swipe:** the highlighter draws behind the "Needs you" heading left to right (0.9s), only when something waits to be sorted.
 - **Meters fill** from the left (0.9s).
 - **Charts draw in:** the net worth line, wash and end point reveal left to right (1.3s) on arrival and again when the range changes, never on hover; cash flow bars rise from the baseline (0.8s, 45ms apart); allocation segments sweep round (0.9s); the projection band and lines reveal left to right; the hero trace draws in (1.4s).
 - **Already in place:** the month spread's ink-in, the standing strip's since-last-visit count, Money flow's streams drawing in (1.1s) with a 0.22s hover focus, and the month replay drawing the month through once.
-- **Small transitions:** row hover backgrounds and segmented controls (0.15s), lifting cards (0.3s), the rail icon nudge (0.25s), the seal straightening (0.5s).
+- **Small transitions:** row hover backgrounds and segmented controls (0.15s), lifting cards (0.3s), the rail icon nudge (0.25s). Nothing scales or rotates on hover; the seal keeps its resting tilt.
 
 ### Charts
 Lines are 2.75px with round joins and caps (net worth) or 2.5px (projection, replay); estimated runs stay dashed and lighter. Two fills are allowed, both quiet and both marking real ranges, never gloss:
@@ -354,30 +400,45 @@ Lines are 2.75px with round joins and caps (net worth) or 2.5px (projection, rep
 - **Allocation ring:** 18px thick, drawn at 164px with a soft drop shadow under it; the centre total is 16px.
 
 ### Month Replay (Money flow)
-The cash in everyday accounts at the end of each day, as one stepped indigo line (2.5px) across the month's day columns (weekends tinted, today washed), stepping at each day's centre where its stamps sit (the month spread's stamps: green for money in, indigo for bills paid from these accounts, dashed while expected). Days ahead are dashed and add only scheduled paydays and bills. The four biggest steps are named on the line; the lowest point is ringed. A readout above counts the day's cash, its named paydays and bills, and the rest. Replay draws the month through once (3.2s, ease-out) with the readout counting along; it plays on arrival, respects reduced motion, and hover reads out any day.
+The cash in everyday accounts at the end of each day, as one stepped indigo line (2.5px) across the month's day columns (weekends tinted, today washed), stepping at each day's centre where its stamps sit (the month spread's stamps, up to 15px: round green for money in, square indigo for bills paid from these accounts, each with its category icon knocked out, an empty dashed box while expected). Days ahead are dashed and add only scheduled paydays and bills. Days with a big move to savings or investments (at least 6% of the chart's height) get a square indigo stamp with a down-into-tray mark knocked out in sheet colour. The legend shows the same stamps as the spread's. The four biggest steps are labelled with the day's signed net change in ink (green only when the day's net is money in), naming an item only when it is most of the step; the lowest point is ringed. A readout above counts the day's cash and its parts, in order: paydays, bills, moved to savings or investments, moved in from your other accounts, everyday spending, and other changes, which together add up to the step. Replay draws the month through once (3.2s, ease-out) with the readout counting along; it plays on arrival, respects reduced motion, and hover reads out any day.
+
+### Year at a Glance (Reports › Year in review)
+Twelve small month spreads in one section of the year's ledger (six across, four below 1250px): Sunday-first weeks under a label and the month's spending, a 1px ink rule under each head, weekends tinted, today ringed in indigo ink. Each passed day carries one ink dot on the month spread's eight-step ramp, shrunk to 62% so it fits; a passed day with nothing spent shows a 3px strong-rule point, days ahead nothing; no stamps. A month missing history from a bank has its dots faded and its total in pencil (`<Est>`). Each month is a button that opens Month by month reaching that month, with its column marked (indigo wash and top edge on the head, indigo hairlines down the cells so their own shading stays).
+
+### Index Tabs
+Small cloth tabs on the page's right edge (fixed, inside the page's right margin, 1100px and wider), one per section: Today, Spending, Looking back, What you own, Plan (Settings has none). Vertical tracked labels on the cover cloth, tucked to 22px; the section you are in is raised to 30px in the lighter fold with white text, so one tab is always raised except on Settings. Each tab is a link to the last page you used in that section (remembered in this browser; the first page otherwise). The rail stays the main navigation: the tabs sit in a `nav` labelled "Section tabs", are skipped by Tab (`tabindex="-1"`) and carry a title naming where they go. Hover slides a tab out 3px (transform only, 0.2s) and opens a small card listing the section's pages, each a link.
+
+### Margin Notes
+Explanations under figures ("Dots use one size scale…", "48% of November has passed…", the `p.small.foot` notes on every page, `.mnote` elsewhere) are set like printed footnotes: a narrow column (40ch) at the sheet's right margin, 0.76rem in Pencil (`--pencil`, a token of its own in light and both dark blocks), under a short 2.5rem pencil rule at 45%.
+
+### Date Blocks (Transactions)
+The table reads as a daily log: a left margin column holds each day's date block, the day number large (1.75rem, 800), the weekday under it as a tracked label and the day's net below it (green only for money in), spanning that day's rows and sticking under the table head while the day scrolls. A month heading (tracked label over a 1px ink rule) runs across when the month changes.
 
 ### Glance Sheet
 Under the spread: Needs you, Coming up, Budget as three ruled sections of one sheet; rows separated by hairlines, a drawn check and a muted line when there is nothing to do.
 
 ### Seal
-A 30px vermillion circle with an inner hairline ring and a drawn "M" in seal ink, like a hanko, with a small drop shadow. It rests pressed at -7°; hovering the logo straightens it and scales it to 1.06 (0.5s). Logo only.
+A 30px vermillion circle with an inner hairline ring and a drawn "M" in seal ink, like a hanko, with a small drop shadow. It rests pressed at -7° and does not move on hover. Logo only.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** rest every sheet on the page with a 1px rule, 6px corners and the paper shadow; keep sheets inside sheets flat.
+- **Do** rest every top-level sheet on the page with a 1px rule, 6px corners and the paper shadow; keep sheets inside sheets flat.
+- **Do** make neighbouring sheets on one subject a single ruled sheet (a ruled strip or a ledger).
 - **Do** use Atkinson Hyperlegible Next for everything, with tabular figures.
 - **Do** name panels with the tracked uppercase label (0.74rem, 800, 0.12em) as their title.
 - **Do** mark estimated, partial or future figures with `<Est>` (muted, dashed underline, a reason on hover); in charts, dashed lines and outlines, faded partial months, no wash under estimated runs.
-- **Do** keep motion to one arrival: settle, fill or draw in once with `--ease`, animating opacity and transform only.
+- **Do** keep motion to one arrival: settle, fill or draw in once with `--ease`. Move with opacity and transform; draw lines and marks with clip or stroke; never animate size. Only the refresh icon and the loading shimmer may loop, and only while work runs.
 - **Do** give every dollar figure an amount class (`.amt`, `.tamt`, `.big`, or a covered table cell) so Hide amounts blurs it.
 - **Do** draw icons as 1.8px-stroke line SVGs in currentColor, matching the navigation set.
 - **Do** design light and dark together; dark keeps the indigo cover rail and uses its own validated steps.
 - **Do** put the detail behind a figure in a hover card (dotted underline) rather than hiding it.
+- **Do** give every planner object one meaning, listed in the Planner Details table, and use it only for that.
 
 ### Don't:
 - **Don't** use green or red for anything but money in/out or good/bad.
 - **Don't** use vermillion anywhere but the seal.
+- **Don't** lay out a subject as a row of separate cards with dots showing between them.
 - **Don't** float sheets on big blurry shadows, add glossy gradients to charts, or fill a chart area with anything but the net worth hatch or the projection band.
 - **Don't** use the highlighter for anything but attention: the "Needs you" heading and the banks chip.
 - **Don't** add a second typeface or a system display face.
@@ -385,6 +446,7 @@ A 30px vermillion circle with an inner hairline ring and a drawn "M" in seal ink
 - **Don't** use text glyphs (×, ‹, ›, ●, ↻) as icons; draw them.
 - **Don't** use more than four chart hues; the rest are grey.
 - **Don't** design a phone layout; narrow windows collapse the rail and stack columns.
+- **Don't** add a planner object that marks nothing (rings, tape, clips, torn edges), or let a texture become a signal.
 
 ## Voice and wording
 
@@ -442,7 +504,7 @@ not rewritten to fit these rules.
 
 ### Where the app is already right
 
-- Short, specific subtitles: "Track savings targets by hand, or link a goal to an account and it follows the balance." (`web/src/Goals.jsx`, as a starting point; see Task 18 for the page subtitles that still run long).
+- Short, specific subtitles: "Track savings targets by hand, or link a goal to an account and it follows the balance." (`web/src/Goals.jsx`).
 - Empty states that name the next step: "Connect a bank to see its accounts here." (`web/src/NetWorth.jsx`).
 - A plain greeting on the dashboard: "Here's where you stand." (`web/src/App.jsx`).
 - No hype words in `web/src`: a search found none of "smart", "powerful", "seamless", "journey", "experience", and no exclamation marks in JSX text. Plural "we" was checked only as "we can", "we will", "we have" and "we've".

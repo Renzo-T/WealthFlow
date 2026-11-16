@@ -17,13 +17,14 @@ import { defaultLayout, mergeLayout } from './layout.js';
 
 // Every dashboard panel, in default order. `span` is its width in a 3-column row (3 = full width); `rail` means it
 // sits in the right-hand column on wide screens by default. To add a panel: add it here; saved layouts pick it
-// up at its default position automatically. `hidden` panels start hidden for new or reset layouts only (a saved layout keeps what it shows). `lead` panels (where you stand, the month spread) run full width above the
-// rest, side column included, in your order.
+// up at its default position automatically. `span` may be a function of the dashboard's data (Goals goes under a one-item Watchlist, beside Cash flow, and
+// runs full width under a longer one, so the board has no gaps). `hidden` panels start hidden for new or reset layouts only (a saved layout keeps what it shows). `lead` panels (where you stand, the month spread) run full width above the
+// rest, side column included, in your order, as sections of one ruled sheet (separate sheets while you customize).
 export const PANELS = [
   { id: 'cards', name: 'Where you stand', span: 3, lead: true, render: ({ s, extra }) => <Cards s={s} safe={extra.safe} budgets={extra.budgets} /> },
   { id: 'month', name: 'Month spread', span: 3, lead: true, render: () => <MonthSpread /> },
   { id: 'glance', name: 'Needs you, coming up, budget', span: 3, lead: true, render: ({ extra }) => <Glance todo={extra.todo} upcoming={extra.upcoming} budgets={extra.budgets} /> },
-  { id: 'insight', name: 'What changed', span: 3, render: ({ extra }) => <InsightStrip changed={extra.insights?.changed} todo={extra.todo} /> },
+  { id: 'insight', name: 'What changed', span: 3, lead: true, render: ({ extra }) => <InsightStrip changed={extra.insights?.changed} todo={extra.todo} /> },
   { id: 'networth', name: 'Net worth chart', span: 2, render: ({ s }) => <NetWorthChart history={s.history} /> },
   { id: 'allocation', hidden: true, name: 'Asset allocation', span: 1, render: ({ extra }) => <AssetAllocation a={extra.allocation} /> },
   { id: 'investments', hidden: true, name: 'Investments', span: 1, render: ({ extra }) => <InvestmentsCard d={extra.invest} /> },
@@ -35,7 +36,7 @@ export const PANELS = [
   { id: 'watchlist', name: 'Watchlist', span: 2, render: ({ extra, reload }) => <WatchlistPanel data={extra.watchlist} reload={reload} /> },
   { id: 'frequent', hidden: true, name: 'Frequent spending', span: 1, render: ({ extra }) => <FrequentPanel items={extra.insights?.frequent ?? []} early={extra.insights?.changed?.reason === 'early'} /> },
   { id: 'projection', hidden: true, name: 'Net worth projection', span: 2, render: ({ s, extra }) => <ProjectionPanel s={s} cashflow={extra.cashflow} /> },
-  { id: 'goals', name: 'Goals', span: 2, render: ({ extra }) => <GoalsPanel items={extra.goals} /> },
+  { id: 'goals', name: 'Goals', span: ({ extra }) => ((extra.watchlist?.items.length ?? 0) <= 1 ? 2 : 3), render: ({ extra }) => <GoalsPanel items={extra.goals} /> },
 ];
 const DEFAULT = defaultLayout(PANELS);
 const merge = (saved) => mergeLayout(saved, PANELS);
@@ -68,15 +69,35 @@ function useWide() {
 // Packs the board like a well-kept page: the grid has small fixed rows, and each panel spans as many as its content
 // needs (re-measured whenever anything resizes), so with dense flow a short panel lets the next one sit right under
 // it instead of leaving a gap. No stretching, no holes.
-const ROW = 8, GAP = 16;
+const ROW = 8, GAP = 16, NEAR = 4; // panels side by side within NEAR rows of each other share one height
 function usePacked(ref, deps) {
   useLayoutEffect(() => {
     const grid = ref.current;
     if (!grid) return undefined;
     const fit = () => {
-      for (const cell of grid.children) {
+      const cells = [...grid.children];
+      const above = (cell) => [...cell.children].slice(0, -1).reduce((t, c) => t + c.getBoundingClientRect().height + 8, 0); // edit controls
+      const spans = cells.map((cell) => {
+        if (cell.lastElementChild) cell.lastElementChild.style.minHeight = '';
         const h = [...cell.children].reduce((t, c) => t + c.getBoundingClientRect().height, 0) + (cell.children.length - 1) * 8;
-        cell.style.gridRowEnd = `span ${Math.max(1, Math.ceil((h + GAP) / (ROW + GAP)))}`;
+        const span = Math.max(1, Math.ceil((h + GAP) / (ROW + GAP)));
+        cell.style.gridRowEnd = `span ${span}`;
+        return span;
+      });
+      // Neighbours that start on the same line and are nearly the same height end on the same line too: the shorter
+      // ones take the tallest's rows and their sheet fills them, so a row of panels reads as one band, not a ragged edge.
+      // Evening out one band moves the bands below it, so group again (a few times) until the lines settle.
+      for (let pass = 0; pass < 4; pass++) {
+        const rows = new Map();
+        cells.forEach((cell, i) => { const top = cell.offsetTop; rows.set(top, [...(rows.get(top) ?? []), i]); });
+        for (const row of rows.values()) {
+          if (row.length < 2) continue;
+          const max = Math.max(...row.map((i) => spans[i]));
+          for (const i of row.filter((j) => max - spans[j] <= NEAR)) {
+            cells[i].style.gridRowEnd = `span ${max}`;
+            if (cells[i].lastElementChild) cells[i].lastElementChild.style.minHeight = `${max * (ROW + GAP) - GAP - above(cells[i])}px`;
+          }
+        }
       }
     };
     fit();
@@ -133,7 +154,7 @@ export default function Dashboard(props) {
   const lead = visible.filter((p) => p.lead && !railIds.includes(p.id));
   const main = visible.filter((p) => !p.lead && !railIds.includes(p.id)), rail = visible.filter((p) => railIds.includes(p.id));
   const cell = (p, list) => (
-    <div key={p.id} className={`dcell span${railIds.includes(p.id) ? 1 : p.span}`}>
+    <div key={p.id} className={`dcell span${railIds.includes(p.id) ? 1 : typeof p.span === 'function' ? p.span(props) : p.span}`}>
       {editing && <Controls p={p} i={list.indexOf(p)} n={list.length} layout={layout} set={save} />}
       {p.render(props)}
     </div>
@@ -153,7 +174,7 @@ export default function Dashboard(props) {
           <span className="btnrow">{layout.hidden.map((id) => byId[id] && (
             <button key={id} className="btn" onClick={() => save({ ...layout, hidden: layout.hidden.filter((x) => x !== id) })}>Show {byId[id].name}</button>))}</span></div>
       )}
-      {lead.length > 0 && <div className={`dlead${editing ? ' editing' : ''}`}>{lead.map((p) => cell(p, lead))}</div>}
+      {lead.length > 0 && <div className={`dlead${editing ? ' editing' : ' ledger'}`}>{lead.map((p) => cell(p, lead))}</div>}
       <div className={`dboard${rail.length ? ' has-rail' : ''}${editing ? ' editing' : ''}`}>
         <div className="dmain" ref={mainRef}>{main.map((p) => cell(p, main))}</div>
         {rail.length > 0 && <div className="drail">{rail.map((p) => cell(p, rail))}</div>}

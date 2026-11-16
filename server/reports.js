@@ -2,6 +2,7 @@ import db from './db.js';
 import { GROUPS, NOT_SPENDING, SPEND_SQL, historyStart } from './categories.js';
 import { bills } from './recurring.js';
 import { coverageStart } from './insights.js';
+import { daySpending, step } from './spread.js';
 
 // ---------- Reports: month by month, subscriptions, and the year in review ----------
 const iso = (d) => d.toISOString().slice(0, 10);
@@ -97,8 +98,20 @@ export function yearInReview(year = new Date().getFullYear(), today = new Date()
   const startYear = historyStart()?.slice(0, 4);
   const years = db.prepare("SELECT DISTINCT substr(date, 1, 4) y FROM transactions ORDER BY y DESC").all().map((r) => +r.y)
     .filter((y) => !startYear || y >= +startYear);
+  // The year at a glance: each month's days on the month spread's dot scale (`step`, null for days still ahead), and
+  // whether the month is missing history from a bank (`partial`).
+  const daily = daySpending(from, to);
+  const glance = Array.from({ length: 12 }, (_, i) => {
+    const m = `${year}-${String(i + 1).padStart(2, '0')}`;
+    const n = new Date(year, i + 1, 0).getDate();
+    const steps = Array.from({ length: n }, (_, d) => {
+      const date = `${m}-${String(d + 1).padStart(2, '0')}`;
+      return date > today ? null : step(Math.max(0, Math.round((daily[date] ?? 0) * 100) / 100));
+    });
+    return { m, steps, future: `${m}-01` > today, partial: `${m}-01` <= today && isPartial(m) };
+  });
   return {
-    year, years, income, spending, saved: income - spending, rate: income > 0 ? ((income - spending) / income) * 100 : null,
+    year, years, glance, income, spending, saved: income - spending, rate: income > 0 ? ((income - spending) / income) * 100 : null,
     groups: groups.map((g) => ({ ...g, share: spending ? (g.v / spending) * 100 : 0, categories: cats[g.name] ?? [] })),
     topMonth: months[0] ?? null, byMonth: [...months].sort((a, b) => a.m.localeCompare(b.m)), biggest, trips, merchants,
     // How complete the year's data is: when it starts, and whether every bank's history covers it.

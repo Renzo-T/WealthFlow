@@ -7,7 +7,8 @@ import { SERIES, NEUTRAL, INCOME, tint } from './format.js';
 // Neutral grey is read from the muted text colour so the glyph keeps 3:1 against its well in both themes.
 const ink = (c) => (c === NEUTRAL ? 'var(--muted)' : c);
 
-const I = {
+export const I = {
+  check: <path d="M5 12.5l4.5 4.5L19 7" />,
   home: <><path d="M4 11l8-7 8 7" /><path d="M6 10v10h12V10" /></>,
   bolt: <path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z" />,
   cart: <><path d="M3 4h2l2.4 11h10.2L20 8H7" /><circle cx="9" cy="19" r="1.4" /><circle cx="17" cy="19" r="1.4" /></>,
@@ -39,9 +40,12 @@ const GROUP = {
 };
 const SUB = { Restaurants: 'fork', Coffee: 'cup', 'Alcohol & bars': 'cup', Gas: 'fuel', Entertainment: 'play', Fitness: 'dumbbell', Pets: 'paw', 'Phone & internet': 'phone' };
 
+// The drawn icon (a key of I) for a group, subcategory or kind: shared with the month spread's stamps.
+export const iconKey = ({ group, sub, kind }) => kind ?? SUB[sub] ?? (GROUP[group] ?? ['receipt'])[0];
+
 export default function CategoryIcon({ group, sub, kind, size = 30 }) {
-  const [icon0, color] = GROUP[group] ?? ['receipt', NEUTRAL];
-  const icon = kind ?? SUB[sub] ?? icon0;
+  const color = (GROUP[group] ?? ['receipt', NEUTRAL])[1];
+  const icon = iconKey({ group, sub, kind });
   return (
     <span className="caticon" style={{ width: size, height: size, color: ink(color), background: tint(ink(color), 15) }} aria-hidden="true">
       <svg viewBox="0 0 24 24" width={size * 0.55} height={size * 0.55} fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{I[icon]}</svg>

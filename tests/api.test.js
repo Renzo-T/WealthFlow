@@ -49,6 +49,30 @@ test('goals: add, edit a goal that follows an account (the form sends an empty "
   assert.equal((await get('/goals')).body.length, 0);
 });
 
+test('goals: a reached goal says when (from the balance history, or the day you entered the amount)', async () => {
+  const { iso } = await import('../server/summary.js');
+  const ago = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return iso(d); };
+  db.prepare('DELETE FROM balance_snapshots').run();
+  for (let n = 60; n >= 0; n--) db.prepare('INSERT INTO balance_snapshots (date, account_id, balance) VALUES (?,?,?)').run(ago(n), 'chk', n > 20 ? 1500 : 2500);
+  await post('/goals', { name: 'Crossed', target: 2000, account_id: 'chk' });
+  await post('/goals', { name: 'Always over', target: 1000, account_id: 'chk' });
+  await post('/goals', { name: 'Not yet', target: 5000, account_id: 'chk' });
+  const [crossed, always, notYet] = (await get('/goals')).body;
+  assert.equal(crossed.reached, ago(20)); // the first day at or over the target
+  assert.equal(always.reached, null); // already over when the history starts: unknown
+  assert.equal('reached' in notYet, false);
+  db.prepare('DELETE FROM balance_snapshots').run();
+
+  // A goal you enter amounts for remembers the day the amount reached the target, until it drops back below.
+  const { body: { id } } = await post('/goals', { name: 'Manual', target: 400, saved: 500 });
+  const manual = async () => (await get('/goals')).body.find((g) => g.id === id);
+  assert.equal((await manual()).reached, iso(new Date()));
+  await patch(`/goals/${id}`, { saved: 100 });
+  assert.equal('reached' in await manual(), false);
+  await patch(`/goals/${id}`, { saved: 450 });
+  assert.equal((await manual()).reached, iso(new Date()));
+});
+
 test('goal ideas answer even with no history', async () => {
   const { status, body } = await get('/goals/ideas');
   assert.equal(status, 200);
@@ -324,23 +348,46 @@ test('getting started: steps tick off from the data; "looks right" and hide stic
 
 // ---------- Reports ----------
 test('reports: month by month, subscriptions with price changes, year in review', async () => {
-  for (const [d, a] of [['2026-08-10', 10.99], ['2026-09-10', 10.99], ['2026-10-10', 12.99]])
+  // Dates follow the calendar from today: a monthly charge more than a few days late counts as ended, so fixed
+  // 2026 dates would stop being a live subscription once the test runs past them.
+  const now = new Date();
+  const ym = (k) => new Date(now.getFullYear(), now.getMonth() + k, 1).toLocaleDateString('en-CA').slice(0, 7);
+  const [m2, m1, m0] = [ym(-2), ym(-1), ym(0)];
+  const flix = [[`${m2}-01`, 10.99], [`${m1}-01`, 10.99], [`${m0}-01`, 12.99]];
+  for (const [d, a] of flix)
     tx('card', d, a, 'STREAMFLIX', { primary: 'ENTERTAINMENT', detailed: 'ENTERTAINMENT_TV_AND_MOVIES', merchant: 'Streamflix' });
-  tx('card', '2026-09-05', 80, 'GROCER', { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_GROCERIES' });
-  tx('chk', '2026-09-01', -3000, 'ACME PAYROLL', { primary: 'INCOME', detailed: 'INCOME_SALARY' });
+  tx('card', `${m1}-05`, 80, 'GROCER', { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_GROCERIES' });
+  tx('chk', `${m1}-01`, -3000, 'ACME PAYROLL', { primary: 'INCOME', detailed: 'INCOME_SALARY' });
   classify();
   const m = (await get('/reports/months?months=6')).body;
-  assert.ok(m.months.length <= 6 && m.months.includes('2026-09')); // starts at the history cap
+  assert.ok(m.months.length <= 6 && m.months.includes(m1)); // starts at the history cap
   const food = m.groups.find((g) => g.group === 'Food');
-  assert.equal(food.values[m.months.indexOf('2026-09')], 80);
-  assert.equal(m.groups.find((g) => g.income).values[m.months.indexOf('2026-09')], 3000);
+  assert.equal(food.values[m.months.indexOf(m1)], 80);
+  assert.equal(m.groups.find((g) => g.income).values[m.months.indexOf(m1)], 3000);
   const s = (await get('/reports/subscriptions')).body;
-  const flix = s.items.find((x) => /Streamflix/i.test(x.name));
-  assert.ok(flix, 'the streaming charge is a subscription');
-  assert.deepEqual([flix.change?.from, flix.change?.to], [10.99, 12.99]);
-  const y = (await get('/reports/year?year=2026')).body;
-  assert.equal(Math.round(y.spending), Math.round(80 + 10.99 * 2 + 12.99));
-  assert.ok(y.years.includes(2026));
+  const sub = s.items.find((x) => /Streamflix/i.test(x.name));
+  assert.ok(sub, 'the streaming charge is a subscription');
+  assert.deepEqual([sub.change?.from, sub.change?.to], [10.99, 12.99]);
+  const year = now.getFullYear();
+  const y = (await get(`/reports/year?year=${year}`)).body;
+  const spent = [...flix, [`${m1}-05`, 80]].filter(([d]) => d.startsWith(String(year))).reduce((t, [, a]) => t + a, 0);
+  assert.equal(Math.round(y.spending), Math.round(spent));
+  assert.ok(y.years.includes(year));
+});
+
+test('year at a glance: every month of the year, each day on the month spread\'s dot scale, nothing for days ahead', async () => {
+  const today = new Date().toLocaleDateString('en-CA'), year = +today.slice(0, 4), month = today.slice(0, 7);
+  tx('chk', today, 42.5, 'GROCER', { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_GROCERIES' });
+  tx('chk', today, -500, 'TRANSFER IN', { primary: 'TRANSFER_IN' }); // not spending
+  classify();
+  const y = (await get(`/reports/year?year=${year}`)).body;
+  assert.deepEqual(y.glance.map((g) => g.m), Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`));
+  const g = y.glance.find((x) => x.m === month);
+  assert.equal(g.steps.length, new Date(year, +month.slice(5), 0).getDate());
+  const spread = (await get(`/month-spread?month=${month}`)).body;
+  assert.deepEqual(g.steps, spread.days.map((d) => d.step)); // the same scale and days as the dashboard's spread
+  assert.equal(g.steps[+today.slice(8) - 1], 3);
+  for (const later of y.glance.filter((x) => x.m > month)) { assert.equal(later.future, true); assert.ok(later.steps.every((s) => s === null)); }
 });
 
 test('a bank with only investment accounts does not make spending months incomplete', async () => {
@@ -361,7 +408,7 @@ test('net worth: an investment account with no history yet shows when tracking s
   assert.notEqual(chk.change, null); // bank balances are worked out from transactions
 });
 
-test('net worth breakdown: saved (income − spending) and market and other add up to the change', async () => {
+test('net worth breakdown: saved (income − spending), moved to untracked accounts and market and other add up to the change', async () => {
   const today = new Date().toLocaleDateString('en-CA');
   const y = new Date(Date.now() - 864e5).toLocaleDateString('en-CA');
   bank('broker', 'Brokerage'); account('ira', { item: 'broker', type: 'investment', subtype: 'ira', balance: 1100 });
@@ -371,11 +418,39 @@ test('net worth breakdown: saved (income − spending) and market and other add 
     for (const [a, v] of [['chk', chk], ['ira', ira], ['card', 0], ['ven', 0]]) db.prepare('INSERT OR REPLACE INTO balance_snapshots (date, account_id, balance) VALUES (?,?,?)').run(d, a, v);
   tx('chk', today, 100, 'SHOP', { primary: 'GENERAL_MERCHANDISE' });
   classify();
-  const b = (await get('/networth/breakdown?period=all')).body;
+  let b = (await get('/networth/breakdown?period=all')).body;
   assert.equal(b.available, true);
   assert.equal(Math.round(b.change), 0); // −100 checking, +100 IRA
   assert.equal(Math.round(b.saved), -100);
   assert.equal(Math.round(b.market), 100);
+  assert.equal(Math.round(b.moved), 0);
+
+  // $2,800 from checking to a brokerage that isn't linked, filed under Investments: it left net worth but is still
+  // yours, so it's "moved", not market.
+  const snap = (d, a, v) => db.prepare('INSERT OR REPLACE INTO balance_snapshots (date, account_id, balance) VALUES (?,?,?)').run(d, a, v);
+  snap(y, 'chk', 5300);
+  const out = tx('chk', today, 2800, 'TRANSFER TO ACME BROKERAGE', { primary: 'TRANSFER_OUT', detailed: 'TRANSFER_OUT_INVESTMENT_AND_RETIREMENT_FUNDS' });
+  db.prepare("UPDATE transactions SET user_category = 'Investments' WHERE id = ?").run(out);
+  classify();
+  b = (await get('/networth/breakdown?period=all')).body;
+  assert.equal(Math.round(b.change), -2800);
+  assert.equal(Math.round(b.saved), -100);
+  assert.equal(Math.round(b.moved), -2800);
+  assert.equal(Math.round(b.market), 100); // unchanged
+  assert.equal(Math.round(b.saved + b.moved + b.market), Math.round(b.change));
+  assert.deepEqual(b.movedItems.map((t) => [t.date, t.amount]), [[today, -2800]]);
+
+  // The same transfer arriving in a linked account pairs with it: nothing left net worth.
+  db.prepare('UPDATE transactions SET user_category = NULL WHERE id = ?').run(out);
+  tx('ira', today, -2800, 'TRANSFER FROM CHECKING', { primary: 'TRANSFER_IN' });
+  snap(today, 'ira', 3900);
+  classify();
+  assert.ok(row(out).transfer_pair);
+  b = (await get('/networth/breakdown?period=all')).body;
+  assert.equal(Math.round(b.change), 0);
+  assert.equal(Math.round(b.moved), 0);
+  assert.equal(Math.round(b.market), 100);
+  assert.equal(Math.round(b.saved + b.moved + b.market), Math.round(b.change));
   db.prepare('DELETE FROM balance_snapshots').run();
 });
 
@@ -518,6 +593,27 @@ test('month spread: each day\'s spending on one fixed dot scale, with bills and 
   for (const f of s.days.filter((x) => x.future)) assert.equal(f.spent, null);
 });
 
+test('month spread and replay: each stamp carries its bill\'s group and category (for its drawn icon), and whether it pays a card', async () => {
+  const { kindOf } = await import('../server/spread.js');
+  const { groupOf } = await import('../server/categories.js');
+  assert.deepEqual(kindOf({ grp: 'Housing', category: 'Rent', card: null, can_card: false }), { grp: 'Housing', category: 'Rent', card: false });
+  assert.equal(kindOf({ card: { due: '2026-01-05' } }).card, true); // a card statement
+  assert.equal(kindOf({ can_card: true }).card, true); // a card payment's occurrence
+  const today = new Date().toLocaleDateString('en-CA'), month = today.slice(0, 7);
+  const last = new Date(Date.UTC(+today.slice(0, 4), +today.slice(5, 7), 0)).toISOString().slice(0, 10);
+  if (today === last) return; // nothing left of the month to test with
+  db.prepare(`INSERT INTO bill_settings (key, manual, name, direction, category, rule, amount_mode, amount) VALUES ('man:stamp', 1, 'Acme Gym', 'out', 'Fitness', ?, 'fixed', 40)`)
+    .run(JSON.stringify({ kind: 'dom', n: +last.slice(8), roll: 0 }));
+  try {
+    for (const path of ['/month-spread', '/month-replay']) {
+      const day = (await get(`${path}?month=${month}`)).body.days.find((x) => x.date === last);
+      const m = day.marks.find((x) => x.name === 'Acme Gym');
+      assert.ok(m, `${path}: the bill is stamped on its day`);
+      assert.deepEqual([m.category, m.grp, m.card, m.done], ['Fitness', groupOf('Fitness'), false, false], path);
+    }
+  } finally { db.prepare("DELETE FROM bill_settings WHERE key = 'man:stamp'").run(); }
+});
+
 test('backup download: named after the app, keeps 5 downloaded copies, and never deletes the daily automatic backups', async () => {
   const fs = await import('node:fs'), path = await import('node:path');
   const dir = path.join(process.env.WEALTHFLOW_DATA_DIR, 'backups');
@@ -556,6 +652,45 @@ test('month replay: cash in everyday accounts each day, rewound from today\'s ba
   for (const d of r.days.filter((x) => x.future)) assert.equal(d.cash, 2500); // no paydays or bills scheduled
   assert.equal(r.low.cash, Math.min(...r.days.map((d) => d.cash).filter((c) => c != null)));
   assert.deepEqual((await get('/month-replay?month=2999-01')).body.days, []); // a month that hasn't started
+});
+
+test('month replay: each day\'s change splits into paydays, bills, savings, money moved in, spending and the rest, adding up exactly', async () => {
+  account('brk', { type: 'investment', subtype: 'brokerage' });
+  const today = new Date().toLocaleDateString('en-CA'), month = today.slice(0, 7);
+  tx('chk', today, -3000, 'PAYROLL ACME CORP', { primary: 'INCOME', detailed: 'INCOME_WAGES' });
+  tx('chk', today, 28000, 'TRANSFER TO BROKERAGE 9999', { primary: 'TRANSFER_OUT', detailed: 'TRANSFER_OUT_INVESTMENT_AND_RETIREMENT_FUNDS' });
+  tx('chk', today, -28065.12, 'MONEY MARKET REDEMPTION', { primary: 'TRANSFER_IN', detailed: 'TRANSFER_IN_INVESTMENT_AND_RETIREMENT_FUNDS' });
+  tx('chk', today, 300, 'PAYMENT TO CARD 3456', { primary: 'LOAN_PAYMENTS', detailed: 'LOAN_PAYMENTS_CREDIT_CARD_PAYMENT' });
+  tx('card', today, -300, 'PAYMENT THANK YOU', { primary: 'LOAN_PAYMENTS', detailed: 'LOAN_PAYMENTS_CREDIT_CARD_PAYMENT' });
+  tx('chk', today, 42.5, 'GROCER', { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_GROCERIES' });
+  tx('chk', today, -12.25, 'GROCER REFUND', { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_GROCERIES' });
+  classify();
+  const r = (await get(`/month-replay?month=${month}`)).body;
+  const i = r.days.findIndex((d) => d.today), d = r.days[i];
+  const prev = i > 0 ? r.days[i - 1].cash : r.start;
+  assert.equal(d.change, Math.round((d.cash - prev) * 100) / 100);
+  const by = Object.fromEntries(d.parts.map((p) => [p.key, p.amount]));
+  assert.deepEqual(d.parts.map((p) => p.key), ['payday', 'bill', 'saved', 'movedIn', 'spending']); // in the readout's order
+  assert.deepEqual(by, { payday: 3000, bill: -300, saved: -28000, movedIn: 28065.12, spending: -30.25 });
+  assert.equal(d.parts.find((p) => p.key === 'saved').top.name, 'TRANSFER TO BROKERAGE 9999');
+  const sum = (ps) => Math.round(ps.reduce((s, p) => s + p.amount, 0) * 100) / 100;
+  assert.equal(sum(d.parts), d.change);
+
+  // A balance the transactions don't explain (a snapshot) shows up as "Other changes", so the parts still add up.
+  if (i > 0) {
+    db.prepare('INSERT OR REPLACE INTO balance_snapshots (date, account_id, balance) VALUES (?,?,?)').run(r.days[i - 1].date, 'chk', 100);
+    const d2 = (await get(`/month-replay?month=${month}`)).body.days[i];
+    assert.equal(d2.change, 2500 - 100);
+    assert.equal(d2.parts.at(-1).key, 'other');
+    assert.equal(sum(d2.parts), d2.change);
+    db.prepare('DELETE FROM balance_snapshots').run();
+  }
+  for (const x of r.days.filter((x) => x.change != null)) assert.equal(sum(x.parts), x.change, x.date);
+  // A monthly transfer to savings repeats like a bill but is still a move to savings; a card payment is a bill.
+  const { partOf } = await import('../server/spread.js');
+  assert.equal(partOf({ amount: 500, grp: 'Transfer' }, { direction: 'out' }), 'saved');
+  assert.equal(partOf({ amount: 500, grp: 'Transfer', pair_type: 'credit' }, { direction: 'out' }), 'bill');
+  assert.equal(partOf({ amount: -500, grp: 'Transfer' }, null), 'movedIn');
 });
 
 test('getting started: once every step has been done, something new to sort doesn\'t bring the checklist back', async () => {

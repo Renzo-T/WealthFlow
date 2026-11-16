@@ -12,8 +12,8 @@ and dark are equals. Function, data and copy stay; this replaces the visual worl
 
 ## Constraints
 Green/red only for in/out and good/bad; estimated or partial data stays marked; every amount stays blurrable by Hide
-amounts; standard web controls (tables, selects, tabs, buttons); no phone layout. Avoid: bank-app look, playful,
-spreadsheet-dense, and hiding detail.
+amounts; standard web controls (tables, selects, tabs, buttons); no phone layout. Avoid: bank-app look, decoration
+(a planner detail that marks nothing; see the Earned Detail Rule in DESIGN.md), spreadsheet-dense, and hiding detail.
 
 ## Direction contract
 THESIS: Money kept like a well-kept Japanese stationery planner: a cloth-bound cover, calm ruled pages, the month always
@@ -21,7 +21,7 @@ in view. It refuses the category default of a white card grid with a blue accent
 
 OWN-WORLD: Deep indigo cover (#1E2A47 family) as the sidebar rail and brand; a quiet off-white page with a faint dot
 grid; ink-dark text; hairline rules instead of shadows; one vermillion round seal (an "M" hanko) as the logo only;
-green/red reserved for meaning. One gothic family (M PLUS 1p, chosen for its equal-width figures) carries every level by size and weight;
+green/red reserved for meaning. One family (Atkinson Hyperlegible Next, chosen for legibility at small sizes) carries every level by size and weight;
 tabular figures; tracked small-caps labels.
 
 STORY: The visitor opens it, reads net worth and free-to-spend first, sees the month's shape at a glance (which days
@@ -48,6 +48,6 @@ fddc3616.log) are empty or hold only a timeout; the evidence lives in this sessi
 - serve-question --wait --key 03638023: "ANSWER: {"optionId":"assigned","steer":"","html":".impeccable/mocks/decision/
   assigned.html","buildPath":"code","buildPathFlipped":false}".
 - concept-seed --kind assigned --from 7d6c00d6: "choice recorded".
-Adaptations made with the user's direction: the date is the page title; M PLUS 1p replaced Zen Kaku Gothic New for
-equal-width figures; the strip shows net worth, free to spend and spent against budget (income lives in Cash flow);
+Adaptations made with the user's direction: the date is the page title; Atkinson Hyperlegible Next replaced Zen Kaku Gothic New for
+legibility at small sizes and equal-width figures; the strip shows net worth, free to spend and spent against budget (income lives in Cash flow);
 after the finish review: a Needs you / Coming up / Budget row under the spread and a packed two-column board below it.

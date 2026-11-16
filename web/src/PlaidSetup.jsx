@@ -50,7 +50,7 @@ export function FirstRun({ onDone }) {
   return (
     <main className="main firstrun">
       <div className="card">
-        <div className="logo"><Seal size={34} /><span className="wordmark">Mizo Money</span></div>
+        <div className="logo"><Seal size={34} /><span className="wordmark">Mizo Money<i className="wm-dot" aria-hidden="true" /></span></div>
         <h2>Connect Mizo Money to Plaid</h2>
         <p className="muted">Mizo Money runs on this computer and reads your accounts through Plaid. It needs your own Plaid keys, once.</p>
         <HowTo />

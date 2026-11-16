@@ -8,6 +8,9 @@ import { bills } from './recurring.js';
 // A category is "fixed" when a recurring bill lands in it, otherwise "flexible".
 
 const BUDGET_GROUPS = Object.keys(GROUPS).filter((g) => g !== 'Transfer'); // Income is budgeted too (expected income)
+// Saving more than planned isn't overspending: money put into savings beyond its budget (or with no budget, like a
+// one-off move to an account of your own that isn't connected) is "met", and doesn't push the totals over.
+const SAVING = 'Savings & investments';
 const monthEnd = (m) => { const [y, mo] = m.split('-').map(Number); return new Date(Date.UTC(y, mo, 0)).toISOString().slice(0, 10); };
 const shiftMonth = (m, k) => { const [y, mo] = m.split('-').map(Number); return new Date(Date.UTC(y, mo - 1 + k, 1)).toISOString().slice(0, 7); };
 
@@ -93,7 +96,7 @@ export function budgetMonth(month, today = new Date().toLocaleDateString('en-CA'
       const fixedHere = fixed[category];
       const suggested = fixedHere ? Math.round(fixedHere.reduce((s, b) => s + b.monthly, 0)) : avg[category] ? round(avg[category]) : 0;
       return {
-        category, budget: category in over ? over[category] : budgets[category] ?? null, actual: actual[category] ?? 0,
+        category, saving: group === SAVING, budget: category in over ? over[category] : budgets[category] ?? null, actual: actual[category] ?? 0,
         usual: budgets[category] ?? null, overridden: category in over,
         rollover: rolling.has(category), carry: carried[category]?.carry ?? 0, carryHistory: carried[category]?.history ?? [],
         count: txns[category]?.length ?? 0, top: (txns[category] ?? []).slice(0, 6).map(({ date, name, amount }) => ({ date, name, amount })),
@@ -108,7 +111,7 @@ export function budgetMonth(month, today = new Date().toLocaleDateString('en-CA'
     if (whole) for (const c of categories) c.budget = null; // the group's amount covers them
     const gKey = `group:${group}`, gBudget = whole ? (gKey in over ? over[gKey] : wholes[group] ?? null) : null;
     return {
-      group, income: group === 'Income', spending: !NOT_SPENDING.includes(group), categories, actual: sum('actual'),
+      group, income: group === 'Income', saving: group === SAVING, spending: !NOT_SPENDING.includes(group), categories, actual: sum('actual'),
       whole, groupBudget: gBudget, groupUsual: whole ? wholes[group] ?? null : null, groupOverridden: whole && gKey in over,
       groupSuggested: Math.round(sum('suggested')) || null,
       budget: whole ? gBudget ?? 0 : sum('budget'),
@@ -126,13 +129,17 @@ export function budgetMonth(month, today = new Date().toLocaleDateString('en-CA'
     const cs = all.filter((c) => c.kind === kind && c.budget != null);
     return { budget: cs.reduce((s, c) => s + c.budget, 0), actual: cs.reduce((s, c) => s + c.actual, 0) };
   };
+  // Saved beyond plan: savings above their budget (the group's own amount when budgeted as one).
+  const sg = expenses.find((g) => g.saving);
+  const savedExtra = !sg ? 0 : sg.whole ? Math.max(0, sg.actual - (sg.groupBudget ?? 0))
+    : sg.categories.reduce((s, c) => s + Math.max(0, c.actual - (c.budget ?? 0)), 0);
   // How far through the month we are (for the "on pace" marker): 1 for past months, 0 for future ones.
   const start = Date.parse(`${month}-01T00:00Z`), end = Date.parse(`${monthEnd(month)}T00:00Z`) + 864e5, now = Date.parse(`${today}T12:00Z`);
   return {
     month, prev: shiftMonth(month, -1), next: shiftMonth(month, 1), progress: Math.min(1, Math.max(0, (now - start) / (end - start))),
     income, expenses,
     totals: { income: income.budget, incomeActual: income.actual, expenses: expenses.reduce((s, g) => s + g.budget, 0),
-      expensesActual: expenses.reduce((s, g) => s + g.actual, 0), fixed: kindTotals('fixed'), flexible: kindTotals('flexible'),
+      expensesActual: expenses.reduce((s, g) => s + g.actual, 0), savedExtra, fixed: kindTotals('fixed'), flexible: kindTotals('flexible'),
       nonmonthly: kindTotals('nonmonthly') },
     leftToBudget: income.budget - expenses.reduce((s, g) => s + g.budget, 0),
     trips: { counted: tripsInBudget(), left_out: tripsInBudget() ? 0 : db.prepare(`SELECT COALESCE(SUM(t.amount), 0) v FROM transactions t

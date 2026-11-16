@@ -3,6 +3,7 @@ import { api } from './api.js';
 import { usd2, usd, signed, label, shortDate, SERIES, tint } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
+import { RowStamp, useStampedExit } from './Stamp.jsx';
 import { Panel, PageHeader, Skeleton, Hover, TipList, Repeat, Close, tipText } from './ui.jsx';
 
 const txIcon = (t) => (t.to_account ? { group: t.shown_grp === 'Transfer' ? 'Transfer' : t.shown_grp, kind: t.shown_grp === 'Transfer' ? 'swap' : undefined }
@@ -69,13 +70,14 @@ const hint = (r) => HINTS.find(([n, inst]) => n.test(r.name) && inst.test(r.inst
 function Review({ dir, items, decide, cats }) {
   const R = REVIEW[dir];
   const [picking, setPicking] = useState(null); // review group waiting for a spending category
-  if (!items?.length) return null;
+  const rows = useStampedExit(items, (r) => r.name);
+  if (!rows.length) return null;
   const spendCats = cats.filter((g) => !['Income', 'Transfer', 'Savings & investments'].includes(g.group));
   return (
     <Panel className="mt" title={R.title}>
       <p className="small muted mt-0">{R.text} Tell Mizo Money what it is and it'll remember for future ones too.</p>
-      {items.map((r) => (
-        <div className="review" key={r.name}>
+      {rows.map(({ item: r, key, leaving }) => (
+        <div className={`review stampable${leaving ? ' leaving' : ''}`} key={key} {...(leaving ? { inert: '' } : {})}>
           <div className="trow">
             <div className="tmain"><b>{r.name}</b>
               <span className="small muted">{[r.institutions, r.accounts].filter(Boolean).join(' · ')}</span>
@@ -102,6 +104,7 @@ function Review({ dir, items, decide, cats }) {
               ))}</tbody>
             </table>
           </details>
+          {leaving && <RowStamp />}
         </div>
       ))}
     </Panel>
@@ -116,7 +119,8 @@ const PEOPLE_QUICK = ['Restaurants', 'Entertainment', 'Travel', 'Gifts & donatio
 function PeoplePanel({ data, cats, reload }) {
   const [shown, setShown] = useState(5);
   const [always, setAlways] = useState({});
-  if (!data?.items?.length) return null;
+  const rows = useStampedExit(data?.items, (r) => r.id);
+  if (!rows.length) return null;
   const spendCats = cats.filter((g) => !['Income', 'Transfer', 'Savings & investments'].includes(g.group));
   const file = async (r, category) => {
     await api(`/transactions/${r.id}`, { method: 'PATCH', body: JSON.stringify({ category, person: !!always[r.id] }) });
@@ -128,10 +132,10 @@ function PeoplePanel({ data, cats, reload }) {
     <Panel className="mt" title={<>Payments with people <span className="asof">{data.count} to sort</span></>}>
       <p className="small muted mt-0">Plaid guesses these from the note, so Mizo Money doesn't. Pick what each one was, or leave it as a payment
         with a person. Money a friend sent you can count against the charge it paid back.</p>
-      {data.items.slice(0, shown).map((r) => {
+      {rows.slice(0, shown).map(({ item: r, key, leaving }) => {
         const best = r.candidates[0]?.likely ? r.candidates[0] : null; // one-click only when the name or an even split matches
         return (
-          <div className="peer" key={r.id}>
+          <div className={`peer stampable${leaving ? ' leaving' : ''}`} key={key} {...(leaving ? { inert: '' } : {})}>
             <span className="avatar" style={{ background: tint(avatarColor(r.person), 13), color: avatarColor(r.person) }}>{r.person[0]}</span>
             <span className="peerwho"><b>{r.person}</b>{r.note && <span className="peernote">“{r.note}”</span>}
               <span className="small muted">{shortDate(r.date)} · {r.amount < 0 ? 'paid you' : 'you paid'}</span></span>
@@ -151,10 +155,11 @@ function PeoplePanel({ data, cats, reload }) {
               <button className="linkbtn" onClick={() => file(r, 'Payment apps')} title="Keep it as a payment with a person">Fine as is</button>
               <label className="check small"><input type="checkbox" checked={!!always[r.id]} onChange={(e) => setAlways({ ...always, [r.id]: e.target.checked })} /> Always for {first(r.person)}</label>
             </span>
+            {leaving && <RowStamp />}
           </div>
         );
       })}
-      {data.items.length > shown && <button className="linkbtn foot" onClick={() => setShown(shown + 5)}>Show more</button>}
+      {rows.length > shown &&<button className="linkbtn foot" onClick={() => setShown(shown + 5)}>Show more</button>}
     </Panel>
   );
 }
@@ -361,21 +366,46 @@ export default function Transactions() {
           </select>
         </div>
       )}
-      <div className="txgrid mt-sm">
+      <div className="ledger mt-sm">
+        {summary && (
+          <div className="cards ruled txstrip" aria-label="Summary">
+            <div className="card"><h3>Transactions</h3><div className="txfig">{summary.count.toLocaleString()}</div></div>
+            <div className="card"><h3>Total income</h3><div className="txfig amt good">{usd(summary.income)}</div></div>
+            <div className="card"><h3 title="Net of refunds and cash back; transfers, savings and debt repayment aren't counted">Total spending</h3><div className="txfig amt">{usd(summary.spent)}</div></div>
+            {summary.largest_expense != null && <div className="card"><h3>Largest expense</h3><div className="txfig amt">{usd2(summary.largest_expense)}</div></div>}
+            <div className="card txcsv"><a className="btn" href={`/api/transactions.csv?${filterQs}`}>Download CSV</a></div>
+          </div>
+        )}
         <section className="card scroll sticky-head">
           <table className="t txtable">
-            <thead><tr>{editing && <th />}<th>Merchant</th><th>Category</th><th>Account</th><th className="r">Amount</th></tr></thead>
+            <thead><tr><th className="datecol" aria-label="Date" />{editing && <th />}<th>Merchant</th><th>Category</th><th>Account</th><th className="r">Amount</th></tr></thead>
             <tbody>
-              {days.map((d) => (
+              {days.map((d, di) => {
+                // Each day opens with a date block in the left margin, like a daily log: the day number, the weekday
+                // under it, and the day's net. It spans the day's rows (and any open details); a month heading
+                // runs across when the month changes.
+                const when = new Date(d.date + 'T00:00');
+                const span = d.rows.reduce((n, t) => n + 1 + (t.parts?.length ?? 0) + (open === t.id && !editing ? 1 : 0), 0);
+                const newMonth = di === 0 || days[di - 1].date.slice(0, 7) !== d.date.slice(0, 7);
+                const block = (
+                  <td className="datecell" rowSpan={span} onClick={(e) => e.stopPropagation()}>
+                    <span className="dateblock" title={when.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}>
+                      <b className="dbnum">{when.getDate()}</b>
+                      <span className="dbday">{when.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                      {Math.abs(d.net) >= 0.005 && <span className={`dbnet amt${d.net > 0 ? ' good' : ''}`}>{signed(d.net)}</span>}
+                    </span>
+                  </td>
+                );
+                return (
                 <Fragment key={d.date}>
-                  <tr className="dayrow"><td colSpan={cols - 1}>{new Date(d.date + 'T00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}</td>
-                    <td className="r"><span className={`amt ${d.net > 0 ? 'good' : ''}`}>{Math.abs(d.net) >= 0.005 ? signed(d.net) : ''}</span></td></tr>
-                  {d.rows.map((t) => (
+                  {newMonth && <tr className="monthrow"><td colSpan={cols + 1}>{when.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</td></tr>}
+                  {d.rows.map((t, ti) => (
                     <Fragment key={t.id}>
-                      <tr className={`txrow${sel.has(t.id) ? ' picked' : ''}`} onClick={(e) => {
+                      <tr className={`txrow${sel.has(t.id) ? ' picked' : ''}${ti === 0 ? ' dayfirst' : ''}`} onClick={(e) => {
                         if (['SELECT', 'INPUT', 'BUTTON'].includes(e.target.tagName)) return;
                         if (editing) toggleSel(t.id); else setOpen(open === t.id ? null : t.id);
                       }}>
+                        {ti === 0 && block}
                         {editing && <td><input type="checkbox" checked={sel.has(t.id)} onChange={() => toggleSel(t.id)} aria-label={`Select ${title(t)}`} /></td>}
                         <td className="merch" title={t.name}><span className="merchcell"><Logo t={t} /><span>{title(t)}
                           {t.recurring && <Hover className="quiet" tip={<TipList title={t.bill?.name ?? 'Recurring bill'} rows={[['Schedule', t.bill?.schedule ?? '—'],
@@ -419,24 +449,14 @@ export default function Transactions() {
                     </Fragment>
                   ))}
                 </Fragment>
-              ))}
+                );
+              })}
             </tbody>
           </table>
           {data.loading && <div className="skelrows" aria-label="Loading">{Array.from({ length: 8 }, (_, i) => <Skeleton key={i} h={22} />)}</div>}
           {!data.loading && rows.length === 0 && <div className="empty">No transactions match.</div>}
           {summary && summary.count > rows.length && <p className="small muted foot">Showing the newest {rows.length} of {summary.count}. Narrow the filters, or download the CSV for all of them.</p>}
         </section>
-        {summary && (
-          <Panel className="txsummary" title="Summary">
-            <dl className="kv">
-              <dt>Transactions</dt><dd>{summary.count.toLocaleString()}</dd>
-              <dt>Total income</dt><dd className="amt good">{usd(summary.income)}</dd>
-              <dt title="Net of refunds and cash back; transfers, savings and debt repayment aren't counted">Total spending</dt><dd className="amt">{usd(summary.spent)}</dd>
-              {summary.largest_expense != null && <><dt>Largest expense</dt><dd className="amt">{usd2(summary.largest_expense)}</dd></>}
-            </dl>
-            <a className="btn csvbtn" href={`/api/transactions.csv?${filterQs}`}>Download CSV</a>
-          </Panel>
-        )}
       </div>
     </>
   );

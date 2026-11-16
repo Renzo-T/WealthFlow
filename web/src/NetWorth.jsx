@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from './api.js';
-import { usd, usd2, label, SERIES, NEUTRAL, shortDate, tint } from './format.js';
+import { usd, usd2, signed, label, SERIES, NEUTRAL, shortDate, tint } from './format.js';
 import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, tipText, Trend, Est } from './ui.jsx';
 import NetWorthChart from './NetWorthChart.jsx';
 import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
@@ -175,7 +175,8 @@ function AccountRow({ a, act, open, setOpen, saved }) {
   );
 }
 
-// What moved your net worth: what you saved (income − spending) and everything else, mostly the market.
+// What moved your net worth: what you saved (income − spending), money moved to accounts that aren't tracked, and
+// everything else, mostly the market.
 const PERIODS = [['month', 'This month'], ['30d', 'Last 30 days'], ['all', 'Since tracking']];
 const signedUsd = (v) => `${v < 0 ? '−' : '+'}${usd(Math.abs(v))}`;
 function WhatMoved() {
@@ -189,17 +190,28 @@ function WhatMoved() {
       <p className="small muted mt-0">This needs a real daily value for every account at both ends of a period. Mizo Money records one each day
         {b.since ? ` (since ${shortDate(b.since)})` : ' from the first sync'}, so it shows up after the next day's sync.</p>
     </Panel>);
-  const max = Math.max(Math.abs(b.saved), Math.abs(b.market), 1);
+  // Money paid into accounts Mizo Money can't see; hidden when it rounds to $0.
+  const showMoved = Math.round(b.moved ?? 0) !== 0;
+  const max = Math.max(Math.abs(b.saved), Math.abs(b.market), showMoved ? Math.abs(b.moved) : 0, 1);
   const bar = (v, cls) => <span className="wmbar"><i className={`${cls} ${v < 0 ? 'neg' : ''}`} style={{ width: `${(Math.abs(v) / max) * 100}%` }} /></span>;
+  // Market and other: each investment account's change, then whatever is left (cash, cards, interest, fees).
+  const rest = b.market - b.investments.reduce((s, a) => s + a.change, 0);
+  const marketRows = [...b.investments.map((a) => [a.name, signedUsd(a.change)]),
+    ...(Math.abs(rest) >= 0.5 || !b.investments.length ? [['Cash, cards and other', signedUsd(rest)]] : [])];
+  const movedRows = [...(b.movedItems ?? []).map((t) => [t.name, signed(t.amount), shortDate(t.date)]),
+    ...(b.movedMore?.count ? [[`and ${b.movedMore.count} more`, signed(b.movedMore.amount)]] : [])];
   return (
     <Panel className="mt" title="What moved your net worth" actions={head}>
-      <div className="wm">
+      <div className={`wm ${showMoved ? 'three' : ''}`}>
         <div className="wmtotal"><span className="small muted">{shortDate(b.from)} → {shortDate(b.to)}</span>
           <b className={`amt big ${b.change < 0 ? 'bad' : 'good'}`}>{signedUsd(b.change)}</b></div>
         <div className="wmrow"><Hover className="quiet" tip={<TipList title="Saved" rows={[['Income', usd(b.income)], ['Spending', `−${usd(b.spending)}`]]}
           note="From your transactions. Transfers between your own accounts don't count." />}>Saved</Hover>{bar(b.saved, 'saved')}<b className="amt">{signedUsd(b.saved)}</b></div>
-        <div className="wmrow"><Hover className="quiet" tip={<TipList title="Investments" rows={b.investments.map((a) => [a.name, signedUsd(a.change)])}
-          note="Market and other: the rest of the change, mostly investments going up or down. It also catches interest, fees and balance corrections." />}>Market and other</Hover>
+        {showMoved && <div className="wmrow"><Hover className="quiet" tip={<TipList title="Moved to accounts not tracked" rows={movedRows}
+          note="Transfers, savings and debt payments to an account that isn't linked. The money is still yours, but Mizo Money can't see where it went. Linking that account, or adding it by hand on this page, moves it out of this row." />}>Moved to accounts not tracked</Hover>
+          {bar(b.moved, 'moved')}<b className="amt">{signedUsd(b.moved)}</b></div>}
+        <div className="wmrow"><Hover className="quiet" tip={<TipList title="Market and other" rows={marketRows}
+          note="The rest of the change, mostly investments going up or down. It also catches interest, fees and balance corrections." />}>Market and other</Hover>
           {bar(b.market, 'market')}<b className="amt">{signedUsd(b.market)}</b></div>
       </div>
       {b.clipped && <p className="small muted foot">Real daily values start {shortDate(b.since)}, so this covers from then.</p>}
@@ -282,7 +294,8 @@ export default function NetWorth({ onChange }) {
         <Summary accounts={d.accounts} manual={d.manual} />
       </div>
       <WhatMoved />
-      {GROUPS.map(([type, title]) => {
+      {/* Cash, cards, investments and loans: one ruled sheet, a section per type. */}
+      {d.accounts.length > 0 && <div className="ledger mt">{GROUPS.map(([type, title]) => {
         const list = d.accounts.filter((a) => a.type === type);
         if (!list.length) return null;
         const inc = list.filter((a) => a.in_networth);
@@ -292,12 +305,12 @@ export default function NetWorth({ onChange }) {
         const change = untracked.length ? null : inc.reduce((s, a) => s + a.change, 0);
         const since = untracked.map((a) => a.tracking_since).sort().at(-1);
         return (
-          <Panel key={type} className="mt" title={<>{title} <Change v={change} debt={type === 'credit' || type === 'loan'} suffix=" in 30 days" since={since} /></>}
+          <Panel key={type} title={<>{title} <Change v={change} debt={type === 'credit' || type === 'loan'} suffix=" in 30 days" since={since} /></>}
             actions={<b className="amt">{(type === 'credit' || type === 'loan') && total >= 0.5 ? '−' : ''}{usd(total)}</b>}>
             {list.map((a) => <AccountRow key={a.id} a={a} act={activity[a.id]} open={open === a.id} setOpen={setOpen} saved={load} />)}
           </Panel>
         );
-      })}
+      })}</div>}
       {d.accounts.some((a) => a.estimated) && <p className="small muted mt-sm">Dashed trend lines are estimated from transactions; investments are held at today's value until daily history builds up.</p>}
       <Banks meta={meta} accounts={d.accounts} saved={saved} />
       <Panel className="mt-lg" title="Other assets and debts">

@@ -4,6 +4,7 @@ import { iso, accountHistory } from '../summary.js';
 import { CATEGORIES, GROUPS, groupOf } from '../categories.js';
 import { budgetMonth, budgetGroups } from '../budget.js';
 import { ACCT, cashFlow } from '../insights.js';
+import { reachedOn } from '../goals.js';
 
 const router = Router();
 const num = (v) => { const n = Number(v); return v !== '' && v != null && Number.isFinite(n) && n >= 0 ? n : null; };
@@ -144,15 +145,18 @@ router.delete('/budgets/:category', (req, res) => {
 // Goals with progress. A goal linked to an account follows its balance, and also gets that account's recent
 // pace (average change per month over the last 90 days) and a small history for a sparkline.
 router.get('/goals', (_req, res) => {
-  const goals = db.prepare(`SELECT g.id, g.name, g.target, g.target_date, g.account_id, ${ACCT} AS account, a.balance,
+  const goals = db.prepare(`SELECT g.id, g.name, g.target, g.target_date, g.reached_at, g.account_id, ${ACCT} AS account, a.balance,
     COALESCE(a.balance, g.saved) AS saved FROM goals g LEFT JOIN accounts a ON a.id = g.account_id ORDER BY g.id`).all();
   const ids = goals.filter((g) => g.account_id && g.balance != null).map((g) => g.account_id);
   const hist = ids.length ? accountHistory(db.prepare(`SELECT * FROM accounts WHERE id IN (${ids.map(() => '?').join(',')})`).all(...ids), 180) : {};
-  res.json(goals.map(({ balance, ...g }) => {
+  res.json(goals.map(({ balance, reached_at, ...g }) => {
     const h = hist[g.account_id] ?? [];
+    // When it was reached, only for a goal that is over its target now: from the balance history for one that follows
+    // an account, from the day it was entered over the target otherwise. null = can't be known.
+    if (g.saved >= g.target) g.reached = g.account_id ? reachedOn(h, g.target) : reached_at;
     if (h.length < 31) return { ...g, pace: null, spark: [] };
     const from = h[Math.max(0, h.length - 91)], days = h.length - 1 - h.indexOf(from);
-    return { ...g, pace: ((h.at(-1).balance - from.balance) / days) * 30.44, estimated: h.some((x) => x.est),
+    return { ...g, pace:((h.at(-1).balance - from.balance) / days) * 30.44, estimated: h.some((x) => x.est),
       spark: h.filter((_, i) => (h.length - 1 - i) % 7 === 0).map((x) => x.balance) };
   }));
 });
@@ -175,8 +179,8 @@ router.post('/goals', (req, res) => {
   const name = String(req.body.name ?? '').trim(), target = num(req.body.target), saved = num(req.body.saved) ?? 0;
   if (!name || !target) return bad(res, 'Give the goal a name and a target above zero.');
   const date = DATE.test(req.body.target_date ?? '') ? req.body.target_date : null;
-  const r = db.prepare('INSERT INTO goals (name, target, saved, account_id, target_date) VALUES (?,?,?,?,?)')
-    .run(name.slice(0, 60), target, saved, req.body.account_id || null, date);
+  const r = db.prepare('INSERT INTO goals (name, target, saved, account_id, target_date, reached_at) VALUES (?,?,?,?,?,?)')
+    .run(name.slice(0, 60), target, saved, req.body.account_id || null, date, !req.body.account_id && saved >= target ? iso(new Date()) : null);
   res.json({ id: Number(r.lastInsertRowid) });
 });
 
@@ -191,8 +195,10 @@ router.patch('/goals/:id', (req, res) => {
   if ('saved' in b && b.saved !== '' && b.saved != null) { next.saved = num(b.saved); if (next.saved == null) return bad(res, 'Enter an amount of zero or more.'); }
   if ('target_date' in b) { next.target_date = b.target_date || null; if (next.target_date && !DATE.test(next.target_date)) return bad(res, 'Pick a date.'); }
   if ('account_id' in b) next.account_id = b.account_id || null;
-  db.prepare('UPDATE goals SET name = ?, target = ?, saved = ?, target_date = ?, account_id = ? WHERE id = ?')
-    .run(next.name, next.target, next.saved, next.target_date, next.account_id, g.id);
+  // The day you entered an amount at or over the target is kept until the amount drops back below it.
+  const reachedAt = !next.account_id && next.saved >= next.target ? g.reached_at ?? iso(new Date()) : null;
+  db.prepare('UPDATE goals SET name = ?, target = ?, saved = ?, target_date = ?, account_id = ?, reached_at = ? WHERE id = ?')
+    .run(next.name, next.target, next.saved, next.target_date, next.account_id, reachedAt, g.id);
   res.json({ ok: true });
 });
 

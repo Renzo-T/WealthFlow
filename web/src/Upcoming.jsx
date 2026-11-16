@@ -20,7 +20,7 @@ export default function Upcoming({ items: all, max = 8, calendar = true, skip = 
   return (
     <Panel title={skip ? 'Later in the next 30 days' : 'Upcoming bills & income'} actions={<a href="#/bills">Manage</a>}>
       <PaycheckPrompt compact onDone={() => window.location.reload()} />
-      {calendar && <BillsCalendar compact selected={day} onDay={(d, list) => { setDay(d); setDayItems(list); }} />}
+      {calendar && <BillsCalendar selected={day} onDay={(d, list) => { setDay(d); setDayItems(list); }} />}
       <div className={`small muted upnote${calendar ? '' : ' first'}`}>
         {day ? <>{new Date(day + 'T00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })} · <button className="linkbtn" onClick={() => setDay(null)}>Show next 30 days</button></>
           : skip ? `After the next ${Math.min(skip, all.length)} in Coming up` : 'Next 30 days'}

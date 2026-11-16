@@ -156,6 +156,8 @@ export default function Settings({ onChange }) {
   return (
     <>
       <PageHeader title="Settings" sub="Connections and backups for this copy of Mizo Money." />
+      {/* One ruled sheet, a section per setting. */}
+      <div className="ledger mt">
       <Panel className="mt" title={<>Banks <span className="badge">{sys?.plaidEnv ?? '…'}</span></>} actions={<a className="btn" href="#/networth">Open Net worth</a>}>
         <p className="small muted">{meta ? `${meta.items.length} of ${meta.max} Plaid connections used. ` : ''}Connecting, reconnecting and removing banks, and renaming or hiding
           accounts, are on the Net worth page (Accounts & net worth).</p>
@@ -194,6 +196,7 @@ export default function Settings({ onChange }) {
           Keep a copy of it with your backups: restoring a backup without that key means connecting every bank again. Forecast assumptions live in your browser and aren't included.</p>
         <a className="btn primary linkbtn-solid" href="/api/backup/download">Download backup</a>
       </Panel>
+      </div>
     </>
   );
 }

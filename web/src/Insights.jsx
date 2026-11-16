@@ -83,12 +83,15 @@ function WatchBar({ w, over }) {
   const pace = (now.getDate() / days) * 100;
   const p = Math.min((w.soFar / max) * 100, 100);
   return (
-    <div className="watchbar">
+    <div className="rl-meter">
       <div className="bar"><i style={{ width: `${p}%`, background: over ? 'var(--red)' : 'var(--blue)' }} /><b className="tick" style={{ left: `${pace}%` }} title="An even pace for today" /></div>
       <span className="small muted amt">{Math.round((w.soFar / max) * 100)}% of {w.target ? 'your target' : 'your monthly average'}</span>
     </div>
   );
 }
+
+// Column heads of the watchlist rows (the first and last columns are the name and the remove button).
+const WATCH_HEADS = ['Monthly average', 'This year', 'This month', 'Target', 'On pace for'];
 
 export function WatchlistPanel({ data, reload }) {
   const [adding, setAdding] = useState(false);
@@ -127,29 +130,34 @@ export function WatchlistPanel({ data, reload }) {
             <button className="chipbtn" onClick={() => setAdding(true)}>Something else…</button></>}>
           See your monthly average, this month so far, and where you're headed. Your most frequent shops are below.
         </EmptyState>)}
-      <div className="watchgrid">
-        {data.items.map((w) => {
-          const over = w.target && (w.projected ?? w.soFar) > w.target;
-          return (
-            <div className="watch" key={w.id}>
-              <div className="row base"><span className="rowicon">{w.kind === 'category' ? <CategoryIcon sub={w.value} group={null} size={26} /> : <span className="avatar sm">{w.value[0]}</span>}<b>{w.value}</b></span>
-                <button className="linkbtn" onClick={() => remove(w.id)} aria-label={`Stop watching ${w.value}`}><Close /></button></div>
-              <div className="watchstats">
-                <div><span className="small muted">Monthly average</span><b className="amt">{w.avg == null ? '—'
-                  : <Hover tip={<TipList title={`Last ${w.history.length} month${w.history.length > 1 ? 's' : ''}`} rows={w.history.map((h) => [monthName(h.month), usd(h.total)])} />}>{usd(w.avg)}</Hover>}</b></div>
-                <div><span className="small muted">This year</span><b className="amt">{usd(w.ytd)}</b></div>
+      {data.items.length > 0 && (
+        <div className="rl rl-watch" role="table" aria-label="Watched items">
+          <div className="rl-head" role="row">
+            <span role="columnheader" aria-label="Item" />
+            {WATCH_HEADS.map((h) => <span key={h} role="columnheader">{h}</span>)}
+            <span role="columnheader" aria-label="Stop watching" />
+          </div>
+          {data.items.map((w) => {
+            const over = w.target && (w.projected ?? w.soFar) > w.target;
+            return (
+              <div className="rl-item" key={w.id}>
+                <div className="rl-row" role="row">
+                  <span className="rowicon" role="cell">{w.kind === 'category' ? <CategoryIcon sub={w.value} group={null} size={26} /> : <span className="avatar sm">{w.value[0]}</span>}<b className="rl-name" title={w.value}>{w.value}</b></span>
+                  <b className="rl-num amt" role="cell">{w.avg == null ? '—'
+                    : <Hover tip={<TipList title={`Last ${w.history.length} month${w.history.length > 1 ? 's' : ''}`} rows={w.history.map((h) => [monthName(h.month), usd(h.total)])} />}>{usd(w.avg)}</Hover>}</b>
+                  <b className="rl-num amt" role="cell">{usd(w.ytd)}</b>
+                  <b className="rl-num amt" role="cell">{usd(w.soFar)}</b>
+                  <span className="rl-num" role="cell"><WatchTarget w={w} reload={reload} /></span>
+                  <span className="rl-num" role="cell" title="This month so far, continued at the same pace">
+                    {w.projected == null ? <b className="muted" title="Starts on the 5th of the month">—</b> : <b className={`amt ${over ? 'bad' : ''}`}>{usd(w.projected)}</b>}</span>
+                  <span className="rl-end" role="cell"><button className="linkbtn" onClick={() => remove(w.id)} aria-label={`Stop watching ${w.value}`}><Close /></button></span>
+                </div>
+                <WatchBar w={w} over={over} />
               </div>
-              <div className="watchnow">
-                <div><span className="small muted">This month</span><b className="amt">{usd(w.soFar)}</b></div>
-                <div><span className="small muted">Target</span><WatchTarget w={w} reload={reload} /></div>
-                <div title="This month so far, continued at the same pace"><span className="small muted">On pace for</span>
-                  {w.projected == null ? <b className="muted" title="Starts on the 5th of the month">—</b> : <b className={`amt ${over ? 'bad' : ''}`}>{usd(w.projected)}</b>}</div>
-              </div>
-              <WatchBar w={w} over={over} />
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </Panel>
   );
 }

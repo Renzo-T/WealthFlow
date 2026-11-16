@@ -3,12 +3,12 @@
    Dark mode follows the system unless the top-bar toggle sets data-theme on <html>; it is the same planner at night,
    its own validated steps, not an inversion. --blue is the accent (kept as a name so older rules follow the theme). */
 :root {
-  --bg: #f3f3ef; --card: #ffffff; --line: #e1e3df; --ink: #1b2030; --muted: #4c5365;
+  --bg: #f3f3ef; --card: #ffffff; --line: #e1e3df; --ink: #1b2030; --muted: #4c5365; --muted-2: #636a7d;
   --blue: #2d4a93; --accent: var(--blue); --soft: #e8ecf5; --green: #24724f; --amber: #9a6410; --red: #b4382a; --purple: #7a4e9c;
-  --surface-2: #f7f7f4; --line-strong: #c8ccd2; --disabled: #8f96a5; --hub: #475066;
+  --surface-2: #f7f7f4; --line-strong: #c8ccd2; --disabled: #8f96a5; --hub: #475066; --pencil: #475066;
   --alert-bg: #f9ebe8; --note-ink: #2d4a93; --warn-bg: #f7efde; --warn-ink: #74500f; --warn-dot: #b5720f;
   --shadow: 0 2px 6px rgba(27, 32, 48, .06), 0 14px 34px rgba(27, 32, 48, .12);
-  --rail: #1e2a47; --rail-2: #2b3b63; --rail-ink: #c5ccdd; --rail-line: rgba(255, 255, 255, .09); --btn: #1e2a47; --btn-hover: #2b3b63;
+  --rail: #1e2a47; --rail-2: #2b3b63; --rail-ink: #c5ccdd; --rail-ink-2: #a9b2c8; --rail-line: rgba(255, 255, 255, .09); --btn: #1e2a47; --btn-hover: #2b3b63;
   --seal: #d9482e; --seal-ink: #fff6f2; --dot: #d6d9d3; --ink-dot: #26355c;
   --s1: #3554a8; --s2: #b5700e; --s3: #00909a; --s4: #9a3fa8; --neutral: #8a90a0; --neutral-light: #c5c9d2; --in: #24724f;
   color-scheme: light;
@@ -16,24 +16,24 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #11141c; --card: #181c27; --line: #282e3d; --ink: #e7e9ef; --muted: #adb3c3;
+    --bg: #11141c; --card: #181c27; --line: #282e3d; --ink: #e7e9ef; --muted: #adb3c3; --muted-2: #8a92a6;
     --blue: #9db2ea; --soft: #222a40; --green: #5cc193; --amber: #e0a84a; --red: #ee806e; --purple: #b48bd6;
-    --surface-2: #1d2230; --line-strong: #3a4255; --disabled: #5f6779; --hub: #a3abbd;
+    --surface-2: #1d2230; --line-strong: #3a4255; --disabled: #5f6779; --hub: #a3abbd; --pencil: #a3abbd;
     --alert-bg: #3a1e1c; --note-ink: #afc0ee; --warn-bg: #33281a; --warn-ink: #ebc27d; --warn-dot: #e0a84a;
     --shadow: 0 2px 6px rgba(0, 0, 0, .3), 0 14px 34px rgba(0, 0, 0, .45);
-    --rail: #1a2440; --rail-2: #283a66; --rail-ink: #aab4cc; --rail-line: rgba(255, 255, 255, .07); --btn: #3c58a8; --btn-hover: #4a67b8;
+    --rail: #1a2440; --rail-2: #283a66; --rail-ink: #aab4cc; --rail-ink-2: #8f9bbb; --rail-line: rgba(255, 255, 255, .07); --btn: #3c58a8; --btn-hover: #4a67b8;
     --seal: #e0533d; --seal-ink: #fff3ee; --dot: #20252f; --ink-dot: #a9b9e6;
     --s1: #6a86d4; --s2: #c4852a; --s3: #109e9b; --s4: #a266cf; --neutral: #7d8496; --neutral-light: #4a5163; --in: #5cc193;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #11141c; --card: #181c27; --line: #282e3d; --ink: #e7e9ef; --muted: #adb3c3;
+  --bg: #11141c; --card: #181c27; --line: #282e3d; --ink: #e7e9ef; --muted: #adb3c3; --muted-2: #8a92a6;
   --blue: #9db2ea; --soft: #222a40; --green: #5cc193; --amber: #e0a84a; --red: #ee806e; --purple: #b48bd6;
-  --surface-2: #1d2230; --line-strong: #3a4255; --disabled: #5f6779; --hub: #a3abbd;
+  --surface-2: #1d2230; --line-strong: #3a4255; --disabled: #5f6779; --hub: #a3abbd; --pencil: #a3abbd;
   --alert-bg: #3a1e1c; --note-ink: #afc0ee; --warn-bg: #33281a; --warn-ink: #ebc27d; --warn-dot: #e0a84a;
   --shadow: 0 2px 6px rgba(0, 0, 0, .3), 0 14px 34px rgba(0, 0, 0, .45);
-  --rail: #1a2440; --rail-2: #283a66; --rail-ink: #aab4cc; --rail-line: rgba(255, 255, 255, .07); --btn: #3c58a8; --btn-hover: #4a67b8;
+  --rail: #1a2440; --rail-2: #283a66; --rail-ink: #aab4cc; --rail-ink-2: #8f9bbb; --rail-line: rgba(255, 255, 255, .07); --btn: #3c58a8; --btn-hover: #4a67b8;
   --seal: #e0533d; --seal-ink: #fff3ee; --dot: #20252f; --ink-dot: #a9b9e6;
   --s1: #6a86d4; --s2: #c4852a; --s3: #109e9b; --s4: #a266cf; --neutral: #7d8496; --neutral-light: #4a5163; --in: #5cc193;
   color-scheme: dark;
@@ -63,7 +63,7 @@ h1 { margin: 0; font-size: 1.9rem; letter-spacing: -.02em; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1rem 1.15rem; }
 .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1.25rem 0 1rem; }
 .card h3 { margin: 0; font-size: .85rem; font-weight: 500; color: var(--muted); }
-.big { font-size: 1.7rem; font-weight: 700; letter-spacing: -.02em; margin: .25rem 0; }
+.big { font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; margin: .25rem 0; }
 .row { display: flex; justify-content: space-between; align-items: flex-end; gap: .5rem; }
 .chip { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: .9rem; }
 .small { font-size: .8rem; } .muted { color: var(--muted); } .good { color: var(--green); } .bad { color: var(--red); }
@@ -230,7 +230,7 @@ tr.dim td { opacity: .6; }
 .caldots { position: absolute; left: 0; right: 0; bottom: 3px; display: flex; justify-content: center; gap: 2px; }
 .caldots i { width: 4px; height: 4px; border-radius: 50%; }
 .calday.sel .caldots i { background: var(--paper-white) !important; }
-.callist .trow { padding: .4rem 0; }
+.daysheet .trow { padding: .4rem 0; }
 
 /* ---------- Sidebar: icons only on narrow windows (it no longer disappears) ---------- */
 @media (max-width: 1099px) {
@@ -245,6 +245,9 @@ tr.dim td { opacity: .6; }
 .more { display: block; margin-top: .5rem; color: var(--blue); text-decoration: none; }
 .lkey { display: inline-block; width: 16px; height: 0; border-top: 2.5px solid var(--blue); margin-right: .35rem; vertical-align: middle; }
 .lkey.dash { border-top: 2px dashed var(--blue); opacity: .6; }
+.lkey.cushion { border-top: 1.5px dotted var(--line-strong); }
+.lkey.zero { border-top: 1px solid var(--ink); opacity: .3; }
+.lkey.neg { border-top-color: var(--red); }
 /* Compact calendar inside Upcoming */
 .calgrid.compact .calday { font-size: .72rem; padding: .2rem 0 .45rem; border-radius: 6px; }
 .calgrid.compact .calhead { font-size: .65rem; padding-bottom: .1rem; }
@@ -326,8 +329,7 @@ img, svg { color-scheme: inherit; }
 
 /* Small, quiet motion */
 @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-.dash > div, .main > section, .main > .card, .flowchart, .chart { animation: fadein .25s ease-out both; }
-.bar i, .sharebar i, .splitbar i { transition: width .45s cubic-bezier(.2, .7, .2, 1); }
+.dash > div, .main > section, .main > .card, .flowchart, .chart { animation: fadein .25s var(--ease) both; }
 .btn, .iconbtn, .nav, .ranges button, .calday, .catsel, .card { transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s; }
 .btn:active, .iconbtn:active { transform: translateY(1px); }
 
@@ -355,13 +357,10 @@ img, svg { color-scheme: inherit; }
 .pill.over { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
 .pill.zero { background: var(--soft); color: var(--muted); }
 .bbar { position: relative; height: 4px; border-radius: 2px; background: var(--soft); }
-.bbar i { display: block; height: 100%; border-radius: 2px; background: var(--blue); transition: width .45s; }
+.bbar i { display: block; height: 100%; border-radius: 2px; background: var(--blue); }
 .bbar i.over { background: var(--red); } .bbar i.inc { background: var(--green); }
 .bbar b { position: absolute; top: -3px; width: 2px; height: 10px; background: var(--muted); border-radius: 1px; }
 .ftag { margin-left: .4rem; font-size: .68rem; padding: .05rem .4rem; border-radius: 99px; background: var(--soft); color: var(--muted); vertical-align: middle; }
-.leftcard { text-align: center; background: color-mix(in srgb, var(--green) 12%, var(--card)); color: var(--green); padding: 1.4rem 1rem; }
-.leftcard.neg { background: color-mix(in srgb, var(--red) 12%, var(--card)); color: var(--red); }
-.leftcard .big { color: inherit; font-size: 2rem; }
 .bsplit { padding: .6rem 0; border-bottom: 1px solid var(--line); }
 .bsplit:last-of-type { border-bottom: 0; }
 .bsplit .row { margin: .2rem 0; }
@@ -384,20 +383,9 @@ img, svg { color-scheme: inherit; }
 .nwblock .splitbar { margin: .6rem 0 .3rem; }
 
 /* ---------- Transactions page ---------- */
-.txgrid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 1rem; align-items: start; }
-/* Narrower screens: the summary becomes a strip above the table, so the table gets the full width. */
-@media (max-width: 1399px) {
-  .txgrid { grid-template-columns: 1fr; }
-  .txgrid .txsummary { order: -1; position: static; }
-  .txsummary .kv { grid-template-columns: repeat(4, max-content minmax(0, 1fr)); column-gap: .75rem; }
-  .txsummary .kv dd { padding-right: 1.25rem; white-space: nowrap; }
-  .txgrid .csvbtn { display: inline-block; padding-left: 1.5rem; padding-right: 1.5rem; }
-}
-.txsummary { position: sticky; top: 1rem; }
 .kv { display: grid; grid-template-columns: 1fr auto; gap: .55rem 1rem; margin: .25rem 0 1rem; font-size: .9rem; }
 .kv dt { color: var(--muted); } .kv dd { margin: 0; text-align: right; font-weight: 600; }
 .csvbtn { display: block; text-align: center; text-decoration: none; }
-.txtable .dayrow td { background: var(--surface-2); color: var(--muted); font-size: .8rem; font-weight: 600; padding: .45rem .75rem; }
 .txtable tr.picked td { background: var(--soft); }
 .mlogo { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; vertical-align: middle; background: var(--paper-white); border: 1px solid var(--line); }
 .recur { margin-left: .35rem; color: var(--muted); font-size: .85rem; cursor: help; }
@@ -480,17 +468,21 @@ img, svg { color-scheme: inherit; }
 .goal .big { font-size: 1.6rem; }
 .goal .bar { height: 8px; margin: .6rem 0 .4rem; }
 .goal.done .bar i { background: var(--green) !important; }
-.donepill { font-size: .72rem; font-weight: 600; padding: .1rem .55rem; border-radius: 99px;
-  background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
 
 /* Settings: rule category as a pill */
 .rulecat { font-size: .72rem; padding: .05rem .5rem; border-radius: 99px; background: var(--soft); color: var(--blue); margin-left: .4rem; }
 
 /* Wide tables fit their panel at 1440px: names and schedules wrap, the category picker stays compact. */
-.billtable td:nth-child(1), .billtable td:nth-child(2) { white-space: normal; }
-.billtable td:nth-child(1) { min-width: 12rem; }
-.billtable td:nth-child(2) { min-width: 10rem; }
-.billtable td:nth-child(3) { white-space: normal; min-width: 5.5rem; }
+/* Bills: fixed columns so the table fits beside the calendar at 1280px. The name column takes what's left and
+   truncates (full name on hover); schedule and next date wrap; the amount column keeps a fixed width. */
+.billtable { table-layout: fixed; }
+.billtable th, .billtable td { padding-left: .5rem; padding-right: .5rem; }
+.billtable .c-sched { width: 8rem; }
+.billtable .c-next { width: 6rem; }
+.billtable .c-amt { width: 8.25rem; }
+.billtable .c-act { width: 4rem; }
+.billtable td:nth-child(1) { white-space: nowrap; }
+.billtable td:nth-child(2), .billtable td:nth-child(3) { white-space: normal; }
 .billtable td:last-child { padding-left: 0; }
 .billtable td:last-child .linkbtn { display: block; margin-left: auto; text-align: right; line-height: 1.6; }
 .txtable td.merch { white-space: normal; max-width: none; min-width: 11rem; }
@@ -502,8 +494,6 @@ img, svg { color-scheme: inherit; }
 /* Transactions: a wrapped merchant name stays beside its logo. */
 .merchcell { display: inline-flex; align-items: center; gap: .5rem; }
 /* Budget: neutral until something is budgeted. */
-.leftcard.none { background: var(--card); color: var(--muted); }
-.leftcard.none .big { color: var(--ink); }
 .merchcell > :first-child { flex-shrink: 0; }
 
 /* Watchlist target: edited in place. */
@@ -534,7 +524,7 @@ img, svg { color-scheme: inherit; }
 .hov:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 3px; }
 .hovtip { position: fixed; z-index: 50; pointer-events: none; background: var(--card); color: var(--ink); border: 1px solid var(--line);
   border-radius: 10px; box-shadow: var(--shadow); padding: .6rem .75rem; font-size: .8rem; font-weight: 400; min-width: 13rem; max-width: 22rem;
-  text-align: left; white-space: normal; line-height: 1.35; animation: hovin .12s ease-out; }
+  text-align: left; white-space: normal; line-height: 1.35; animation: hovin .12s var(--ease); }
 @keyframes hovin { from { opacity: 0; transform: translateY(2px); } }
 .hovtip ul { list-style: none; margin: .25rem 0 0; padding: 0; }
 .hovtip li { display: flex; justify-content: space-between; gap: 1.25rem; padding: .12rem 0; }
@@ -551,31 +541,31 @@ img, svg { color-scheme: inherit; }
 .cards > .card { container-type: inline-size; }
 @container (max-width: 200px) { .cards .spark { display: none; } .cards .ring { width: 48px; height: 48px; } }
 
-/* ---------- Budget page: a card per group, header strips, meters under the numbers ---------- */
-.bcol { display: grid; gap: .6rem; min-width: 0; }
-.bcol { --bcols: minmax(0, 1fr) 7.5rem 6.5rem 7.5rem; }
-.bstrip, .bhead, .brow, .btot { display: grid; grid-template-columns: var(--bcols); align-items: center; column-gap: .75rem; }
-.bstrip { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: .55rem 1rem; font-size: .8rem; color: var(--muted); font-weight: 500; margin-top: .4rem; }
-.bstrip:first-child { margin-top: 0; }
-.bstrip > span:first-child { display: flex; align-items: center; gap: .75rem; }
-.bview { margin-left: auto; }
+/* ---------- Budget page: one ruled sheet, like a planner ledger ----------
+   Column heads once at the top; groups are title rows on a 1px ink rule; a section's total closes it on the
+   page header's double rule (2px ink, then 1px at 30%); "Left to budget" is the closing line. Every row shares
+   the same fixed columns, so amounts line up down the whole sheet. */
+.card.bsheet { --bcols: minmax(0, 1fr) 7.5rem 6.5rem 7.5rem; --bx: 1.3rem; padding: 1.15rem 0 0; min-width: 0; }
+.bsheethead { padding: 0 var(--bx); }
 .bview button { font-size: .75rem; padding: .15rem .55rem; }
-.bcard { padding: 0; overflow: hidden; }
+.bcolhead, .bhead, .brow, .btot, .bleft { display: grid; grid-template-columns: var(--bcols); align-items: center; column-gap: .75rem; padding-inline: var(--bx); }
+.bcolhead { font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-bottom: .45rem; }
+.bsection { font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 2rem var(--bx) .1rem; }
+.bgroup + .bgroup { margin-top: .9rem; }
 .bhead { width: 100%; border: 0; background: none; font: inherit; color: var(--ink); text-align: left; cursor: pointer;
-  padding: .85rem 1rem; font-size: 1.05rem; font-weight: 600; border-bottom: 1px solid var(--line); }
+  padding-block: .7rem .45rem; font-size: 1.05rem; font-weight: 600; border-bottom: 1px solid var(--ink); }
 .bhead:hover { background: var(--surface-2); }
 .btitle { display: flex; align-items: center; gap: .45rem; }
 .bhead .chev { width: 16px; height: 16px; fill: none; stroke: var(--muted); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
 .bhead .chev.open { transform: rotate(90deg); }
 .bhead .good { color: var(--green); } .bhead .bad { color: var(--red); }
-.brow { padding: .55rem 1rem 0; row-gap: .45rem; border-bottom: 1px solid var(--line); }
-.brow:last-child { border-bottom: 0; }
+.brow { padding-block: .55rem 0; row-gap: .45rem; border-bottom: 1px solid var(--line); }
 .bname { display: flex; align-items: center; gap: .6rem; min-width: 0; }
 .bname > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bmeter { grid-column: 2 / -1; margin: 0 -1rem 0 0; }
+.bmeter { grid-column: 2 / -1; }
 .meter { position: relative; height: 4px; background: color-mix(in srgb, var(--muted) 20%, transparent); }
 .meter.blank { background: transparent; }
-.meter i { display: block; height: 100%; background: var(--green); transition: width .45s; }
+.meter i { display: block; height: 100%; background: var(--green); }
 .meter i.over { background: var(--red); } .meter i.ahead { background: var(--amber); }
 .meter b { position: absolute; top: -3px; width: 2px; height: 10px; background: var(--muted); border-radius: 1px; opacity: .7; }
 .bsplit .meter { border-radius: 3px; height: 6px; margin: .4rem 0; } .bsplit .meter i { border-radius: 3px; }
@@ -583,15 +573,23 @@ img, svg { color-scheme: inherit; }
   font-size: .85rem; color: var(--muted); padding: .65rem 1rem; cursor: pointer; text-align: left; }
 .bmore:hover { color: var(--ink); background: var(--surface-2); }
 .bmore svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
-.btot { padding: .95rem 1rem; font-size: 1.05rem; font-weight: 600; }
+.btot { position: relative; padding-block: .8rem .6rem; font-size: 1.05rem; font-weight: 600; margin: 0 var(--bx) 8px; padding-inline: 0;
+  border-top: 1px solid var(--line); border-bottom: 2px solid var(--ink); }
+.btot::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; border-bottom: 1px solid var(--ink); opacity: .3; pointer-events: none; }
 .btot .good { color: var(--green); } .btot .bad { color: var(--red); }
-.bside-card { margin-top: 1rem; padding-top: .75rem; }
+.bleft { padding-block: 1.6rem 1.35rem; margin-top: .4rem; background: var(--surface-2); border-top: 1px solid var(--line); border-radius: 0 0 5px 5px; }
+.bleft > span:first-child { display: flex; flex-direction: column; gap: .15rem; font-size: 1.05rem; }
+.bleft > span:first-child b { font-weight: 600; }
+.bleft .big { grid-column: 2 / -1; justify-self: end; font-size: 2.2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; color: var(--green); }
+.bleft.neg .big { color: var(--red); }
+.bleft.none .big { color: var(--ink); }
+.bside-card { padding-top: .75rem; }
 .btabs { justify-content: center; margin-bottom: .5rem; }
 .bsplit { padding: .8rem 0; border-bottom: 1px solid var(--line); }
 .bsplit:last-of-type { border-bottom: 0; }
 .amt.warn, .warn { color: var(--amber); }
-.bcol .r { text-align: right; justify-self: stretch; }
-.bcol .binput { margin-left: auto; display: block; }
+.bsheet .r { text-align: right; justify-self: stretch; }
+.bsheet .binput { margin-left: auto; display: block; }
 
 /* Payments with people to sort (Transactions page) */
 .peer { display: grid; grid-template-columns: auto minmax(10rem, 1fr) auto; align-items: center; column-gap: .75rem; row-gap: .45rem;
@@ -609,7 +607,7 @@ img, svg { color-scheme: inherit; }
 .tripname { font-size: 1.05rem; }
 .tripnums { display: flex; justify-content: space-between; align-items: flex-end; margin: .25rem 0 .1rem; }
 .tripnums > div { display: flex; flex-direction: column; }
-.tripnums .big { font-size: 1.7rem; }
+.tripnums .big { font-size: 1.6rem; }
 .tripbook { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; margin-top: .25rem; }
 .tripsug { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 1rem; padding: .7rem 0; border-top: 1px solid var(--line); }
 .tripname-in { font: inherit; font-weight: 600; border: 1px solid transparent; background: none; color: var(--ink); padding: .1rem .3rem; margin-left: -.3rem; border-radius: 6px; width: 100%; max-width: 22rem; }
@@ -621,8 +619,8 @@ img, svg { color-scheme: inherit; }
 .subhead { font-size: .85rem; font-weight: 600; margin: .5rem 0 .25rem; }
 .homerow { align-items: flex-end; margin-bottom: .4rem; }
 
-.bfoot { display: flex; border-top: 1px solid var(--line); }
-.bfoot .bmore { border-top: 0; flex: 1; }
+.bfoot { display: flex; padding-inline: calc(var(--bx) - 1rem); }
+.bfoot .bmore { border-top: 0; flex: 1; padding-block: .5rem; }
 .bfoot .bclear { flex: 0 0 auto; width: auto; color: var(--muted); }
 .bfoot .bclear:hover { color: var(--red); }
 .bclearall { display: block; margin: .6rem auto 0; color: var(--muted); }
@@ -633,7 +631,7 @@ img, svg { color-scheme: inherit; }
 .bhead:hover { background: none; }
 .btitle { border: 0; background: none; font: inherit; color: inherit; cursor: pointer; padding: 0; text-align: left; }
 .btitle:hover { color: var(--blue); }
-.bhead.whole { padding-bottom: 0; row-gap: .55rem; }
+.bhead.whole { padding-bottom: .55rem; row-gap: .55rem; }
 .bhead .bmeter { margin-bottom: 0; }
 .bfill { flex: 1; }
 .bfoot .bswitch { flex: 0 0 auto; width: auto; }
@@ -649,7 +647,21 @@ img, svg { color-scheme: inherit; }
 .goalplan > div { display: flex; justify-content: space-between; gap: 1rem; }
 .goalplan .linkbtn { justify-self: start; padding: 0; }
 .goalspark { width: 100%; height: 34px; margin-top: .2rem; }
-.goalfoot { margin-top: .35rem; align-items: center; }
+/* Goal cards share their rows (name, figure, target, meter, status, plan, trend), so figures and meters line up. */
+.goalgrid { row-gap: 1rem; }
+.goal.view { display: grid; grid-row: span 7; grid-template-rows: subgrid; row-gap: .3rem; }
+.goal.view .goalplan { align-self: start; }
+.goalsparkslot { min-height: 34px; }
+.goalhead { display: inline-flex; align-items: center; gap: .4rem; }
+.rowmenu { position: relative; display: inline-flex; }
+.rowmenu-btn { display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem; margin: -.3rem -.4rem -.3rem 0; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.rowmenu-btn:hover, .rowmenu-btn[aria-expanded="true"] { background: var(--surface-2); color: var(--ink); }
+.rowmenu-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.rowmenu-pop { position: absolute; top: 100%; right: 0; z-index: 20; display: grid; gap: .15rem; min-width: 9.5rem; padding: .35rem; background: var(--card); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: 0 8px 22px -10px rgba(27,32,48,.35); }
+.rowmenu-pop button { padding: .4rem .55rem; border: 0; border-radius: 6px; background: none; color: var(--ink); font: inherit; font-size: .85rem; text-align: left; cursor: pointer; }
+.rowmenu-pop button:hover, .rowmenu-pop button:focus-visible { background: var(--surface-2); outline: none; box-shadow: inset 0 0 0 2px var(--blue); }
+.rowmenu-pop label { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .3rem .55rem; }
+.rowmenu-pop .mini { width: 5.5rem; }
 .goalform .lbl { flex: 1 1 9rem; }
 .idea { display: flex; justify-content: space-between; align-items: center; gap: 1rem; width: 100%; text-align: left; font: inherit; color: var(--ink);
   background: none; border: 0; border-top: 1px solid var(--line); padding: .7rem 0; cursor: pointer; }
@@ -711,11 +723,11 @@ p.btrips { display: block; text-align: center; margin-top: .25rem; }
 
 /* ---------- Reports ---------- */
 .rtable th, .rtable td { padding-left: .5rem; padding-right: .5rem; }
-.rtable th.partial, .rtable td.partial { opacity: .55; }
+.rtable th.partial { color: var(--muted-2); }
 .rtable .rcell { background: color-mix(in srgb, var(--blue) calc(var(--share) * 14%), transparent); }
-.rtable .rcell.current { font-style: italic; }
 .rtable .ravg { color: var(--muted); border-left: 1px solid var(--line); }
 .rtable tr.rgroup td { font-weight: 600; }
+.rtable td:first-child, .rtable tr.rgroup td:first-child, .rtable tr.rtotal td:first-child, .rtable td:first-child b { font-weight: 500; }
 .rtable tr.rcat td { font-size: .85rem; color: var(--muted); }
 .rtable tr.rcat td:first-child { padding-left: 3.2rem; }
 .rtable tr.rtotal td { font-weight: 700; border-top: 2px solid var(--line); }
@@ -734,13 +746,14 @@ p.btrips { display: block; text-align: center; margin-top: .25rem; }
 /* Net worth: what moved it */
 .wm { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: .6rem 2rem; align-items: center; }
 .wmtotal { grid-row: span 2; display: flex; flex-direction: column; }
+.wm.three .wmtotal { grid-row: span 3; }
 .wmtotal .big { font-size: 1.8rem; }
-.wmrow { display: grid; grid-template-columns: 9rem minmax(0, 1fr) 7rem; gap: .75rem; align-items: center; }
+.wmrow { display: grid; grid-template-columns: 14rem minmax(0, 1fr) 7rem; gap: .75rem; align-items: center; }
 .wmrow > b { text-align: right; }
 .wmbar { height: 10px; background: color-mix(in srgb, var(--muted) 15%, transparent); border-radius: 5px; overflow: hidden; }
 .wmbar i { display: block; height: 100%; border-radius: 5px; }
-.wmbar i.saved { background: var(--green); } .wmbar i.market { background: var(--blue); } .wmbar i.neg { background: var(--red); }
-@media (max-width: 900px) { .wm { grid-template-columns: 1fr; } .wmtotal { grid-row: auto; } }
+.wmbar i.saved { background: var(--green); } .wmbar i.market { background: var(--blue); } .wmbar i.moved { background: var(--neutral); } .wmbar i.neg { background: var(--red); }
+@media (max-width: 900px) { .wm { grid-template-columns: 1fr; } .wm .wmtotal, .wm.three .wmtotal { grid-row: auto; } }
 
 /* Settings › App */
 .row.mid { align-items: center; }
@@ -792,7 +805,9 @@ a { color: var(--blue); text-underline-offset: 3px; }
 /* The cover: an indigo rail with the seal and the navigation. */
 .side { background: var(--rail); border-right: 0; padding: 1.4rem .85rem; color: var(--rail-ink); scrollbar-color: var(--rail-2) transparent; }
 .logo { display: flex; align-items: center; gap: .7rem; padding: 0 .45rem 1.6rem; }
-.wordmark { color: var(--paper-white); font-weight: 800; font-size: 1.12rem; letter-spacing: .01em; }
+.wordmark { color: var(--paper-white); font-weight: 800; font-size: 1.12rem; letter-spacing: .01em; display: inline-flex; align-items: baseline; gap: .28em; }
+.wm-dot { width: .38em; height: .38em; border-radius: 50%; background: var(--rail-ink); align-self: flex-end; margin: 0 0 .2em .02em; }
+.firstrun .wm-dot { background: currentColor; }
 .side .nav { color: var(--rail-ink); border-radius: 6px; padding: .5rem .65rem; font-size: .95rem; margin-bottom: 1px; }
 .side .nav:hover { background: rgba(255, 255, 255, .06); color: var(--paper-white); }
 .side .nav.on { background: var(--rail-2); color: var(--paper-white); font-weight: 700; }
@@ -811,7 +826,8 @@ a { color: var(--blue); text-underline-offset: 3px; }
 .top { border-bottom: 1.5px solid var(--ink); padding-bottom: .7rem; margin-bottom: 1.25rem; align-items: flex-end; }
 h1 { font-size: 2.15rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
 .sub { font-size: .95rem; margin-top: .3rem; }
-.big, .stsbig { font-weight: 800; letter-spacing: -.02em; }
+/* Secondary figures (summary cards, goal amounts) are 700; each page's lead figure stays 800 (.sfig.big, .bleft .big, .rp-fig). */
+.big, .stsbig { font-weight: 700; letter-spacing: -.02em; }
 
 /* Controls: standard ones, in the world's ink. */
 .btn { border-radius: 6px; border-color: var(--line-strong); font-weight: 500; }
@@ -824,7 +840,7 @@ input:hover, select:hover { border-color: var(--hub); }
 .ranges { background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; padding: 2px; }
 .ranges button { border-radius: 5px; }
 .ranges button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(27, 32, 48, .12); }
-.chipbtn, .pill, .badge, .kind, .ftag, .donepill, .splitchip, .tripchip, .rulecat { border-radius: 99px; }
+.chipbtn, .pill, .badge, .kind, .ftag, .splitchip, .tripchip, .rulecat { border-radius: 99px; }
 :focus-visible, .btn:focus-visible, .iconbtn:focus-visible, .ranges button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible,
 .linkbtn:focus-visible, .calday:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
@@ -832,7 +848,7 @@ input:hover, select:hover { border-color: var(--hub); }
 .t th { font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .t th .small { text-transform: none; letter-spacing: 0; }
 .t td { border-bottom-color: var(--line); }
-.txtable .dayrow td, .grouprow td { background: var(--surface-2); }
+.grouprow td { background: var(--surface-2); }
 
 /* Notices: a small ink dot instead of a text glyph, and no thick colored edges. */
 .chip-link::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--warn-dot); vertical-align: middle; margin: -2px .45rem 0 0; }
@@ -849,7 +865,7 @@ input:hover, select:hover { border-color: var(--hub); }
 .stand { display: flex; flex-direction: column; gap: .3rem; padding: 1.15rem 1.4rem 1.2rem; border-left: 1px solid var(--line); min-width: 0; }
 .stand:first-child { border-left: 0; }
 .slabel { font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-.sfig.big { margin: 0; font-size: 1.95rem; line-height: 1.1; }
+.sfig.big { margin: 0; font-size: 1.95rem; font-weight: 800; line-height: 1.1; }
 .stand.lead .sfig.big { font-size: 3.1rem; letter-spacing: -.03em; }
 .delta .good, .delta .bad { font-weight: 700; }
 @media (max-width: 1099px) { .stand.lead .sfig.big { font-size: 2.6rem; } }
@@ -873,21 +889,52 @@ input:hover, select:hover { border-color: var(--hub); }
 .sink { display: grid; place-items: center; width: 100%; height: 38px; }
 .sink i { display: block; border-radius: 50%; background: var(--ink-dot); animation: ink .6s cubic-bezier(.16, 1, .3, 1) both; animation-delay: calc(var(--i) * 18ms); }
 .sstamps { display: flex; gap: 2px; }
-.stamp { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 4px; border: 1.5px dashed var(--hub); color: var(--hub);
-  font-style: normal; font-size: .62rem; font-weight: 800; line-height: 1; background: var(--card); }
-.stamp.done { border-style: solid; border-color: var(--blue); color: var(--blue); background: var(--soft); }
-.stamp.in { border-color: var(--green); color: var(--green); }
-.stamp.in.done { background: color-mix(in srgb, var(--green) 14%, var(--card)); }
-.legend .stamp { width: 13px; height: 13px; font-size: 0; }
+/* Stamps (Stamp.jsx): an inked impression once it has happened (indigo for bills, green for money in; round for money
+   in, square for bills) with the category's icon knocked out in sheet colour; a dashed pencil box while still due. */
+.stamp { display: inline-block; flex: none; width: 17px; height: 17px; overflow: visible; color: var(--hub); }
+.stamp.in { color: var(--green); }
+.stamp.done { color: var(--blue); }
+.stamp.in.done { color: var(--green); }
+.st-ink :is(rect, circle) { fill: currentColor; }
+.st-due :is(rect, circle) { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 2.6 2; }
+.st-mark { fill: none; stroke: var(--card); stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+:is(.st-ink, .st-due) text { font-weight: 800; font-variant-numeric: tabular-nums; }
+.st-ink text { fill: var(--card); }
+.st-due text { fill: currentColor; }
+.tstamp { position: relative; display: inline-block; flex: none; padding: .12rem .5rem; border-radius: 3px; font-size: .72rem; font-weight: 700;
+  line-height: 1.3; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--blue); }
+.tstamp.in { color: var(--green); }
+.tstamp.tilt { rotate: -2deg; }
+.tripwhen { display: flex; align-items: center; gap: .6rem; margin: .35rem 0 .1rem; }
+.tstamp-ink { position: absolute; inset: 0; border-radius: inherit; background: currentColor; }
+.tstamp-text { position: relative; color: var(--card); }
+.inkdefs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
+.legend .stamp { width: 14px; height: 14px; }
+.stamp.mini { width: 13px; height: 13px; padding: 0; vertical-align: -2px; margin-right: .4rem; }
+.tipstamp { display: inline-flex; align-items: center; }
 .sink i.fut { width: 8px; height: 8px; background: none; border: 1.5px dashed var(--line-strong); animation: none; }
 .sday .stamp { animation: stamp .5s cubic-bezier(.16, 1, .3, 1) both; animation-delay: calc(var(--i) * 18ms + 120ms); }
 .sday:hover { background: color-mix(in srgb, var(--soft) 70%, transparent); }
+/* Clickable days (Bills page): a plain column as a button; the picked day takes the indigo wash with its number in
+   indigo ink and a 2px indigo foot (today keeps its top edge, so both read when they differ). */
+button.sday { width: 100%; background: none; font: inherit; color: inherit; border-top: 0; border-right: 0; border-bottom: 0; border-radius: 0; margin: 0; cursor: pointer; }
+.sday.sel { background: var(--soft); box-shadow: inset 0 -2px 0 var(--blue); }
+.sday.sel.today { box-shadow: inset 0 2px 0 var(--blue), inset 0 -2px 0 var(--blue); }
+.sday.sel .snum { color: var(--blue); font-weight: 800; }
+button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
 .sfoot { display: flex; flex-wrap: wrap; gap: .4rem 1.5rem; margin-top: .7rem; }
 .sfoot b { color: var(--ink); }
-.sscale { margin-left: auto; }
 .skelrow { height: 112px; }
 @keyframes ink { from { transform: scale(.35); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes stamp { from { transform: scale(1.5); opacity: 0; } to { transform: none; opacity: 1; } }
+/* A sorted row (Needs you, the sorting panels on Transactions) holds its place while a stamp is pressed on it, then goes.
+   Opacity and transform only: nothing moves until the row is removed. */
+.stampable { position: relative; }
+.stampable.leaving { pointer-events: none; }
+.stampable.leaving > :not(.rowstamp) { opacity: .45; transition: opacity .2s var(--ease); }
+.stampable .rowstamp { position: absolute; top: 50%; right: 1.5rem; width: 40px; height: 40px; margin-top: -20px; rotate: -6deg;
+  animation: stamp .5s var(--ease) both; }
+@media (prefers-reduced-motion: reduce) { .stampable .rowstamp { display: none; } }
 
 /* One authored moment (the spread inking in); everything else simply appears. */
 .dash > div, .main > section, .main > .card, .flowchart, .chart { animation: none; }
@@ -913,6 +960,9 @@ input:hover, select:hover { border-color: var(--hub); }
 .glink { grid-template-columns: minmax(0, 1fr) auto; color: var(--ink); text-decoration: none; }
 .glink:hover span:first-child { color: var(--blue); }
 .gmore { color: var(--muted); }
+.grow.gbill { grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; }
+.paidline { display: flex; align-items: center; justify-content: flex-end; white-space: nowrap; }
+.paidline .stamp.mini { margin-right: .35rem; vertical-align: 0; }
 .gname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gwhen { white-space: nowrap; }
 .gquiet { display: flex; gap: .45rem; align-items: center; color: var(--muted); margin: .2rem 0 0; }
@@ -932,10 +982,9 @@ input:hover, select:hover { border-color: var(--hub); }
 /* Names stay on one line; the full name is on hover. */
 .trow .tmain > b, .bname1 > b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .trow .rowicon { min-width: 0; }
-.billtable td:nth-child(1) { white-space: nowrap; max-width: 18rem; }
 .bname1 { display: block; min-width: 0; overflow: hidden; }
 .recur svg { vertical-align: -1px; }
-.donepill svg, .setupcheck svg { vertical-align: -1px; }
+.setupcheck svg { vertical-align: -1px; }
 
 /* Board packing (Dashboard.jsx usePacked): small fixed rows; each panel spans what its content needs. Beside the side
    column the board uses two wider columns, so lists have room for whole names. */
@@ -946,8 +995,6 @@ input:hover, select:hover { border-color: var(--hub); }
 }
 .trow .tmain > .small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bname1 > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.billtable td:nth-child(3) { min-width: 7.5rem; }
-.billtable td:nth-child(2) { min-width: 8rem; }
 
 /* One corner language: 6px sheets and controls (round only for tags, dots and the seal). */
 .watch, .estate-ic, .bstrip, .billform, .explain, .tip, .paycheck.compact, .spliteditor, .aedit, .watchnow, .hovtip, .insight,
@@ -976,10 +1023,11 @@ input:hover, select:hover { border-color: var(--hub); }
 .since .amt { font-weight: 700; }
 
 /* The month, replayed (MonthReplay.jsx): planner columns behind one stepped cash line, stamps on their days. */
-.replaypanel .rp-read { display: grid; grid-template-columns: auto 1fr auto; align-items: end; gap: .4rem 1.6rem; padding: .2rem 0 .9rem; border-bottom: 1px solid var(--line); margin-bottom: .6rem; }
-.rp-read > div:first-child { display: grid; gap: .2rem; min-width: 15rem; }
+.replaypanel .rp-read { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: .4rem 1.6rem; padding: .2rem 0 .9rem; border-bottom: 1px solid var(--line); margin-bottom: .6rem; }
+.rp-now { display: grid; gap: .2rem; min-width: 15rem; align-content: start; }
 .rp-fig { font-size: 2rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.rp-day { display: flex; flex-wrap: wrap; gap: .25rem 1rem; align-self: end; padding-bottom: .3rem; min-height: 1.4em; }
+.rp-day { display: flex; flex-wrap: wrap; gap: .25rem 1rem; min-height: 3.2em; align-content: start; } /* two lines reserved, so hovering a day never moves anything */
+.rp-day > span { white-space: nowrap; }
 .rp-sum { display: flex; gap: 1.2rem; justify-self: end; padding-bottom: .3rem; }
 .rp-sum b { color: var(--ink); }
 .replaybtn { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .8rem; }
@@ -991,27 +1039,26 @@ input:hover, select:hover { border-color: var(--hub); }
 .replay .rp-line { fill: none; stroke: var(--blue); stroke-width: 2.5; stroke-linejoin: round; }
 .replay .rp-line.ahead { stroke-width: 2; stroke-dasharray: 5 4; opacity: .6; }
 .replay .rp-head { stroke: var(--ink); stroke-width: 1; opacity: .35; }
-.replay .rp-zero { stroke: var(--red); stroke-width: 1; opacity: .6; }
+.replay .rp-zero { stroke: var(--ink); stroke-width: 1; opacity: .3; }
+.replay .rp-line.neg { stroke: var(--red); }
 .replay .rp-cushion { stroke: var(--line-strong); stroke-dasharray: 3 3; }
 .replay .rp-low circle { fill: var(--card); stroke: var(--ink); stroke-width: 2; }
 .replay .rp-low text { fill: var(--ink); font-weight: 700; }
-.replay text.rp-label { fill: var(--ink); font-size: 11.5px; font-weight: 600; opacity: 0; transition: opacity .3s ease-out; }
+.replay text.rp-label { fill: var(--ink); font-size: 11.5px; font-weight: 600; opacity: 0; transition: opacity .3s var(--ease); }
 .replay text.rp-label.on { opacity: 1; }
 .replay text.rp-label tspan { font-weight: 800; }
 .replay text.rp-label tspan.in { fill: var(--green); }
-.replay .rp-stamp rect { fill: none; stroke: var(--hub); stroke-width: 1.5; stroke-dasharray: 2.5 2; }
-.replay .rp-stamp.done rect { stroke: var(--blue); fill: var(--soft); stroke-dasharray: none; }
-.replay .rp-stamp.in rect { stroke: var(--green); }
-.replay .rp-stamp.in.done rect { fill: color-mix(in srgb, var(--green) 14%, var(--card)); }
-.replay .rp-stamp text { font-size: 9px; font-weight: 800; fill: var(--blue); }
-.replay .rp-stamp.in text { fill: var(--green); }
-.replay .rp-stamp { opacity: 0; transition: opacity .25s ease-out; }
+.replay .rp-stamp { color: var(--hub); }
+.replay .rp-stamp.in { color: var(--green); }
+.replay .rp-stamp.done { color: var(--blue); }
+.replay .rp-stamp.in.done { color: var(--green); }
+.replay .rp-stamp { opacity: 0; transition: opacity .25s var(--ease); }
 .replay .rp-stamp.on { opacity: 1; }
 .replay text.rp-daynum.today { fill: var(--blue); font-weight: 800; }
 
 /* ---------- Richer planner: tokens ---------- */
 :root {
-  --bg: #f2f0e9; --card: #fffefc; --dot: #cdcec3; --surface-2: #f8f6f0;
+  --bg: #f2f0e9; --card: #fffefc; --dot: #d9d9d0; --surface-2: #f8f6f0;
   --hi: #ffe27a;
   --paper-shadow: 0 1px 0 rgba(27,32,48,.03), 0 1px 2px rgba(27,32,48,.06), 0 12px 28px -16px rgba(27,32,48,.28);
   --paper-shadow-up: 0 1px 0 rgba(27,32,48,.03), 0 2px 4px rgba(27,32,48,.07), 0 20px 36px -16px rgba(27,32,48,.34);
@@ -1021,7 +1068,7 @@ input:hover, select:hover { border-color: var(--hub); }
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #11141c; --card: #181c27; --dot: #232937; --surface-2: #1d2230;
+    --bg: #11141c; --card: #181c27; --dot: #191e23; --surface-2: #1d2230;
     --hi: #5a4c12;
     --paper-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 1px 2px rgba(0,0,0,.4), 0 14px 30px -16px rgba(0,0,0,.75);
     --paper-shadow-up: 0 1px 0 rgba(255,255,255,.04) inset, 0 2px 4px rgba(0,0,0,.45), 0 22px 38px -16px rgba(0,0,0,.85);
@@ -1031,7 +1078,7 @@ input:hover, select:hover { border-color: var(--hub); }
   }
 }
 :root[data-theme="dark"] {
-  --bg: #11141c; --card: #181c27; --dot: #232937; --surface-2: #1d2230;
+  --bg: #11141c; --card: #181c27; --dot: #191e23; --surface-2: #1d2230;
   --hi: #5a4c12;
   --paper-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 1px 2px rgba(0,0,0,.4), 0 14px 30px -16px rgba(0,0,0,.75);
   --paper-shadow-up: 0 1px 0 rgba(255,255,255,.04) inset, 0 2px 4px rgba(0,0,0,.45), 0 22px 38px -16px rgba(0,0,0,.85);
@@ -1052,18 +1099,19 @@ input:hover, select:hover { border-color: var(--hub); }
   background: linear-gradient(180deg, color-mix(in srgb, var(--rail-2) 86%, white), var(--rail-2));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 1px 3px rgba(0, 0, 0, .3);
 }
-.seal { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35)); rotate: -7deg; transition: rotate .5s var(--ease), scale .5s var(--ease); }
-.logo:hover .seal { rotate: 0deg; scale: 1.06; }
+.seal { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35)); rotate: -7deg; }
 
 /* ---------- Richer planner: paper and sheets ---------- */
 .main { background: var(--grain), radial-gradient(var(--dot) 1px, transparent 1.3px) 0 0 / 22px 22px, var(--bg); }
 .card, .standing, .insight, .bstrip, .explain { box-shadow: var(--paper-shadow); }
 .card .card, .card .explain { box-shadow: none; }
+/* Inner cards are not whole sheets: no resting shadow, no lift; hover only darkens the border. */
 .goalgrid > .card, .tripgrid > .card, .watch {
-  transition: transform .3s var(--ease), box-shadow .3s var(--ease), background-color .15s, border-color .15s, color .15s;
+  box-shadow: none;
+  transition: background-color .15s, border-color .15s, color .15s;
 }
 .watch { background: var(--card); }
-.goalgrid > .card:hover, .tripgrid > .card:hover, .watch:hover { transform: translateY(-2px); box-shadow: var(--paper-shadow-up); }
+.goalgrid > .card:hover, .tripgrid > .card:hover, .watch:hover { border-color: var(--line-strong); }
 .hovtip, .tip { box-shadow: var(--shadow); }
 .btn, .iconbtn { box-shadow: 0 1px 1px rgba(27, 32, 48, .05); }
 .btn.primary {
@@ -1097,7 +1145,6 @@ h1 {
 .firstrun h1, .pageerror h1 { display: block; background: none; animation: none; padding: 0; margin-left: 0; }
 
 /* ---------- Richer planner: the standing strip ---------- */
-@keyframes trace-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
 .standing { overflow: hidden; }
 .stand { padding: 1.35rem 1.5rem 1.4rem; }
 .stand .sfig.big { font-size: 2.2rem; }
@@ -1108,19 +1155,11 @@ h1 {
   background: var(--cloth), linear-gradient(135deg, var(--rail-2) 0%, var(--rail) 62%, color-mix(in srgb, var(--rail) 86%, black) 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
 }
-.stand.lead > :not(.herotrace) { position: relative; z-index: 1; }
+.stand.lead > * { position: relative; z-index: 1; }
 .stand.lead .slabel { color: var(--rail-ink); }
 .stand.lead .sfig.big { color: var(--paper-white); font-size: 3.7rem; letter-spacing: -.035em; text-shadow: 0 2px 0 rgba(0, 0, 0, .18); }
 .stand.lead :focus-visible { outline-color: var(--paper-white); }
-.herotrace {
-  position: absolute; right: 0; bottom: 0; width: 58%; height: 78%; z-index: 0; pointer-events: none; overflow: visible;
-  animation: trace-in 1.4s var(--ease) both;
-}
-.herotrace path { stroke: rgba(255, 255, 255, .5); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-.herotrace.est path { stroke-dasharray: 5 5; }
 @media (max-width: 1099px) { .stand.lead .sfig.big { font-size: 2.9rem; } }
-.leftcard { box-shadow: var(--paper-shadow); }
-.leftcard .big { font-size: 2.6rem; }
 
 /* ---------- Richer planner: Month spread ink and stamps ---------- */
 .sink i:not(.fut) {
@@ -1130,11 +1169,8 @@ h1 {
 .sdays > :nth-child(3n) { --tilt: 4deg; }
 .sdays > :nth-child(4n + 1) { --tilt: -2deg; }
 .sday .stamp { rotate: var(--tilt, -5deg); }
-.sday .stamp.out.done { box-shadow: 0 1px 0 color-mix(in srgb, var(--blue) 25%, transparent); }
-.sday .stamp.in.done { box-shadow: 0 1px 0 color-mix(in srgb, var(--green) 25%, transparent); }
-.sink i:not(.fut), .sday .stamp { transition: scale .3s var(--ease), rotate .3s var(--ease); }
-.sday:hover .sink i:not(.fut) { scale: 1.12; }
-.sday:hover .stamp { rotate: 0deg; scale: 1.12; }
+/* A box still waiting for its stamp is drawn square to the page; only the pressed stamps rest askew. */
+.sday .stamp:not(.done) { rotate: none; }
 
 /* ---------- Richer planner: Category colour and meters ---------- */
 .caticon { box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 16%, transparent); }
@@ -1152,9 +1188,9 @@ h1 {
 .dlead .dcell:nth-child(3) > *, .dmain .dcell:nth-child(2) > * { animation-delay: 120ms; }
 .dmain .dcell:nth-child(3) > *, .drail .dcell:nth-child(1) > * { animation-delay: 170ms; }
 .dlead .dcell:nth-child(n + 4) > *, .dmain .dcell:nth-child(n + 4) > *, .drail .dcell:nth-child(n + 2) > * { animation-delay: 220ms; }
-.goalgrid > :nth-child(2), .tripgrid > :nth-child(2), .cards > :nth-child(2), .bcol > :nth-child(2) { animation-delay: 60ms; }
-.goalgrid > :nth-child(3), .tripgrid > :nth-child(3), .cards > :nth-child(3), .bcol > :nth-child(3) { animation-delay: 120ms; }
-.goalgrid > :nth-child(n + 4), .tripgrid > :nth-child(n + 4), .cards > :nth-child(n + 4), .bcol > :nth-child(n + 4) { animation-delay: 170ms; }
+.goalgrid > :nth-child(2), .tripgrid > :nth-child(2), .cards > :nth-child(2), .budgetgrid > :nth-child(2) { animation-delay: 60ms; }
+.goalgrid > :nth-child(3), .tripgrid > :nth-child(3), .cards > :nth-child(3) { animation-delay: 120ms; }
+.goalgrid > :nth-child(n + 4), .tripgrid > :nth-child(n + 4), .cards > :nth-child(n + 4) { animation-delay: 170ms; }
 /* Bars fill once from the left */
 .bar i, .meter i, .bbar i, .wmbar i, .setupbar i, .sharebar i { transform-origin: left center; animation: fill .9s var(--ease) both; }
 /* Small transitions */
@@ -1182,21 +1218,11 @@ h1 {
 .chart .band { fill: var(--blue); opacity: .09; stroke: none; }
 
 /* ---------- Richer planner: finish ---------- */
-/* The hero trace stays faint where it passes behind the net worth figure, so the digits read cleanly. */
-.herotrace {
-  -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, .22) 0, rgba(0, 0, 0, .22) 22%, #000 48%);
-  mask-image: linear-gradient(90deg, rgba(0, 0, 0, .22) 0, rgba(0, 0, 0, .22) 22%, #000 48%);
-}
 /* Transactions: a long group name ("Savings & investments ›") drops above its category menu instead of pushing the
    amount column out of the card (the "›" forbids a line break, so the prefix is its own box). */
 .txtable td:has(> .catsel) { white-space: normal; min-width: 17rem; }
 .txtable td > .grp { display: inline-block; white-space: nowrap; }
 .txtable .catsel { max-width: 8.5rem; }
-
-/* Hero trace: keep it in the cell's top-right corner, clear of the figure and the "vs 30 days ago" line */
-.herotrace {
-  right: 1.5rem; bottom: 3.4rem; top: 1.4rem; width: 30%; height: auto;
-}
 
 /* ---------- Feature check: Needs you stops holding an empty third ---------- */
 .glance.caught { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1268,11 +1294,10 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 
 /* ---------- Feature check: Ink and pencil ---------- */
 .est-fig { color: var(--muted); text-decoration: underline dashed; text-decoration-thickness: 1px; text-underline-offset: .22em; cursor: help; }
-.rtable td.partial { opacity: 1; }
 
 /* ---------- Feature check: Planner tabs in the rail ---------- */
 .side .navgroup { font-size: .66rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
-  color: color-mix(in srgb, var(--rail-ink) 62%, transparent); padding: .9rem .65rem .3rem; }
+  color: var(--rail-ink-2); padding: .9rem .65rem .3rem; }
 .side .navrule { height: 0; border-top: 1px dashed rgba(255, 255, 255, .17); margin: .6rem .4rem; }
 .side { display: flex; flex-direction: column; } /* overrides the icons-only block layout too, so Settings stays at the foot */
 .side > * { flex-shrink: 0; }
@@ -1286,16 +1311,8 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 .spread.compact .sday { grid-template-rows: 12px 30px 14px; gap: 1px; padding: .25rem 0 .2rem; }
 .spread.compact .snum { font-size: .68rem; line-height: 12px; }
 .spread.compact .sink { height: 30px; }
-.spread.compact .stamp { width: 14px; height: 14px; border-width: 1.25px; font-size: .55rem; }
+.spread.compact .stamp { width: 14px; height: 14px; }
 .spread.compact .sdays.skelrow { height: 70px; }
-
-/* ---------- Feature check: Net worth trace clears the figure ---------- */
-/* The trace takes the right 45% of the cell; its left part is transparent so it never sits under the figure. */
-.herotrace {
-  left: auto; top: auto; right: 1.5rem; bottom: 3.4rem; width: 45%; height: 60%;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, transparent 50%, #000 80%);
-  mask-image: linear-gradient(90deg, transparent 0, transparent 50%, #000 80%);
-}
 
 /* ---------- Drawings: empty states and the first-run welcome ---------- */
 /* Each drawing is ink on its own paper, so it sits on the page as a small sheet (never inverted for dark mode). */
@@ -1315,3 +1332,229 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 /* ---------- Final pass ---------- */
 /* No pure white anywhere: text and fills on indigo use the paper's own white. */
 :root { --paper-white: #fffdf7; }
+
+/* ---------- Feature check: Watchlist and Goals as ruled rows ---------- */
+/* On the dashboard each watched item or goal is a ruled row across the panel: name, then figures in fixed columns,
+   the meter under it, a 1px rule between rows. No inner border or background. (The Plan page's goal cards stay cards.) */
+.rl-watch { --cols: minmax(0, 1fr) 4.6rem 4.2rem 4rem 4rem 4.4rem 1.4rem; }
+.rl-goals { --cols: minmax(0, 1fr) 5.6rem 5.6rem 10rem; }
+.rl-head, .rl-row { display: grid; grid-template-columns: var(--cols); column-gap: .5rem; align-items: center; }
+.rl-head { align-items: end; padding-bottom: .4rem; border-bottom: 1px solid var(--line-strong); }
+.rl-head > span { font-size: .7rem; font-weight: 800; letter-spacing: .08em; line-height: 1.25; text-transform: uppercase; color: var(--muted); text-align: right; }
+.rl-head > span:first-child { text-align: left; }
+.rl-item { padding: .6rem 0 .65rem; }
+.rl-item + .rl-item { border-top: 1px solid var(--line); }
+.rl-item:last-child { padding-bottom: 0; }
+.rl-num { text-align: right; white-space: nowrap; }
+.rl-num .mini { width: 100%; text-align: right; }
+.rl-num .linkbtn { padding: 0; }
+.rl-num .linkbtn.plain { font-size: inherit; }
+.rl-end { justify-self: end; display: flex; }
+.rl-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rl-namecell { min-width: 0; display: flex; flex-direction: column; }
+.rl-sub { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rl .rowicon > :first-child { flex: none; }
+.rl-meter { display: flex; align-items: center; gap: .75rem; margin-top: .45rem; }
+.rl-meter > .bar { flex: 1; min-width: 0; margin: 0; position: relative; }
+.rl-meter > .small { flex: none; white-space: nowrap; }
+.rl-meter .tick { position: absolute; top: -3px; width: 2px; height: 12px; background: var(--ink); opacity: .45; border-radius: 1px; transform: translateX(-1px); }
+.rl-item.done .bar i { background: var(--green) !important; }
+
+/* ---------- Ruled sheets: one sheet divided by hairlines instead of neighbouring cards ----------
+   Only a top-level sheet rests on the page with the paper shadow; anything that is a sheet elsewhere becomes a flat
+   section when it sits inside one. The dot grid shows only where the page is empty: margins and below short pages. */
+:is(.card, .standing, .insight, .bstrip, .explain, .ledger, .cards.ruled) :is(.card, .standing, .insight, .bstrip, .explain, .cards.ruled) {
+  box-shadow: none; animation: none;
+}
+
+/* A strip of figures (Plan's totals, Reports' subscriptions and year): one sheet, sections side by side. */
+.cards.ruled {
+  gap: 0; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  background: var(--card); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--paper-shadow);
+  animation: settle .55s var(--ease) backwards;
+}
+.cards.ruled > .card { border: 0; border-radius: 0; background: transparent; box-shadow: none; animation: none; }
+.cards.ruled > .card + .card { border-left: 1px solid var(--line); }
+@media (max-width: 1100px) {
+  .cards.ruled { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cards.ruled > .card:nth-child(odd) { border-left: 0; }
+  .cards.ruled > .card:nth-child(n + 3) { border-top: 1px solid var(--line); }
+}
+
+/* A ledger: sheets that belong together stacked into one, ruled across between sections. */
+.ledger {
+  background: var(--card); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--paper-shadow);
+  overflow: clip; /* clip, not hidden: a sticky table head inside still sticks to the window */ animation: settle .55s var(--ease) backwards;
+}
+/* :where keeps this rule weak, so the section rule below still draws between two flattened sheets. */
+.ledger > :where(.card, .standing, .insight, .cards, .grid2), .ledger > .dcell > * { border: 0; border-radius: 0; margin: 0; background-color: transparent; }
+.ledger > .cards.ruled { border: 0; border-radius: 0; margin: 0; box-shadow: none; animation: none; background: transparent; }
+.ledger > * + *, .ledger > * + .cards.ruled { border-top: 1px solid var(--line); }
+.ledger .panel > .arow:last-of-type { border-bottom: 0; } /* the section rule closes the list */
+.ledger > .grid2 { gap: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); } /* halves, so its rule lines up with a strip of 2 or 4 above */
+.ledger > .grid2 > * { border: 0; border-radius: 0; }
+.ledger > .grid2 > * + * { border-left: 1px solid var(--line); }
+@media (max-width: 1100px) { .ledger > .grid2 { grid-template-columns: minmax(0, 1fr); } .ledger > .grid2 > * + * { border-left: 0; border-top: 1px solid var(--line); } }
+.dlead.ledger { gap: 0; }
+.dlead.ledger > .dcell:empty { display: none; }
+.dlead.ledger .insight { padding: .8rem 1.3rem; }
+.dlead.ledger > .dcell > *, .dlead.ledger > .dcell > * > * { animation: none; }
+
+/* Plan's forecast: settings, your average and the projection as sections of one sheet. */
+.forecast .form { margin: 1rem 0; }
+.forecast .explain { margin: 0 -1.3rem; padding: .8rem 1.3rem; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: var(--surface-2); }
+.forecast .fsec { margin: 0 -1.3rem; padding: 1.15rem 1.3rem 0; border-top: 1px solid var(--line); }
+
+/* Transactions: the totals for the current filters are the first band of the table's sheet. */
+.txstrip > .card { padding: .85rem 1.3rem .9rem; }
+.txfig { font-size: 1.3rem; font-weight: 800; line-height: 1.2; margin-top: .3rem; }
+.txcsv { display: flex; align-items: center; justify-content: flex-end; }
+.txcsv .btn { text-decoration: none; }
+
+/* Budget's side column: summary, options and suggestions as sections of one sheet. */
+.bside.ledger { align-self: start; }
+.bopts { padding: .1rem 1.3rem .75rem; }
+
+/* ---------- Year at a glance (Reports › Year in review) ----------
+   Twelve small month spreads: Sunday-first weeks, one ink dot per day on the month spread's ramp (shrunk to fit), the
+   weekend tint, no stamps. Each month is a button into Month by month; partial months are pencil, days ahead empty. */
+.yg-months { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1rem 1.1rem; }
+.yg-month { display: flex; flex-direction: column; gap: .35rem; min-width: 0; padding: .45rem .5rem .55rem; margin: 0;
+  border: 1px solid transparent; border-radius: 6px; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.yg-month:hover:not(:disabled) { background: var(--surface-2); border-color: var(--line); }
+.yg-month:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.yg-month:disabled { cursor: default; }
+.yg-head { display: flex; align-items: baseline; justify-content: space-between; gap: .4rem; padding-bottom: .3rem; border-bottom: 1px solid var(--ink); }
+.yg-head b { font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.yg-head .small { color: var(--muted); white-space: nowrap; }
+.yg-month.future .yg-head b { color: var(--muted); }
+.yg-month.future .yg-head { border-bottom-color: var(--line-strong); }
+.yg-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.yg-wd { font-size: .6rem; font-weight: 700; color: var(--muted); text-align: center; padding-bottom: .15rem; }
+.yg-day { display: grid; place-items: center; aspect-ratio: 1; }
+.yg-day.weekend { background: var(--surface-2); }
+.yg-day.today { background: var(--soft); box-shadow: inset 0 0 0 1px var(--blue); border-radius: 3px; }
+.yg-day i { display: block; border-radius: 50%; background: var(--ink-dot); box-shadow: inset 1px 1px 0 rgba(255, 255, 255, .18);
+  animation: ink .6s var(--ease) both; }
+.yg-day i.none { width: 3px; height: 3px; background: var(--line-strong); box-shadow: none; animation: none; }
+.yg-legend span { display: inline-flex; align-items: center; gap: .35rem; }
+.yg-month.partial .yg-day i:not(.none) { background: color-mix(in srgb, var(--ink-dot) 45%, transparent); box-shadow: none; }
+@media (max-width: 1250px) { .yg-months { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* The month picked there is marked in Month by month. */
+.rtable td.rfocus { box-shadow: inset 1px 0 0 var(--blue), inset -1px 0 0 var(--blue); } /* keeps the cell's own shading */
+.rtable th.rfocus { color: var(--blue); background-color: var(--soft); box-shadow: inset 0 2px 0 var(--blue), inset 1px 0 0 var(--blue), inset -1px 0 0 var(--blue); }
+
+/* ---------- Index tabs: the rail's sections as cloth tabs on the page's right edge ----------
+   They only show where you are (navigation stays in the rail): the current section's tab is raised, lighter cloth
+   standing further out from the edge; the rest sit tucked in. Wide windows only, inside the page's right margin. */
+.idxtabs { position: fixed; right: 0; top: 7.5rem; z-index: 3; display: none; flex-direction: column; align-items: flex-end; gap: 5px; }
+@media (min-width: 1100px) { .idxtabs { display: flex; } }
+.idxtab { writing-mode: vertical-rl; display: block; padding: .8rem 0; width: 22px; text-align: center;
+  font-size: .6rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--rail-ink-2); white-space: nowrap;
+  background: var(--cloth), linear-gradient(90deg, var(--rail), color-mix(in srgb, var(--rail) 82%, black));
+  border-radius: 5px 0 0 5px; box-shadow: -2px 1px 4px rgba(12, 17, 34, .22), inset 1px 0 0 rgba(255, 255, 255, .1), inset 0 1px 0 rgba(255, 255, 255, .08); }
+.idxtab.on { color: var(--paper-white); width: 30px;
+  background: var(--cloth), linear-gradient(90deg, color-mix(in srgb, var(--rail-2) 86%, white), var(--rail-2));
+  box-shadow: -3px 2px 8px rgba(12, 17, 34, .35), inset 1px 0 0 rgba(255, 255, 255, .14); }
+
+/* ---------- Ribbon bookmark: today's column in the month spread ----------
+   A thin indigo ribbon hangs from the spread's top rule on today's column (in place of a "this month" pill), with a
+   notched tail. It unrolls once on arrival. */
+.spread:not(.compact) .sday.today { position: relative; box-shadow: none; }
+.spread:not(.compact) .sday.today.sel { box-shadow: inset 0 -2px 0 var(--blue); }
+.ribbon { position: absolute; top: -5px; right: 1px; width: 5px; height: 30px; background: var(--blue);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 4px), 0 100%);
+  transform-origin: top; animation: ribbon .7s var(--ease) .35s both; pointer-events: none; }
+.ribbon::before { content: ''; position: absolute; inset: 0 0 auto; height: 5px; background: rgba(0, 0, 0, .28); } /* the fold over the rule */
+@keyframes ribbon { from { transform: scaleY(0); } to { transform: none; } }
+
+/* ---------- Margin notes ----------
+   Explanations under figures ("Dots use one size scale…", "45% of November has passed…") are set like printed
+   footnotes: a narrow column at the sheet's right margin, small, in pencil, under a short rule. */
+.mnote, p.small.foot { display: block; margin-left: auto; max-width: 40ch; color: var(--pencil); font-size: .76rem; line-height: 1.45; text-wrap: pretty; }
+p.small.foot { margin-top: .9rem; }
+.mnote::before, p.small.foot::before { content: ''; display: block; width: 2.5rem; margin-bottom: .35rem; border-top: 1px solid var(--pencil); opacity: .45; }
+.sfoot { align-items: flex-start; }
+.sfoot .mnote { flex: 0 1 40ch; }
+
+/* ---------- Date blocks: Transactions as a daily log ----------
+   Each day's rows open with the day number large in a left margin column, the weekday under it and the day's net
+   below; the block stays in view while its day scrolls. A month heading runs across when the month changes. */
+.txtable th.datecol { width: 4.2rem; padding: 0; }
+.txtable td.datecell { vertical-align: top; width: 4.2rem; padding: .55rem .4rem .6rem .9rem; border-right: 1px solid var(--line); cursor: default; }
+.txtable tr:hover td.datecell { background: none; }
+.dateblock { position: sticky; top: 2.6rem; display: flex; flex-direction: column; align-items: flex-start; }
+.dbnum { font-size: 1.75rem; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--ink); }
+.dbday { font-size: .66rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-top: .25rem; }
+.dbnet { font-size: .72rem; color: var(--muted); margin-top: .35rem; white-space: nowrap; }
+.dbnet.good { color: var(--green); }
+.txtable tr.monthrow td { padding: .9rem .9rem .35rem; font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink); border-bottom: 1px solid var(--ink); }
+.txtable tr.monthrow:first-child td { padding-top: .6rem; }
+
+/* ---------- Round 2: Index tabs ----------
+   The tabs are links to each section's last page; one is raised for the section you are in (none on Settings). Hover
+   slides a tab out 3px and opens a card listing the section's pages. */
+.idxwrap { position: relative; display: flex; justify-content: flex-end; }
+.idxtab { text-decoration: none; cursor: pointer; transition: transform .2s var(--ease); }
+.idxtab:hover, .idxwrap:hover .idxtab { transform: translateX(-3px); color: var(--paper-white); }
+.idxcard { position: absolute; right: 100%; top: 0; margin-right: 8px; min-width: 9rem; display: none; flex-direction: column; gap: .1rem;
+  padding: .55rem .4rem .45rem; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(12, 17, 34, .18); }
+.idxcard::after { content: ''; position: absolute; left: 100%; top: 0; bottom: 0; width: 10px; } /* keeps hover across the gap */
+.idxwrap:hover .idxcard { display: flex; }
+.idxcard b { font-size: .6rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 0 .5rem .25rem; }
+.idxcard a { padding: .3rem .5rem; border-radius: 4px; font-size: .84rem; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.idxcard a:hover { background: var(--soft); }
+.idxcard a.cur { font-weight: 700; box-shadow: inset 2px 0 0 var(--blue); }
+@media (prefers-reduced-motion: reduce) { .idxtab { transition: none; } }
+
+/* ---------- Round 2: Active rail tab ---------- */
+/* The active item is a divider tab: its fold runs across the stitched edge and meets the page. The rail lets it overhang
+   (no scroll clipping) except in short windows, where the rail scrolls and the tab is cut at the edge. */
+.side { overflow: visible; }
+@media (max-height: 760px) { .side { overflow-y: auto; } }
+.side .nav.on {
+  position: relative; z-index: 1; border-radius: 6px 0 0 6px; /* square on the right: the tab continues it */
+  background: var(--cloth), linear-gradient(90deg, color-mix(in srgb, var(--rail-2) 86%, white), var(--rail-2));
+}
+.side .nav.on::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 100%; width: calc(.85rem + 5px);
+  background: var(--cloth), var(--rail-2); border-radius: 0 6px 6px 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .3); /* same drop as the item; the stitch is covered where the tab passes */
+}
+@media (max-width: 1099px) { .side .nav.on::after { width: calc(.5rem + 5px); } }
+
+/* ---------- Round 2: Saved beyond plan ---------- */
+.btot .btotnote { grid-column: 1 / -1; font-weight: 400; font-size: .85rem; margin-top: .2rem; }
+.spread .spreadfail { margin: .75rem 0; }
+
+/* ---------- Round 2: Sync status ---------- */
+/* One quiet line above Settings at the rail's foot: when the data was last checked, and the button that checks now. It
+   takes the foot's auto margin, so the stitch and Settings stay at the bottom. The icon spins only while a sync runs. */
+.side .syncfoot {
+  margin-top: auto; display: flex; align-items: center; gap: .6rem; width: 100%; padding: .4rem .65rem; border: 0; border-radius: 6px;
+  background: none; color: var(--rail-ink-2); font: inherit; font-size: .8rem; text-align: left; cursor: pointer;
+}
+.side .syncfoot:hover:not(:disabled) { background: rgba(255, 255, 255, .06); color: var(--paper-white); }
+.side .syncfoot:focus-visible { outline: 2px solid var(--paper-white); outline-offset: 1px; }
+.side .syncfoot:disabled { cursor: default; }
+.side .syncfoot svg { flex: none; opacity: .85; }
+.side .syncfoot.spin svg { animation: spin 1s linear infinite; }
+.side .navrule.foot { margin-top: .4rem; }
+@media (max-width: 1099px) {
+  .side .syncfoot { justify-content: center; padding: .5rem 0; }
+  .side .syncfoot .synclabel { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .side .syncfoot.spin svg { animation-duration: 3s; } }
+
+/* ---------- Round 2: Stitched dividers ---------- */
+/* Every named group starts with the stitch used above Plan and Settings (.navrule: same dash, colour and opacity), with
+   its heading under it. The wide rail's heading takes the stitch as a border, inset so the text lines up with the items.
+   The collapsed rail already draws the heading as that stitch. */
+.side .navgroup {
+  margin: .6rem .4rem 0; padding: .35rem .25rem .3rem; border-top: 1px dashed rgba(255, 255, 255, .17);
+}
+@media (max-width: 1099px) {
+  .side .navgroup { margin: .6rem .4rem; padding: 0; border-top: 1px dashed rgba(255, 255, 255, .17); }
+}

@@ -121,7 +121,8 @@ export function EmptyState({ icon = 'chart', art, title, children, actions }) {
 // Hover (or keyboard focus) detail for a number or label: "4 accounts" -> which accounts and how much in each.
 // The card is portalled to <body> with fixed positioning, so scrolling tables don't clip it, and it flips
 // above or to the left near the window's edges. A dotted underline marks anything with more on hover.
-export function Hover({ tip, children, className = '' }) {
+// `tabbable={false}` when the child is itself focusable (a button): its focus still opens the tip, with one tab stop.
+export function Hover({ tip, children, className = '', tabbable = true }) {
   const [pos, setPos] = useState(null);
   const ref = useRef(null);
   if (!tip) return children;
@@ -136,7 +137,7 @@ export function Hover({ tip, children, className = '' }) {
     ...(pos.flipY ? { bottom: window.innerHeight - pos.top + 6 } : { top: pos.bottom + 6 }),
   };
   return (
-    <span ref={ref} className={`hov ${className}`.trim()} tabIndex={0} onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
+    <span ref={ref} className={`hov ${className}`.trim()} tabIndex={tabbable ? 0 : undefined} onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
       {children}
       {pos && createPortal(<div className="hovtip" role="tooltip" style={style}>{tip}</div>, document.body)}
     </span>

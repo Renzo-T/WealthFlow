@@ -6,7 +6,7 @@ A local, single-user finance dashboard on Plaid's free Trial plan: net worth, sp
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dashboard-dark.png">
-  <img alt="The Mizo Money dashboard: net worth, this month's income and spending, upcoming bills, asset allocation and cash flow" src="docs/screenshots/dashboard.png">
+  <img alt="The Mizo Money dashboard: net worth, free to spend and this month's spending, the month at a glance, what's coming up and the budget" src="docs/screenshots/dashboard.png">
 </picture>
 
 <sub>Screenshots use an invented household (`npm run demo`), not real data.</sub>
@@ -25,8 +25,9 @@ A local, single-user finance dashboard on Plaid's free Trial plan: net worth, sp
 - **Trips:** suggested from purchases made in person away from home (another state, more than N miles, or abroad;
   several home bases supported), with bookings made beforehand and settle-ups with friends. Trips stay in your
   budget categories (optional) but are left out of month-to-month comparisons.
-- **Money flow, Net worth, Investments, Forecast, Goals:** where money went, every account's balance and trend,
-  holdings and allocation, a long-term projection, and savings goals with target dates.
+- **Money flow, Net worth, Investments, Plan:** where money went, every account's balance and trend (your banks and
+  their connections are on Net worth too), holdings and allocation, and savings goals with target dates followed by a
+  long-term forecast.
 
 | | |
 |---|---|
@@ -36,8 +37,8 @@ A local, single-user finance dashboard on Plaid's free Trial plan: net worth, sp
 | **Transactions** | **Net worth** |
 | ![Reports: spending month by month](docs/screenshots/reports.png) | ![Trips: a trip's spending by category](docs/screenshots/trips.png) |
 | **Reports** | **Trips** |
-| ![Accounts: each bank's connection and its accounts](docs/screenshots/accounts.png) | ![Investments: holdings with price change, gain and cost basis](docs/screenshots/investments.png) |
-| **Accounts** | **Investments** |
+| ![Net worth, further down: each account's balance and trend, and your banks' connections](docs/screenshots/accounts.png) | ![Investments: holdings with price change, gain and cost basis](docs/screenshots/investments.png) |
+| **Net worth: accounts and banks** | **Investments** |
 
 Your data only changes when you change it. Mizo Money only asks you to sort recent transactions (from 3 months before
 your first bank connection), since older history tends to have gaps.

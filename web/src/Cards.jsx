@@ -32,7 +32,7 @@ function Counter({ value, from }) {
   const raf = useRef(0);
   useEffect(() => {
     if (shown === value) return undefined;
-    const start = performance.now(), a = shown, d = 1100;
+    const start = performance.now(), a = shown, d = 700;
     const step = (t) => {
       const p = Math.min(1, (t - start) / d), e = p === 1 ? 1 : 1 - 2 ** (-10 * p);
       setShown(a + (value - a) * e);
@@ -63,24 +63,6 @@ function Delta({ v, upIsGood = true, unit = '%', vs = 'vs. last month', hint = '
   );
 }
 
-// The last 30 days of net worth as one faint line behind the lead figure. The scale spans at least 4% of net worth (as in
-// the net worth chart) so a small wobble stays small; dashed when any day in the window is estimated.
-function Trace({ history }) {
-  const pts = (history ?? []).slice(-31);
-  if (pts.length < 8) return null;
-  const vals = pts.map((d) => d.value);
-  let lo = Math.min(...vals), hi = Math.max(...vals);
-  const minSpan = Math.max(Math.abs(hi), Math.abs(lo)) * 0.04 || 2;
-  if (hi - lo < minSpan) { const mid = (hi + lo) / 2; lo = mid - minSpan / 2; hi = mid + minSpan / 2; }
-  const pad = (hi - lo) * 0.1; lo -= pad; hi += pad;
-  const d = pts.map((p, i) => `${i ? 'L' : 'M'}${((i * 300) / (pts.length - 1)).toFixed(1)},${(100 - ((p.value - lo) * 100) / (hi - lo)).toFixed(1)}`).join(' ');
-  return (
-    <svg className={`herotrace${pts.some((p) => p.est) ? ' est' : ''}`} viewBox="0 0 300 100" preserveAspectRatio="none" aria-hidden="true">
-      <path d={d} fill="none" />
-    </svg>
-  );
-}
-
 const monthName = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'long' });
 
 // This month so far vs the same days of last month, and all of last month.
@@ -101,7 +83,6 @@ export default function Cards({ s, safe, budgets }) {
   return (
     <section className="standing" aria-label="Where you stand">
       <div className="stand lead">
-        <Trace history={s.history} />
         <span className="slabel">Net worth</span>
         <span className="sfig big">{s.netWorth.ago == null ? <Counter value={s.netWorth.value} from={was('nw')} />
           : <Hover className="quiet" tip={<TipList title="Net worth" rows={[['30 days ago', usd(s.netWorth.ago)], ['Today', usd(s.netWorth.value)],

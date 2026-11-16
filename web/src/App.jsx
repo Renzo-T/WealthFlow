@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState, useCallback } from 'react';
 import Dashboard, { SetupChecklist } from './Dashboard.jsx';
+import { InkDefs } from './Stamp.jsx';
 import Transactions from './Transactions.jsx';
 import Budget from './Budget.jsx';
 import Goals from './Goals.jsx';
@@ -16,6 +17,8 @@ import Jump from './Jump.jsx';
 import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
 import { FirstRun } from './PlaidSetup.jsx';
 import { api } from './api.js';
+import { sectionOf, tabTarget } from './sections.js';
+import { syncLine } from './syncStatus.js';
 import { PageHeader, DashboardSkeleton, PageBoundary, Seal } from './ui.jsx';
 
 const HIDE_KEY = 'wealthflow.hideAmounts', THEME_KEY = 'wealthflow.theme';
@@ -36,10 +39,12 @@ const RAIL = [
   { ids: ['plan'], rule: true },
   { ids: ['settings'], rule: true, foot: true },
 ];
-const ago = (iso) => {
-  const m = Math.round((Date.now() - Date.parse(iso)) / 60000);
-  return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
-};
+// The index tabs on the page's right edge: one per section (Settings has none), the current one raised. Each opens the
+// last page you used in its section. The rail stays the main navigation; the tabs are a second way in.
+const SECTIONS = [{ label: 'Today', ids: ['dashboard'] }, ...RAIL.filter((g) => g.head).map((g) => ({ label: g.head, ids: g.ids })), { label: 'Plan', ids: ['plan'] }];
+const SECTION_KEY = 'wealthflow.sectionPages';
+const lastPages = () => { try { return JSON.parse(store.get(SECTION_KEY)) ?? {}; } catch { return {}; } };
+const pageLabel = (id) => NAV.find((n) => n.id === id)?.label ?? id;
 // What a sync found, in words. Plaid only has what banks have sent it, so "nothing new" is the common answer.
 const syncSummary = (r) => {
   const added = r.reduce((s, x) => s + (x.added ?? 0), 0);
@@ -67,6 +72,12 @@ function usePage() {
 export default function App() {
   const resume = window.location.pathname === '/oauth';
   const [page, pageQs] = usePage();
+  const [lastBySection, setLastBySection] = useState(lastPages);
+  useEffect(() => { // remember the last page used in each section
+    const sec = sectionOf(SECTIONS, page);
+    if (!sec) return;
+    setLastBySection((l) => { if (l[sec.label] === page) return l; const n = { ...l, [sec.label]: page }; store.set(SECTION_KEY, JSON.stringify(n)); return n; });
+  }, [page]);
   const [meta, setMeta] = useState({ items: [], max: 10 });
   const [s, setS] = useState(null);
   const [extra, setExtra] = useState(null);
@@ -102,6 +113,7 @@ export default function App() {
     store.set(HIDE_KEY, hide ? '1' : '0');
   }, [hide]);
 
+  const syncTitle = `${syncLine(meta.lastSync, busy)}. Mizo Money checks Plaid when it starts and every ${meta.autoSyncHours} hours while it's running. Plaid gets new data from each bank on its own schedule (transactions a few times a day, investments about daily), so something new at your bank can take up to a day to show here. Click to check now.`;
   const refresh = async () => {
     setBusy(true); setSynced('');
     const r = await api('/sync', { method: 'POST' });
@@ -120,12 +132,18 @@ export default function App() {
   if (setup && !setup.configured) return <FirstRun onDone={() => window.location.reload()} />;
   return (
     <div className="shell">
+      <InkDefs />
       <Jump pages={NAV} />
       <aside className="side">
-        <div className="logo"><Seal size={30} /><span className="wordmark">Mizo Money</span></div>
+        <div className="logo"><Seal size={30} /><span className="wordmark">Mizo Money<i className="wm-dot" aria-hidden="true" /></span></div>
         {RAIL.map((g) => (
           <Fragment key={g.ids[0]}>
             {g.head && <div className="navgroup">{g.head}</div>}
+            {g.foot && (
+              <button className={`syncfoot${busy ? ' spin' : ''}`} onClick={refresh} disabled={busy} title={syncTitle} aria-label={`Refresh data. ${syncLine(meta.lastSync, busy)}`}>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 11-2.3-5.7M20 4v5h-5" /></svg>
+                <span className="synclabel" role="status">{syncLine(meta.lastSync, busy)}</span>
+              </button>)}
             {g.rule && <div className={`navrule${g.foot ? ' foot' : ''}`} />}
             {g.ids.map((id) => NAV.find((n) => n.id === id)).map((n) => (
               <button key={n.label} className={`nav${n.id === page ? ' on' : ''}`}
@@ -135,17 +153,26 @@ export default function App() {
         ))}
       </aside>
       <main className="main">
+        <nav className="idxtabs" aria-label="Section tabs">
+          {SECTIONS.map((g) => {
+            const to = tabTarget(SECTIONS, g, lastBySection), on = g.ids.includes(page);
+            return (
+              <div key={g.label} className="idxwrap">
+                <a href={`#/${to}`} tabIndex={-1} className={`idxtab${on ? ' on' : ''}`} aria-current={on ? 'page' : undefined} title={`${g.label}: ${pageLabel(to)}`}>{g.label}</a>
+                {g.ids.length > 1 && (
+                  <div className="idxcard">
+                    <b>{g.label}</b>
+                    {g.ids.map((id) => <a key={id} href={`#/${id}`} tabIndex={-1} className={id === page ? 'cur' : ''}>{pageLabel(id)}</a>)}
+                  </div>)}
+              </div>);
+          })}
+        </nav>
         <div className="topbar">
           {update?.available && <a className="chip-link info" href="#/settings" title={`You have version ${update.version}. See Settings › Updates.`}>Version {update.latest} is available</a>}
           {attention > 0 && <a className="chip-link" href="#/networth" title="See your banks on Accounts & net worth">
             {attention} bank{attention > 1 ? 's' : ''} need{attention > 1 ? '' : 's'} attention</a>}
-          {meta.lastSync && (
-            <span className="small muted" title={`Mizo Money checks Plaid when it starts and every ${meta.autoSyncHours} hours while it's running. Plaid gets new data from each bank on its own schedule (transactions a few times a day, investments about daily), so something new at your bank can take up to a day to show here.`}>
-              {busy ? 'Checking for new data…' : synced || `Updated ${ago(meta.lastSync)}`}
-            </span>)}
-          <button className={`iconbtn${busy ? ' spin' : ''}`} onClick={refresh} disabled={busy} title="Check Plaid for new data now" aria-label="Refresh data">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12a8 8 0 11-2.3-5.7M20 4v5h-5" /></svg>
-          </button>
+          {/* What the last Refresh found shows here for a few seconds; the sync time itself lives at the rail's foot. */}
+          {synced && <span className="small muted" role="status">{synced}</span>}
           <button className="iconbtn" onClick={toggleTheme} title={`Switch to ${dark ? 'light' : 'dark'} mode${theme ? '' : ' (now following your system setting)'}`} aria-label="Toggle dark mode">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
               {dark ? <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>

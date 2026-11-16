@@ -21,9 +21,8 @@ export default function Forecast() {
   const mon = (k) => new Date(k + '-01T00:00').toLocaleDateString('en-US', { month: 'short' });
   const since = (d) => new Date(d + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   return (
-    <>
-      <h2 className="subhead mt">Forecast</h2>
-      <p className="sub">Project your net worth from <span className="amt">{usd(s.netWorth.value)}</span> today, in {dollars}.</p>
+    <Panel className="mt forecast" title="Forecast">
+      <p className="muted mt-0">Project your net worth from <span className="amt">{usd(s.netWorth.value)}</span> today, in {dollars}.</p>
       <div className="form">
         <label className="lbl">Monthly contribution
           <input type="number" step="any" value={a.monthly} onChange={(e) => update({ monthly: e.target.value })} placeholder={String(Math.round(avg ?? 0))} /></label>
@@ -63,7 +62,8 @@ export default function Forecast() {
             {months < 3 ? ` (only ${months} complete month${months > 1 ? 's' : ''} so far)` : ''}. Transfers, savings and debt payments aren't counted as spending.</div>
         </>}
       </div>
-      <Panel title="Net worth projection" actions={<Legend series={series} />}>
+      <div className="fsec">
+        <div className="head"><h2>Net worth projection</h2><Legend series={series} /></div>
         <ProjectionChart series={series} years={years} target={target} real={real} />
         <table className="t">
           <thead><tr><th>Scenario</th><th className="r">Annual return</th><th className="r">In {years} years <span className="muted dollars">in {dollars}</span></th>
@@ -82,7 +82,7 @@ export default function Forecast() {
           {target ? <> The target is compared in the same dollars.</> : null}
           {' '}Taxes are ignored. Your assumptions are saved in this browser only.
         </p>
-      </Panel>
-    </>
+      </div>
+    </Panel>
   );
 }

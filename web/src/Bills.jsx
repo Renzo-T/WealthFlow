@@ -3,9 +3,10 @@ import { api } from './api.js';
 import { usd2, shortDate } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
-import BillsCalendar from './BillsCalendar.jsx';
+import { billIcon } from './BillsCalendar.jsx';
 import MonthSpread from './MonthSpread.jsx';
-import { Panel, PageHeader, PageSkeleton, Hover, TipList } from './ui.jsx';
+import { Stamp, markIcon } from './Stamp.jsx';
+import { Panel, PageHeader, PageSkeleton, Hover, TipList, Est } from './ui.jsx';
 
 const SOURCE = { detected: 'Detected', plaid: 'From Plaid', card: 'Card statement', manual: 'Added by you' };
 const MODE = { last: 'Last amount', average: 'Average of recent', fixed: 'Fixed amount', statement: 'Statement balance', minimum: 'Minimum payment', current: 'Current balance' };
@@ -13,7 +14,12 @@ const KINDS = [
   ['dom', 'On a day of the month'], ['eom', 'Days before the end of the month'], ['bday', 'On the Nth business day'],
   ['lastbday', 'On the Nth-to-last business day'], ['semi', 'Twice a month (a day and month end)'], ['weeks', 'Every N weeks'], ['months', 'Every N months'],
 ];
+// Fixed columns: the name takes what's left (truncated, full name on hover); schedule wraps; amount keeps its width.
+const srcLine = (b) => `${SOURCE[b.source]}${b.edited ? ' · edited' : ''}${b.account ? ` · from ${b.account}` : ''}`;
+const BillCols = () => <colgroup><col /><col className="c-sched" /><col className="c-next" /><col className="c-amt" /><col className="c-act" /></colgroup>;
 const today = () => new Date().toLocaleDateString('en-CA');
+// The date of a bill's latest charge once it has posted: a dated fact that has happened, so it gets a stamp.
+const paidOn = (b) => { const d = b.recent?.[0]?.date ?? b.last_date; return d && d <= today() ? d : null; };
 
 // Signed amount. Estimates (averages, card balances still changing) are marked separately, not with a symbol.
 export const billAmount = (b) => `${b.direction === 'in' ? '+' : '−'}${usd2(b.amount)}`;
@@ -94,6 +100,24 @@ export function PaycheckPrompt({ compact, onDone }) {
   ));
 }
 
+const dayTitle = (d) => new Date(`${d}T00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
+// The side sheet: what's due (bills) and expected in (paydays) on the day picked in the month spread above.
+function DaySheet({ day, items }) {
+  const list = day ? items.filter((x) => x.date === day) : [];
+  return (
+    <Panel className="daysheet" title={day ? dayTitle(day) : 'Pick a day'}>
+      {list.length === 0 && <p className="small muted">{!day ? 'Click a day in the month above to see what’s due.' : items.length ? 'Nothing due this day.' : 'No bills due this month.'}</p>}
+      {list.map((x) => (
+        <div className="trow" key={x.key + x.date}>
+          <span className="rowicon"><CategoryIcon {...billIcon(x)} size={28} /><b className="small">{x.name}</b></span>
+          <span className={`tamt small${x.direction === 'in' ? ' good' : ''}`}>{x.estimate ? <Est why="Estimate: the amount varies">{billAmount(x)}</Est> : billAmount(x)}</span>
+        </div>
+      ))}
+    </Panel>
+  );
+}
+
 export default function Bills() {
   const [list, setList] = useState(null);
   const [editing, setEditing] = useState(null);
@@ -101,6 +125,21 @@ export default function Bills() {
   const [showHidden, setShowHidden] = useState(false);
   const load = useCallback(async () => setList(await api('/bills')), []);
   useEffect(() => { load(); }, [load]);
+  // The month in the spread and the day picked in it; the side sheet lists that day from /bills/calendar.
+  const thisMonth = new Date().toLocaleDateString('en-CA').slice(0, 7);
+  const [month, setMonth] = useState(thisMonth);
+  const [day, setDay] = useState(null);
+  const [cal, setCal] = useState([]);
+  useEffect(() => {
+    let on = true;
+    api(`/bills/calendar?month=${month}`).then((r) => {
+      if (!on) return;
+      setCal(r);
+      // Keep the picked day while it's in this month; otherwise start on the next thing due (or the month's first).
+      setDay((cur) => (cur?.startsWith(month) ? cur : r.find((x) => x.date >= today())?.date ?? r[0]?.date ?? null));
+    }).catch(() => {});
+    return () => { on = false; };
+  }, [month, list]);
   if (!list) return <PageSkeleton />;
 
   const put = async (key, body) => {
@@ -128,7 +167,7 @@ export default function Bills() {
     <Fragment key={b.key}>
       <tr className={b.hidden ? 'dim' : undefined}>
         <td><span className="rowicon"><CategoryIcon group={b.can_card ? 'Debt repayment' : b.direction === 'in' ? 'Income' : b.grp} sub={b.category} kind={b.can_card ? 'card' : undefined} />
-          <span className="bname1"><b title={b.name}>{b.name}</b><div className="small muted">{SOURCE[b.source]}{b.edited ? ' · edited' : ''}{b.account ? ` · from ${b.account}` : ''}</div></span></span></td>
+          <span className="bname1"><b title={b.name}>{b.name}</b><div className="small muted" title={srcLine(b)}>{srcLine(b)}</div></span></span></td>
         <td>{b.schedule ? <span>{b.schedule[0].toUpperCase() + b.schedule.slice(1)}</span> : '—'}
           {b.card && <div className="small muted">Due {shortDate(b.card.due)}{b.card.paid ? ' · this statement is paid' : ''}</div>}</td>
         <td>{b.ended ? <span className="muted">Missed, probably ended</span> : b.unscheduled
@@ -136,7 +175,9 @@ export default function Bills() {
           : b.next_date ? shortDate(b.next_date) : '—'}</td>
         <td className="r"><Hover tip={b.recent?.length ? <TipList title="Recent payments" rows={b.recent.map((r) => [shortDate(r.date), usd2(r.amount)])}
           note={b.card ? `Statement ${usd2(b.card.statement ?? 0)} · current balance ${usd2(b.card.current ?? 0)}` : null} /> : null}>
-          <span className={`tamt${b.direction === 'in' ? ' good' : ''}`}>{billAmount(b)}</span></Hover><div className="small muted">{MODE[b.amount_mode]}</div></td>
+          <span className={`tamt${b.direction === 'in' ? ' good' : ''}`}>{billAmount(b)}</span></Hover>
+          {paidOn(b) && <div className="small muted paidline"><Stamp kind={b.direction === 'in' ? 'in' : 'out'} done icon={markIcon(b)} className="mini" />{b.direction === 'in' ? 'Received' : 'Paid'} {shortDate(paidOn(b))}</div>}
+          {(b.amount_mode !== 'last' || !paidOn(b)) && <div className="small muted">{MODE[b.amount_mode]}</div>}</td>
         <td className="r nowrap">
           <button className="linkbtn" onClick={() => setEditing(editing === b.key ? null : b.key)}>Edit</button>{' '}
           {b.source === 'manual' ? <button className="linkbtn" onClick={() => del(b.key)}>Delete</button>
@@ -152,7 +193,7 @@ export default function Bills() {
     <>
       <PageHeader title="Bills" sub="From your transactions, statements, Plaid or your own entries; your edits always win.">
         <button className="btn primary" onClick={() => setAdding(!adding)}>Add a bill</button></PageHeader>
-      <div className="mt"><MonthSpread month={new Date().toLocaleDateString('en-CA').slice(0, 7)} compact /></div>
+      <div className="mt"><MonthSpread month={month} onMonth={setMonth} selected={day} onPick={setDay} /></div>
       {adding && <Panel className="mt" title="Add a bill or recurring income">
         <Editor adding onSave={add} onCancel={() => setAdding(false)} /></Panel>}
       <PaycheckPrompt onDone={load} />
@@ -160,19 +201,20 @@ export default function Bills() {
       <div className="billsgrid">
       <section className="card scroll sticky-head">
         <table className="t billtable">
+          <BillCols />
           <thead><tr><th>Bill</th><th>Schedule</th><th>Next</th><th className="r">Amount</th><th /></tr></thead>
           <tbody>{active.map(row)}</tbody>
         </table>
         {active.length === 0 && <div className="empty">Nothing recurring found yet. Bills show up after they repeat a couple of times, or add one yourself.</div>}
       </section>
-      <BillsCalendar />
+      <DaySheet day={day} items={cal} />
       </div>
       {ended.length > 0 && <section className="card mt scroll">
         <div className="head" style={{ padding: '.25rem .25rem .5rem' }}><h2 style={{ fontSize: '1rem', margin: 0 }}>Possibly ended</h2></div>
-        <table className="t"><tbody>{ended.map(row)}</tbody></table></section>}
+        <table className="t billtable"><BillCols /><tbody>{ended.map(row)}</tbody></table></section>}
       {hidden.length > 0 && <p className="small mt">
         <button className="linkbtn" onClick={() => setShowHidden(!showHidden)}>{showHidden ? 'Hide' : 'Show'} {hidden.length} marked "not a bill"</button></p>}
-      {showHidden && <section className="card scroll"><table className="t"><tbody>{hidden.map(row)}</tbody></table></section>}
+      {showHidden && <section className="card scroll"><table className="t billtable"><BillCols /><tbody>{hidden.map(row)}</tbody></table></section>}
       <p className="small muted mt">
         Detected schedules account for weekends and bank holidays: a bill due on a Saturday usually posts the next business day.
         Amounts in grey with a dashed underline are estimates. Card payments use your statement balance once your bank shares card statements.</p>

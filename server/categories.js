@@ -209,8 +209,9 @@ export function classify() {
   // A rule or manual choice of "Transfer" still pairs, so both sides show as one row.
   const settled = (t) => (t.user_category ?? ruled.get(t.id) ?? 'Transfer') !== 'Transfer';
   // Payments with people are never your own money moving, even when another transfer has the same amount.
-  const free = txns.filter((t) => !settled(t) && !CASH_BACK.test(t.name ?? '') && PAIRABLE.has(t.pfc_primary ?? null)
+  const movable = txns.filter((t) => !CASH_BACK.test(t.name ?? '') && PAIRABLE.has(t.pfc_primary ?? null)
     && !peerOf(t, accounts[t.account_id]?.institution) && !t.split_of && !t.is_split);
+  const free = movable.filter((t) => !settled(t));
   for (const t of free) {
     if (t.amount >= 0) continue;
     const k = Math.round(-t.amount * 100);
@@ -233,14 +234,17 @@ export function classify() {
 
   // No matching other side (e.g. it happened before that account's history starts): if the description names
   // one of your accounts by number, like "TRANSFERRED FROM ... Z99-123456-1" for an account ending 3456, link it.
+  // A transfer you or a rule gave a category ("Investments") still links to the account it names, so money moved
+  // between your own accounts is known (net worth history, money flow); its category stays yours.
   const named = new Map();
-  for (const t of free) {
+  for (const t of movable) {
     if (pair.has(t.id) || !/^TRANSFER_|^LOAN_PAYMENTS$/.test(t.pfc_primary ?? '')) continue;
     if (/_INVESTMENT_AND_RETIREMENT_FUNDS$/.test(t.pfc_detailed ?? '')) continue; // money-market sweeps
     const tokens = (t.name ?? '').toUpperCase().split(/[^A-Z0-9]+/).filter((x) => x.length >= 4);
     const hit = byMask.filter((a) => a.id !== t.account_id && tokens.some((x) => x.endsWith(a.mask.toUpperCase())));
     if (hit.length !== 1) continue; // none, or ambiguous
     named.set(t.id, hit[0].id);
+    if (settled(t)) continue;
     const other = savingsKind(hit[0]), own = savingsKind(accounts[t.account_id]);
     if (t.amount > 0 && other && !own) pairCat.set(t.id, other); // into savings
     if (t.amount < 0 && other && !own) pairCat.set(t.id, other); // out of savings: a withdrawal (negative)
