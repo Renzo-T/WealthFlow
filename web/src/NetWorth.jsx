@@ -55,7 +55,130 @@ export function AccountType({ a, saved }) {
   );
 }
 
-const KINDS = { real_estate: 'Real estate', vehicle: 'Vehicle', other: 'Other asset', liability: 'Loan or debt' };
+const KINDS = { real_estate: 'Real estate', vehicle: 'Vehicle', investment: 'Investment account', receivable: 'Money owed to you',
+  other: 'Other asset', liability: 'Loan or debt you owe' };
+const today = () => new Date().toLocaleDateString('en-CA');
+const longDate = (d) => new Date(d + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const valueOn = (entries, date) => entries.reduce((v, e) => (e.date <= date ? e.value : v), 0);
+const post = (path, body) => api(path, { method: 'POST', body: JSON.stringify(body) });
+
+// One value in an asset's history: the date it counts from, and the amount, edited in place (saved on blur or Enter).
+function ValueRow({ a, e, txn, removable, saved }) {
+  const [v, setV] = useState(String(e.value));
+  const save = async () => {
+    if (Number(v) === e.value || v === '') return setV(String(e.value));
+    await post(`/assets/${a.id}/values`, { date: e.date, value: v }); saved();
+  };
+  return (
+    <div className="valrow">
+      <span className="tmain"><span>{e.date ? `From ${longDate(e.date)}` : 'From the start'}</span>
+        {txn ? <span className="small muted">with {txn}</span> : !e.date ? <span className="small muted">before any history Mizo Money has</span> : null}</span>
+      <input className="mini amt" type="number" min="0" step="any" value={v} onChange={(ev) => setV(ev.target.value)} onBlur={save}
+        onKeyDown={(ev) => ev.key === 'Enter' && ev.currentTarget.blur()} aria-label={`Value ${e.date ? `from ${longDate(e.date)}` : 'from the start'}`} />
+      {removable ? <button className="linkbtn" onClick={async () => { await api(`/assets/${a.id}/values/${e.id}`, { method: 'DELETE' }); saved(); }}>Remove</button> : <span />}
+    </div>
+  );
+}
+
+// An asset or debt you added: its value over time (each value counts from its date, so net worth history keeps the
+// old one before it), a new value from a date, and recent transfers out of your linked accounts that may have gone into it.
+function AssetRow({ a, candidates, open, setOpen, saved }) {
+  const [f, setF] = useState({ value: '', date: today() });
+  const [err, setErr] = useState('');
+  const debt = a.kind === 'liability';
+  const last = a.entries.at(-1);
+  const rename = async (name) => { if (name.trim() && name.trim() !== a.name) { await api(`/assets/${a.id}`, { method: 'PATCH', body: JSON.stringify({ name }) }); saved(); } };
+  const setValue = async (e) => {
+    e.preventDefault();
+    const r = await post(`/assets/${a.id}/values`, f);
+    if (r.error_message) return setErr(r.error_message);
+    setErr(''); setF({ value: '', date: today() }); saved();
+  };
+  const link = async (t, mode) => { const r = await post(`/assets/${a.id}/link`, { tx_id: t.id, mode }); setErr(r.error_message ?? ''); saved(); };
+  const remove = async () => {
+    if (!window.confirm(`Remove ${a.name}?\n\nIt stops counting toward net worth, including its history.`)) return;
+    await api(`/assets/${a.id}`, { method: 'DELETE' }); saved();
+  };
+  return (
+    <>
+      <div className="arow" onClick={() => setOpen(open ? null : `m${a.id}`)} role="button" tabIndex={0} aria-expanded={open}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setOpen(open ? null : `m${a.id}`)}>
+        <span className="tmain"><b>{a.name}</b><span className="small muted">{KINDS[a.kind] ?? 'Other asset'} · added by you
+          {last?.date ? ` · ${a.entries.length > 1 ? 'value from' : 'since'} ${shortDate(last.date)}` : ''}</span></span>
+        <span />
+        <span className="r"><b className={`amt${debt ? ' bad' : ''}`}>{debt && a.value >= 0.005 ? '−' : ''}{usd2(a.value)}</b></span>
+      </div>
+      {open && (
+        <div className="aedit asset">
+          <div className="aedit-row">
+            <label className="lbl">Name<input defaultValue={a.name} onBlur={(e) => rename(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} /></label>
+            <label className="lbl">Kind<select value={a.kind} onChange={async (e) => { await api(`/assets/${a.id}`, { method: 'PATCH', body: JSON.stringify({ kind: e.target.value }) }); saved(); }}>
+              {Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+            <button className="linkbtn" onClick={remove}>Remove</button>
+          </div>
+          <div className="valhist">
+            <span className="colhead">Value over time</span>
+            {a.entries.map((e) => <ValueRow key={`${e.id}-${e.value}`} a={a} e={e} txn={e.tx_id ? e.tx_name ?? 'a transfer' : null} removable={a.entries.length > 1} saved={saved} />)}
+          </div>
+          <form className="form mt-0" onSubmit={setValue}>
+            <label className="lbl">New value<input className="mini" type="number" min="0" step="any" value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })} required /></label>
+            <label className="lbl">From<input type="date" value={f.date} max={today()} onChange={(e) => setF({ ...f, date: e.target.value })} required /></label>
+            <button className="btn" type="submit">Save value</button>
+          </form>
+          {err && <p className="bad small mt-0">{err}</p>}
+          {candidates.length > 0 && (
+            <div className="valhist">
+              <span className="colhead">Money that left your linked accounts</span>
+              <p className="small muted mt-0">If one of these went {debt ? `toward ${a.name}` : `into ${a.name}`}, count it here so history shows it moving, not leaving.</p>
+              {candidates.map((t) => {
+                const delta = (debt ? -1 : 1) * t.amount;
+                return (
+                  <div className="valrow cand" key={t.id}>
+                    <span className="tmain"><span>{t.name}</span><span className="small muted">{shortDate(t.date)} · {t.account}</span></span>
+                    <b className="amt">{signed(-t.amount)}</b>
+                    <span className="btnrow">
+                      <button className="btn" onClick={() => link(t, 'add')} title={`${a.name} goes from ${usd2(valueOn(a.entries, t.date))} to ${usd2(Math.max(0, valueOn(a.entries, t.date) + delta))} on ${shortDate(t.date)}`}>
+                        {delta >= 0 ? 'Add to its value' : 'Take off its value'}</button>
+                      <button className="linkbtn" onClick={() => link(t, 'included')} title={`Keeps today's value; the days before ${shortDate(t.date)} count ${usd2(Math.abs(delta))} ${delta >= 0 ? 'less' : 'more'}`}>
+                        Already in its value</button>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
+function YourAssets({ manual, candidates, open, setOpen, saved }) {
+  const [f, setF] = useState({ name: '', value: '', kind: 'real_estate', since: '' });
+  const [err, setErr] = useState('');
+  const on = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const add = async (e) => {
+    e.preventDefault();
+    const r = await post('/assets', f);
+    if (r.error_message) return setErr(r.error_message);
+    setErr(''); setF({ ...f, name: '', value: '', since: '' }); saved();
+  };
+  const total = manual.reduce((s, m) => s + (m.kind === 'liability' ? -m.value : m.value), 0);
+  return (
+    <Panel className="mt-lg" title="Assets and debts you added" actions={manual.length ? <b className="amt">{total < -0.005 ? '−' : ''}{usd(Math.abs(total))}</b> : null}>
+      <p className="small muted mt-0">Things Plaid can't see, like a house, a car, a loan you made or one you owe. Each value counts from its date, so net worth history keeps the earlier value.</p>
+      {manual.map((m) => <AssetRow key={m.id} a={m} candidates={candidates} open={open === `m${m.id}`} setOpen={setOpen} saved={saved} />)}
+      <form className="form" onSubmit={add}>
+        <label className="lbl">Name<input value={f.name} onChange={on('name')} placeholder="Home" required /></label>
+        <label className="lbl">Value<input type="number" min="1" step="any" value={f.value} onChange={on('value')} placeholder="350000" required /></label>
+        <label className="lbl">Kind<select value={f.kind} onChange={on('kind')}>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+        <label className="lbl" title="Leave empty if you had it before Mizo Money's history starts">Yours since (optional)<input type="date" value={f.since} max={today()} onChange={on('since')} /></label>
+        <button className="btn primary" type="submit">Add to net worth</button>
+      </form>
+      {err && <p className="bad small">{err}</p>}
+    </Panel>
+  );
+}
 const GROUPS = [
   ['depository', 'Cash'], ['credit', 'Credit cards'], ['investment', 'Investments'], ['loan', 'Loans'], ['other', 'Other'],
 ];
@@ -179,10 +302,11 @@ function AccountRow({ a, act, open, setOpen, saved }) {
 // everything else, mostly the market.
 const PERIODS = [['month', 'This month'], ['30d', 'Last 30 days'], ['all', 'Since tracking']];
 const signedUsd = (v) => `${v < 0 ? '−' : '+'}${usd(Math.abs(v))}`;
-function WhatMoved() {
+// `stamp` changes whenever the page reloads its data (a new value or a linked transfer), so this refetches too.
+function WhatMoved({ stamp }) {
   const [period, setPeriod] = useState('month');
   const [b, setB] = useState(null);
-  useEffect(() => { api(`/networth/breakdown?period=${period}`).then(setB); }, [period]);
+  useEffect(() => { api(`/networth/breakdown?period=${period}`).then(setB); }, [period, stamp]);
   if (!b) return null;
   const head = <div className="ranges">{PERIODS.map(([k, l]) => <button key={k} className={period === k ? 'on' : ''} onClick={() => setPeriod(k)}>{l}</button>)}</div>;
   if (!b.available) return (
@@ -192,26 +316,32 @@ function WhatMoved() {
     </Panel>);
   // Money paid into accounts Mizo Money can't see; hidden when it rounds to $0.
   const showMoved = Math.round(b.moved ?? 0) !== 0;
-  const max = Math.max(Math.abs(b.saved), Math.abs(b.market), showMoved ? Math.abs(b.moved) : 0, 1);
+  const showValued = Math.round(b.revalued ?? 0) !== 0;
+  const max = Math.max(Math.abs(b.saved), Math.abs(b.market), showMoved ? Math.abs(b.moved) : 0, showValued ? Math.abs(b.revalued) : 0, 1);
   const bar = (v, cls) => <span className="wmbar"><i className={`${cls} ${v < 0 ? 'neg' : ''}`} style={{ width: `${(Math.abs(v) / max) * 100}%` }} /></span>;
   // Market and other: each investment account's change, then whatever is left (cash, cards, interest, fees).
   const rest = b.market - b.investments.reduce((s, a) => s + a.change, 0);
-  const marketRows = [...b.investments.map((a) => [a.name, signedUsd(a.change)]),
+  // Money you moved in or out isn't a market move, so it's named beside the account instead of counted in it.
+  const marketRows = [...b.investments.map((a) => [a.name, signedUsd(a.change),
+    Math.abs(a.added ?? 0) >= 0.5 ? <><span className="amt">{signedUsd(a.added)}</span> {a.added > 0 ? 'you moved in' : 'you took out'}</> : null]),
     ...(Math.abs(rest) >= 0.5 || !b.investments.length ? [['Cash, cards and other', signedUsd(rest)]] : [])];
   const movedRows = [...(b.movedItems ?? []).map((t) => [t.name, signed(t.amount), shortDate(t.date)]),
     ...(b.movedMore?.count ? [[`and ${b.movedMore.count} more`, signed(b.movedMore.amount)]] : [])];
   return (
     <Panel className="mt" title="What moved your net worth" actions={head}>
-      <div className={`wm ${showMoved ? 'three' : ''}`}>
+      <div className={`wm rows${2 + showMoved + showValued}`}>
         <div className="wmtotal"><span className="small muted">{shortDate(b.from)} → {shortDate(b.to)}</span>
           <b className={`amt big ${b.change < 0 ? 'bad' : 'good'}`}>{signedUsd(b.change)}</b></div>
         <div className="wmrow"><Hover className="quiet" tip={<TipList title="Saved" rows={[['Income', usd(b.income)], ['Spending', `−${usd(b.spending)}`]]}
           note="From your transactions. Transfers between your own accounts don't count." />}>Saved</Hover>{bar(b.saved, 'saved')}<b className="amt">{signedUsd(b.saved)}</b></div>
         {showMoved && <div className="wmrow"><Hover className="quiet" tip={<TipList title="Moved to accounts not tracked" rows={movedRows}
-          note="Transfers, savings and debt payments to an account that isn't linked. The money is still yours, but Mizo Money can't see where it went. Linking that account, or adding it by hand on this page, moves it out of this row." />}>Moved to accounts not tracked</Hover>
+          note="Transfers, savings and debt payments to an account that isn't linked. The money is still yours, but Mizo Money can't see where it went. Link that account, or count the transfer toward an asset you added below, to move it out of this row." />}>Moved to accounts not tracked</Hover>
           {bar(b.moved, 'moved')}<b className="amt">{signedUsd(b.moved)}</b></div>}
+        {showValued && <div className="wmrow"><Hover className="quiet" tip={<TipList title="New values you entered" rows={b.valued.map((a) => [a.name, signedUsd(a.change)])}
+          note="Changes to the values of assets and debts you added, beyond transfers you counted toward them." />}>Assets and debts you added</Hover>
+          {bar(b.revalued, 'market')}<b className="amt">{signedUsd(b.revalued)}</b></div>}
         <div className="wmrow"><Hover className="quiet" tip={<TipList title="Market and other" rows={marketRows}
-          note="The rest of the change, mostly investments going up or down. It also catches interest, fees and balance corrections." />}>Market and other</Hover>
+          note="The rest of the change, mostly investments going up or down, not counting money you moved in. It also catches interest, fees, balance corrections, and 401(k) contributions taken from your paycheck, which never show up as transactions." />}>Market and other</Hover>
           {bar(b.market, 'market')}<b className="amt">{signedUsd(b.market)}</b></div>
       </div>
       {b.clipped && <p className="small muted foot">Real daily values start {shortDate(b.since)}, so this covers from then.</p>}
@@ -225,14 +355,14 @@ function Summary({ accounts, manual }) {
   const inc = accounts.filter((a) => a.in_networth);
   const sum = (f) => inc.filter(f).reduce((s, a) => s + a.balance, 0);
   const manualSum = (k) => manual.filter((m) => m.kind === k).reduce((s, m) => s + m.value, 0);
-  const assets = [['Investments', sum((a) => a.type === 'investment'), SERIES[0]], ['Cash', sum((a) => a.type === 'depository'), SERIES[2]],
-    ['Real estate', manualSum('real_estate'), SERIES[1]], ['Vehicles', manualSum('vehicle'), SERIES[3]],
+  const assets = [['Investments', sum((a) => a.type === 'investment') + manualSum('investment'), SERIES[0]], ['Cash', sum((a) => a.type === 'depository'), SERIES[2]],
+    ['Real estate', manualSum('real_estate'), SERIES[1]], ['Vehicles', manualSum('vehicle'), SERIES[3]], ['Owed to you', manualSum('receivable'), NEUTRAL],
     ['Other', sum((a) => a.type === 'other') + manualSum('other'), NEUTRAL]].filter(([, v]) => v > 0.5);
   const debts = [['Credit cards', sum((a) => a.type === 'credit'), SERIES[1]], ['Loans', sum((a) => a.type === 'loan'), SERIES[3]],
     ['Other debts', manualSum('liability'), NEUTRAL]].filter(([, v]) => v > 0.5);
   // What's behind each line, for the hover: linked accounts of that type plus anything added by hand.
   const TYPES = { Investments: ['investment'], Cash: ['depository'], Other: ['other'], 'Credit cards': ['credit'], Loans: ['loan'] };
-  const KINDS = { 'Real estate': 'real_estate', Vehicles: 'vehicle', Other: 'other', 'Other debts': 'liability' };
+  const KINDS = { Investments: 'investment', 'Real estate': 'real_estate', Vehicles: 'vehicle', 'Owed to you': 'receivable', Other: 'other', 'Other debts': 'liability' };
   const behind = (n) => [
     ...inc.filter((a) => TYPES[n]?.includes(a.type)).sort((a, b) => b.balance - a.balance).map((a) => [a.name, usd(a.balance), a.institution]),
     ...manual.filter((m) => m.kind === KINDS[n]).map((m) => [m.name, usd(m.value), 'added by you']),
@@ -263,8 +393,6 @@ export default function NetWorth({ onChange }) {
   const [history, setHistory] = useState(null);
   const [meta, setMeta] = useState(null), [activity, setActivity] = useState({});
   const [open, setOpen] = useState(null);
-  const [f, setF] = useState({ name: '', value: '', kind: 'real_estate' });
-  const [err, setErr] = useState('');
   const load = useCallback(async () => {
     const [nw, sum, items, act] = await Promise.all([api('/networth'), api('/summary'), api('/items'), api('/accounts/activity')]);
     setD(nw); setHistory(sum.history); setMeta(items); setActivity(act);
@@ -273,15 +401,6 @@ export default function NetWorth({ onChange }) {
   // Connecting, approving or removing a bank also changes the top bar's "needs attention" chip.
   const saved = () => { load(); onChange?.(); };
   if (!d || !history || !meta) return <PageSkeleton />;
-
-  const add = async (e) => {
-    e.preventDefault();
-    const r = await api('/assets', { method: 'POST', body: JSON.stringify(f) });
-    if (r.error_message) return setErr(r.error_message);
-    setErr(''); setF({ ...f, name: '', value: '' }); load();
-  };
-  const remove = async (id) => { await api(`/assets/${id}`, { method: 'DELETE' }); load(); };
-  const on = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
   return (
     <>
@@ -293,7 +412,7 @@ export default function NetWorth({ onChange }) {
         <NetWorthChart history={history} />
         <Summary accounts={d.accounts} manual={d.manual} />
       </div>
-      <WhatMoved />
+      <WhatMoved stamp={d} />
       {/* Cash, cards, investments and loans: one ruled sheet, a section per type. */}
       {d.accounts.length > 0 && <div className="ledger mt">{GROUPS.map(([type, title]) => {
         const list = d.accounts.filter((a) => a.type === type);
@@ -305,31 +424,15 @@ export default function NetWorth({ onChange }) {
         const change = untracked.length ? null : inc.reduce((s, a) => s + a.change, 0);
         const since = untracked.map((a) => a.tracking_since).sort().at(-1);
         return (
-          <Panel key={type} title={<>{title} <Change v={change} debt={type === 'credit' || type === 'loan'} suffix=" in 30 days" since={since} /></>}
+          <Panel key={type} title={<>{title} <span className="titlenote"><Change v={change} debt={type === 'credit' || type === 'loan'} suffix=" in 30 days" since={since} /></span></>}
             actions={<b className="amt">{(type === 'credit' || type === 'loan') && total >= 0.5 ? '−' : ''}{usd(total)}</b>}>
             {list.map((a) => <AccountRow key={a.id} a={a} act={activity[a.id]} open={open === a.id} setOpen={setOpen} saved={load} />)}
           </Panel>
         );
       })}</div>}
       {d.accounts.some((a) => a.estimated) && <p className="small muted mt-sm">Dashed trend lines are estimated from transactions; investments are held at today's value until daily history builds up.</p>}
+      <YourAssets manual={d.manual} candidates={d.candidates ?? []} open={open} setOpen={setOpen} saved={saved} />
       <Banks meta={meta} accounts={d.accounts} saved={saved} />
-      <Panel className="mt-lg" title="Other assets and debts">
-        <p className="small muted mt-0">Things Plaid can't see, like a house, a car or a personal loan. They count toward net worth and allocation. Update a value by removing and re-adding it.</p>
-        <form className="form" onSubmit={add}>
-          <label className="lbl">Name<input value={f.name} onChange={on('name')} placeholder="Home" required /></label>
-          <label className="lbl">Value<input type="number" min="1" step="any" value={f.value} onChange={on('value')} placeholder="350000" required /></label>
-          <label className="lbl">Kind<select value={f.kind} onChange={on('kind')}>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-          <button className="btn primary" type="submit">Add to net worth</button>
-        </form>
-        {err && <p className="bad small">{err}</p>}
-        {d.manual.map((m) => (
-          <div className="trow" key={m.id}>
-            <span className="tmain"><b>{m.name}</b><span className="small muted">{KINDS[m.kind]}</span></span>
-            <span className="btnrow"><b className={`amt${m.kind === 'liability' ? ' bad' : ''}`}>{m.kind === 'liability' ? '−' : ''}{usd2(m.value)}</b>
-              <button className="linkbtn" onClick={() => remove(m.id)}>Remove</button></span>
-          </div>
-        ))}
-      </Panel>
     </>
   );
 }

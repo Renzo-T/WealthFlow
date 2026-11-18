@@ -40,6 +40,7 @@ function Remaining({ value, income, saving }) {
   const v = Math.round(value);
   if (saving && v < 0) return <span className="pill ok" title={amountsHidden() ? 'Saved more than planned' : `${usd(-v)} more than planned`}>met</span>;
   const cls = v === 0 ? 'zero' : income || v > 0 ? 'ok' : 'over'; // income above budget is good news, not "over"
+  if (income && v < 0) return <span className={`pill amt ${cls}`} title={amountsHidden() ? 'Received more than budgeted' : `${usd(-v)} more than budgeted`}>+{usd(-v)}</span>;
   return <span className={`pill amt ${cls}`}>{v < 0 ? '−' : ''}{usd(Math.abs(v))}</span>;
 }
 
@@ -125,7 +126,7 @@ function GroupBlock({ id, title, rows, income, progress, save, tags, clear, grou
         <span className="r amt">{usd(actual)}</span>
         <span className="r">{whole ? (group.groupBudget != null ? <Remaining value={left} income={income} saving={saving} /> : <span className="small muted">no budget</span>)
           : saving && budget && left < -0.5 ? <span className="good" title={amountsHidden() ? 'Saved more than planned' : `${usd(-left)} more than planned`}>met</span>
-          : <span className={`amt ${!budget ? '' : left < -0.5 && !income ? 'bad' : 'good'}`}>{budget ? `${left < -0.5 ? '−' : ''}${usd(Math.abs(left))}` : ''}</span>}</span>
+          : <span className={`amt ${!budget ? '' : left < -0.5 && !income ? 'bad' : 'good'}`}>{budget ? `${left < -0.5 ? (income ? '+' : '−') : ''}${usd(Math.abs(left))}` : ''}</span>}</span>
         {whole && <span className="bmeter"><Meter actual={actual} budget={group.groupBudget} income={income} saving={saving} pace={!income && group.kind === 'flexible' ? progress : null} /></span>}
       </div>
       {open && shown.map((c) => <Row key={c.category} c={c} income={income} progress={progress} save={save} tags={tags} inGroup={whole} month={month} resetMonth={resetMonth} setRollover={setRollover} />)}
@@ -149,14 +150,16 @@ function GroupBlock({ id, title, rows, income, progress, save, tags, clear, grou
 const ColHeads = () => (
   <div className="bcolhead" role="presentation"><span /><span className="r">Budget</span><span className="r">Actual</span><span className="r">Remaining</span></div>
 );
-// Saved beyond plan (`extra`) isn't counted as over: remaining is against what was spent and planned saving.
-const Total = ({ title, budget, actual, income, extra = 0 }) => {
+// Saved beyond plan (`extra`) isn't counted as over: remaining is against what was spent and planned saving. Income
+// received beyond its budget shows as +extra, not a negative remainder.
+const Total = ({ title, budget, actual, income, extra = 0, refunds = 0 }) => {
   const left = budget - (actual - extra);
   return (
     <div className="btot">
       <span>{title}</span><span className="r amt">{usd(budget)}</span><span className="r amt">{usd(actual)}</span>
-      <span className={`r amt ${left < -0.5 && !income ? 'bad' : 'good'}`}>{budget ? `${left < -0.5 ? '−' : ''}${usd(Math.abs(left))}` : ''}</span>
+      <span className={`r amt ${left < -0.5 && !income ? 'bad' : 'good'}`}>{budget ? `${left < -0.5 ? (income ? '+' : '−') : ''}${usd(Math.abs(left))}` : ''}</span>
       {extra > 0.5 && <span className="btotnote small muted">Includes <span className="amt">{usd(extra)}</span> saved beyond plan, not counted as over.</span>}
+      {refunds > 0.5 && <span className="btotnote small muted">Leaves out <span className="amt">{usd(refunds)}</span> of refunds beyond a group's own spending: a refund only offsets its own group.</span>}
     </div>
   );
 };
@@ -190,10 +193,10 @@ function Split({ title, t, income, pace, sub }) {
     <div className="bsplit">
       <div className="row"><span>{title}</span><span className="small muted amt">{usd(t.budget)} budget</span></div>
       <Meter actual={t.actual - extra} budget={t.budget} income={income} pace={pace} />
-      <div className="row small"><b className="amt">{usd(t.actual)} {income ? 'received' : 'spent'}</b>
-        <span className={`amt ${left < -0.5 && !income ? 'bad' : left > 0.5 && !income && pace != null && t.actual / t.budget > pace + 0.1 ? 'warn' : 'good'}`}>
+      <div className="row small"><b className="amt">{usd(t.actual - extra)} {income ? 'received' : 'spent'}</b>
+        <span className={`amt ${left < -0.5 && !income ? 'bad' : left > 0.5 && !income && pace != null && (t.actual - extra) / t.budget > pace + 0.1 ? 'warn' : 'good'}`}>
           {usd(Math.abs(left))} {left < -0.5 ? (income ? 'extra' : 'over') : income ? 'to come' : 'remaining'}</span></div>
-      {extra > 0.5 && <div className="small muted">Includes <span className="amt">{usd(extra)}</span> saved beyond plan, not counted as over.</div>}
+      {extra > 0.5 && <div className="small muted">Plus <span className="amt">{usd(extra)}</span> saved beyond plan, not counted against it.</div>}
     </div>
   );
 }
@@ -312,7 +315,7 @@ Budgets apply to every month, so this clears them everywhere. Suggestions stay, 
           <Total title="Total income" budget={b.totals.income} actual={b.totals.incomeActual} income />
           <div className="bsection">Expenses</div>
           {cards.map((c) => <GroupBlock key={c.id} id={c.id} title={c.title} rows={c.rows} progress={b.progress} save={save} tags={view !== 'kind'} clear={clear} group={c.group} setWhole={setWhole} {...extra} />)}
-          <Total title="Total spending & saving" budget={b.totals.expenses} actual={b.totals.expensesActual} extra={b.totals.savedExtra} />
+          <Total title="Total spending & saving" budget={b.totals.expenses} actual={b.totals.expensesActual} extra={b.totals.savedExtra} refunds={b.totals.refundsLeftOut} />
           <LeftLine b={b} />
         </section>
         <aside className="bside ledger">

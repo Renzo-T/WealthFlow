@@ -378,6 +378,23 @@ img, svg { color-scheme: inherit; }
 .avatar { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; font-weight: 700; flex: none; }
 .aedit { display: flex; gap: 1.25rem; align-items: flex-end; flex-wrap: wrap; padding: .75rem; margin: .25rem 0 .5rem; background: var(--surface-2); border-radius: 10px; }
 .aedit .tmain .small { display: none; }
+/* An asset you added, opened: name and kind, its value over time (ruled rows), a new value, transfers to count. */
+.aedit.asset { flex-direction: column; align-items: stretch; gap: .9rem; }
+.aedit.asset .tmain .small { display: block; }
+.aedit-row { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
+.aedit-row > .linkbtn { margin-left: auto; padding-bottom: .55rem; }
+.valhist { display: flex; flex-direction: column; }
+.valhist .colhead { font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-bottom: .35rem; border-bottom: 1px solid var(--line-strong, var(--line)); }
+.valhist > p { margin: .4rem 0 .2rem; }
+.valrow { display: grid; grid-template-columns: minmax(0, 1fr) 9rem 5rem; gap: .75rem; align-items: center; padding: .4rem 0; border-bottom: 1px solid var(--line); }
+.valrow:last-child { border-bottom: 0; }
+.valrow .mini { width: 100%; text-align: right; }
+.valrow > .linkbtn { justify-self: end; }
+.valrow.cand { grid-template-columns: minmax(0, 1fr) 7rem auto; }
+.valrow.cand > b { text-align: right; }
+.valrow .tmain > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* A figure beside a panel's label title (Net worth groups' 30-day change) reads as text, not as part of the label. */
+.panel .head h2 .titlenote { text-transform: none; letter-spacing: 0; font-weight: 600; margin-left: .5rem; }
 .nwblock { padding: .4rem 0 .9rem; }
 .nwblock + .nwblock { border-top: 1px solid var(--line); padding-top: .9rem; }
 .nwblock .splitbar { margin: .6rem 0 .3rem; }
@@ -746,14 +763,16 @@ p.btrips { display: block; text-align: center; margin-top: .25rem; }
 /* Net worth: what moved it */
 .wm { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: .6rem 2rem; align-items: center; }
 .wmtotal { grid-row: span 2; display: flex; flex-direction: column; }
-.wm.three .wmtotal { grid-row: span 3; }
+.wm.rows3 .wmtotal { grid-row: span 3; } .wm.rows4 .wmtotal { grid-row: span 4; }
 .wmtotal .big { font-size: 1.8rem; }
 .wmrow { display: grid; grid-template-columns: 14rem minmax(0, 1fr) 7rem; gap: .75rem; align-items: center; }
 .wmrow > b { text-align: right; }
 .wmbar { height: 10px; background: color-mix(in srgb, var(--muted) 15%, transparent); border-radius: 5px; overflow: hidden; }
 .wmbar i { display: block; height: 100%; border-radius: 5px; }
 .wmbar i.saved { background: var(--green); } .wmbar i.market { background: var(--blue); } .wmbar i.moved { background: var(--neutral); } .wmbar i.neg { background: var(--red); }
-@media (max-width: 900px) { .wm { grid-template-columns: 1fr; } .wm .wmtotal, .wm.three .wmtotal { grid-row: auto; } }
+/* Money moved to your own untracked accounts is still yours: neutral either way, never red. */
+.wmbar i.moved.neg { background: var(--neutral); }
+@media (max-width: 900px) { .wm { grid-template-columns: 1fr; } .wm .wmtotal, .wm[class*=rows] .wmtotal { grid-row: auto; } }
 
 /* Settings › App */
 .row.mid { align-items: center; }

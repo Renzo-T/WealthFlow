@@ -78,6 +78,8 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
      unpaired ones naming an account by its number (mask) get `transfer_account`. Into savings/investments = a
      contribution (Savings & investments group).
    - Not spending: Income, Transfer, Savings & investments, Debt repayment, Split (`NOT_SPENDING`, `SPEND_SQL`).
+   - "Spent" totals (standing strip, month spread total, budget totals) all use `spendingBetween()`: a refund reduces
+     only its own group, never below zero; what's left out is returned as `refunds` and named in the UI.
    - **Splits**: each part is a transaction row (`split_of` = the original's id, your category); the original gets
      `is_split` and category/group "Split", so totals count the parts. Raw per-account sums (balance history, bill
      detection, transfer pairing) must skip `split_of IS NOT NULL` rows; the transactions list shows originals with
@@ -111,6 +113,9 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
 8. **Insights** (`server/insights.js`): cash flow, top spending, allocation (`holdingKind`), money flow (`flow`,
    `accountFlow`), coverage (which bank's history starts last; months before it are "partial").
    `accountHistory()` (`server/summary.js`) gives per-account daily balances; net worth history sums it.
+   Assets and debts you add (`server/assets.js`) have a value history (`manual_asset_values`: value from a date on, ''
+   = from the start), so a new value never backdates; a transfer can be counted toward one (`tx_id`), which takes it
+   out of What moved's "moved to accounts not tracked". `manual_assets.value` is kept as today's value.
 
 ## Plaid quirks we've hit
 - New connections fill in slowly; `/transactions/refresh` and `/investments/refresh` fetch immediately.

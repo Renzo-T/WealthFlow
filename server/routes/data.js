@@ -7,6 +7,7 @@ import { cashFlow, topCategories, allocation, upcoming, flow, accountFlow, holdi
 import { classify, CATEGORIES, GROUPS, NOT_SPENDING, pickerGroups, peerOf, SPEND_SQL, reviewSince, historyStart, historyCapped } from '../categories.js';
 import { describe } from '../describe.js';
 import { accountHistory } from '../summary.js';
+import { manualAssets, linkCandidates } from '../assets.js';
 import { monthSpread, monthReplay } from '../spread.js';
 import { bills, calendar, seriesKey, freeToSpend, paycheckCandidates, paycheckRule, markPaycheckHandled } from '../recurring.js';
 import { budgetMonth } from '../budget.js';
@@ -58,7 +59,8 @@ router.get('/networth', (_req, res) => {
       return { ...a, apr: interest[a.id]?.apr ?? null, interest_month: interest[a.id]?.interest_month ?? null, spark: untracked ? h.filter((p) => !p.est).map((p) => p.balance) : h.map((p) => p.balance), estimated: h.some((p) => p.est),
         change: untracked ? null : h.length > 1 ? h.at(-1).balance - h[0].balance : 0, tracking_since: untracked ? realFrom ?? new Date().toLocaleDateString('en-CA') : null };
     }),
-    manual: db.prepare('SELECT * FROM manual_assets ORDER BY id').all(),
+    manual: manualAssets(),
+    candidates: linkCandidates(),
     lastSync: db.prepare("SELECT value FROM meta WHERE key = 'last_sync'").get()?.value ?? null,
   });
 });

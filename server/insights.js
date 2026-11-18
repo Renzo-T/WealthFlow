@@ -232,7 +232,7 @@ export function holdingKind(h) {
 }
 
 // Assets only (no cards or loans). Accounts with holdings are split by holding kind; others by account type.
-const MANUAL_LABEL = { real_estate: 'Real estate', vehicle: 'Vehicles', other: 'Other' };
+const MANUAL_LABEL = { real_estate: 'Real estate', vehicle: 'Vehicles', investment: 'Investments (no detail)', receivable: 'Owed to you', other: 'Other' };
 export function allocation() {
   const sums = {};
   const add = (k, v) => { if (v > 0) sums[k] = (sums[k] ?? 0) + v; };

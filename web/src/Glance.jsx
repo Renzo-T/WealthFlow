@@ -18,7 +18,9 @@ export default function Glance({ todo = [], upcoming = [], budgets }) {
   const rows = useStampedExit(todo, (t) => t.key); // a kind of thing that got sorted holds its place for a stamp
   const caught = rows.length === 0;
   const groups = (budgets?.items ?? []).filter((b) => b.amount > 0);
-  const total = groups.reduce((s, b) => s + b.amount, 0), spent = groups.reduce((s, b) => s + b.spent, 0);
+  const total = groups.reduce((s, b) => s + b.amount, 0), spent = groups.reduce((s, b) => s + b.spent, 0), left = total - spent;
+  // The four groups closest to (or past) their budget; one that hasn't started yet says nothing at a glance.
+  const watch = [...groups].sort((a, b) => b.spent / b.amount - a.spent / a.amount).slice(0, 4);
   return (
     <section className={`card glance${caught ? ' caught' : ''}`} aria-label="At a glance">
       {caught ? <p className="gcaught small"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" /></svg>Nothing to sort.</p>
@@ -42,8 +44,8 @@ export default function Glance({ todo = [], upcoming = [], budgets }) {
       <div className="gsec">
         <div className="ghead"><h2>Budget</h2><a className="small" href="#/budget">Budget</a></div>
         {groups.length === 0 ? <p className="gquiet small">No budget yet. <a href="#/budget">Set one up</a> and this shows how each group is tracking.</p> : <>
-          <div className="gtotal small"><b className="amt">{usd(spent)}</b> <span className="muted">of <span className="amt">{usd(total)}</span> budgeted</span></div>
-          {groups.slice(0, 4).map((b) => {
+          <div className="gtotal small"><b className={`amt${left < -0.5 ? ' bad' : ''}`}>{usd(Math.abs(left))}</b> <span className="muted">{left < -0.5 ? 'over' : 'left'} of <span className="amt">{usd(total)}</span> budgeted</span></div>
+          {watch.map((b) => {
             const p = b.amount ? (b.spent / b.amount) * 100 : 0;
             return (
               <div className="gbud" key={b.category} title={tipText(`${b.category}: ${usd2(b.spent)} of ${usd2(b.amount)}`)}>

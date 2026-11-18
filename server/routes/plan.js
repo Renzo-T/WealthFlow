@@ -5,6 +5,7 @@ import { CATEGORIES, GROUPS, groupOf } from '../categories.js';
 import { budgetMonth, budgetGroups } from '../budget.js';
 import { ACCT, cashFlow } from '../insights.js';
 import { reachedOn } from '../goals.js';
+import { KINDS, manualAssets, linkCandidates, setValue, entriesOf, syncCurrent, linkTransfer } from '../assets.js';
 
 const router = Router();
 const num = (v) => { const n = Number(v); return v !== '' && v != null && Number.isFinite(n) && n >= 0 ? n : null; };
@@ -207,18 +208,63 @@ router.delete('/goals/:id', (req, res) => {
   res.json({ ok: true });
 });
 
-// Things Plaid can't see: a house, a car, or a loan. Liabilities are subtracted from net worth.
-const KINDS = ['real_estate', 'vehicle', 'other', 'liability'];
-router.get('/assets', (_req, res) => res.json(db.prepare('SELECT * FROM manual_assets ORDER BY id').all()));
+// Things Plaid can't see: a house, a car, a loan you made or owe. Debts are subtracted from net worth. Each has a value
+// history (assets.js), so a new value counts from the day it changed and history before it keeps the old one.
+const isDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d ?? '');
+const assetOr404 = (req, res) => {
+  const a = db.prepare('SELECT * FROM manual_assets WHERE id = ?').get(req.params.id);
+  if (!a) res.status(404).json({ error_message: 'That asset no longer exists.' });
+  return a;
+};
+router.get('/assets', (_req, res) => res.json({ assets: manualAssets(), candidates: linkCandidates() }));
 router.post('/assets', (req, res) => {
   const name = String(req.body.name ?? '').trim(), value = num(req.body.value);
   if (!name || !value) return bad(res, 'Give it a name and a value above zero.');
-  db.prepare('INSERT INTO manual_assets (name, value, kind) VALUES (?,?,?)')
+  // since: the day you got it (it adds nothing to net worth before then); empty = you had it all along.
+  const since = isDate(req.body.since) ? req.body.since : '';
+  if (since > iso(new Date())) return bad(res, 'The date can\'t be in the future.');
+  const { lastInsertRowid: id } = db.prepare('INSERT INTO manual_assets (name, value, kind) VALUES (?,?,?)')
     .run(name, value, KINDS.includes(req.body.kind) ? req.body.kind : 'other');
+  setValue(Number(id), since, value);
+  res.json({ ok: true, id: Number(id) });
+});
+router.patch('/assets/:id', (req, res) => {
+  const a = assetOr404(req, res); if (!a) return;
+  const name = req.body.name == null ? a.name : String(req.body.name).trim() || a.name;
+  const kind = KINDS.includes(req.body.kind) ? req.body.kind : a.kind;
+  db.prepare('UPDATE manual_assets SET name = ?, kind = ? WHERE id = ?').run(name, kind, a.id);
+  res.json({ ok: true });
+});
+// A value from a date on ('' or no date = from the start). Same date again replaces that entry.
+router.post('/assets/:id/values', (req, res) => {
+  const a = assetOr404(req, res); if (!a) return;
+  const value = num(req.body.value), date = isDate(req.body.date) ? req.body.date : '';
+  if (value == null) return bad(res, 'Enter a value of zero or more.');
+  if (date > iso(new Date())) return bad(res, 'The date can\'t be in the future.');
+  setValue(a.id, date, value);
+  res.json({ ok: true });
+});
+router.delete('/assets/:id/values/:vid', (req, res) => {
+  const a = assetOr404(req, res); if (!a) return;
+  if (entriesOf(a.id).length < 2) return bad(res, 'An asset needs at least one value. Remove the asset instead.');
+  db.prepare('DELETE FROM manual_asset_values WHERE id = ? AND asset_id = ?').run(req.params.vid, a.id);
+  syncCurrent(a.id);
+  res.json({ ok: true });
+});
+// Count a transfer toward the asset from its date: mode "add" (the value grew by it) or "included" (it already has it).
+router.post('/assets/:id/link', (req, res) => {
+  const a = assetOr404(req, res); if (!a) return;
+  const t = db.prepare('SELECT id, date, amount FROM transactions WHERE id = ?').get(req.body.tx_id);
+  if (!t) return bad(res, 'That transaction no longer exists.');
+  if (db.prepare('SELECT 1 FROM manual_asset_values WHERE tx_id = ?').get(t.id)) return bad(res, 'That transfer already counts toward an asset.');
+  linkTransfer(a, t, req.body.mode === 'included' ? 'included' : 'add');
   res.json({ ok: true });
 });
 router.delete('/assets/:id', (req, res) => {
-  db.prepare('DELETE FROM manual_assets WHERE id = ?').run(req.params.id);
+  db.transaction(() => {
+    db.prepare('DELETE FROM manual_asset_values WHERE asset_id = ?').run(req.params.id);
+    db.prepare('DELETE FROM manual_assets WHERE id = ?').run(req.params.id);
+  })();
   res.json({ ok: true });
 });
 

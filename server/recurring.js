@@ -88,6 +88,17 @@ export function ruleText(r) {
 }
 export const frequencyOf = (r) => ({ semi: 'Twice a month', weeks: r?.n === 1 ? 'Weekly' : `Every ${r?.n} weeks`, months: r?.n === 12 ? 'Yearly' : r?.n === 3 ? 'Quarterly' : `Every ${r?.n} months` }[r?.kind] ?? 'Monthly');
 
+// Where to look for the next date after a payment on `last`: a payment covers the occurrence it's nearest to, so one
+// that posted a day or two early (the 14th for the 15th) or late (the 4th for the 1st) doesn't leave that occurrence
+// looking due. The window is a fifth of the gap between payments (at least 2 days), well under half of it. Only for
+// detected schedules, learned from the payments themselves; a rule you set is taken as you set it.
+const GAP = { weeks: (r) => 7 * r.n, months: (r) => 30 * r.n, semi: () => 15 };
+export function afterPayment(r, last, ctx = {}) {
+  const tol = Math.max(2, Math.round((GAP[r.kind]?.(r) ?? 30) * 0.2));
+  const covered = nextFromRule(r, addDays(last, -tol), ctx);
+  return covered && covered <= addDays(last, tol) && covered > last ? addDays(covered, 1) : addDays(last, 1);
+}
+
 // First date on or after `from` that the rule produces. `due` needs the card's due date in ctx.
 export function nextFromRule(r, from, ctx = {}) {
   if (MONTHLY[r.kind]) {
@@ -301,7 +312,7 @@ export function bills(today = new Date().toLocaleDateString('en-CA')) {
     if (set?.rule || b.source === 'manual') next = nextFromRule(rule, b.last_date ? [addDays(b.last_date, 1), addDays(today, -3)].sort().at(-1) : today, b);
     else if (b.source === 'plaid') next = b.plaid_next;
     else if (b.source === 'card') next = nextFromRule(rule, b.paid ? addDays(b.due, 1) : addDays(today, -3), b);
-    else next = nextFromRule(rule, addDays(b.last_date, 1), b);
+    else next = nextFromRule(rule, afterPayment(rule, b.last_date, b), b);
     let ended = false;
     if (next && next < today) {
       const late = d2n(today) - d2n(next);

@@ -1,9 +1,11 @@
 // Money. Rule of thumb: individual transactions and bills show cents (usd2); totals and summaries show whole
 // dollars (usd); chart axes use compact ($633K). Signed amounts use a real minus sign (−), never a hyphen.
-export const usd2 = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-export const usd = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+// Intl writes negatives with a hyphen-minus ("-$35"); every formatter here swaps it for the real minus sign.
+const minus = (s) => s.replace('-', '−');
+export const usd2 = (n) => minus(n.toLocaleString('en-US', { style: 'currency', currency: 'USD' }));
+export const usd = (n) => minus(n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }));
 const compactFmt = [0, 1].map((d) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: d }));
-export const usdCompact = (n, digits = 1) => compactFmt[digits].format(n);
+export const usdCompact = (n, digits = 1) => minus(compactFmt[digits].format(n));
 export const signed = (n, fmt = usd2) => `${n < 0 ? '−' : '+'}${fmt(Math.abs(n))}`;
 // Chart colours. SERIES is four hues that stay distinct in every pairing, including for colour-blind readers
 // (checked with the dataviz validator, each theme against its own surface); anything beyond four is grey or folded into

@@ -209,3 +209,22 @@ test('a shop visited every two weeks by chance is not a bill; a steady charge fr
   assert.ok(find('Chewy'), 'a steady charge from a shop is still a bill');
   assert.ok(find('Acme Corp'), 'varying pay is still detected');
 });
+
+// A card charge usually posts on the 15th but posted on the 14th in November. That payment covers the 15th: the next one is next month's,
+// not "due today" two days later.
+test('a payment that posts a day or two early covers that month, so the bill isn\'t shown as due again', () => {
+  for (const d of ['2026-07-15', '2026-08-15', '2026-09-15', '2026-10-15', '2026-11-14']) // a card: posts on weekends too, one day early in Nov
+    tx('chk', d, 6.83, 'ACME INSURANCE', { primary: 'GENERAL_SERVICES', detailed: 'GENERAL_SERVICES_INSURANCE', merchant: 'Acme Insurance' });
+  classify();
+  const b = bills('2026-11-17').find((x) => x.name === 'Acme Insurance');
+  assert.equal(b.rule.kind, 'dom');
+  assert.equal(b.next_date, '2026-12-15');
+  assert.equal(b.ended, false);
+});
+
+test('a monthly bill paid a few days late isn\'t due again the same month', () => {
+  for (const d of ['2026-07-01', '2026-08-01', '2026-09-01', '2026-10-01', '2026-11-04'])
+    tx('chk', d, 50, 'ACME GYM', { primary: 'PERSONAL_CARE', detailed: 'PERSONAL_CARE_GYMS_AND_FITNESS_CENTERS', merchant: 'Acme Gym' });
+  classify();
+  assert.equal(bills('2026-11-05').find((x) => x.name === 'Acme Gym').next_date, '2026-12-01');
+});

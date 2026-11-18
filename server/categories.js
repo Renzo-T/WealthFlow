@@ -40,6 +40,15 @@ export const CATEGORIES = Object.values(GROUPS).flat();
 // Split: an original transaction whose parts carry the categories (so it isn't counted itself).
 export const NOT_SPENDING = ['Income', 'Transfer', 'Savings & investments', 'Debt repayment', 'Split'];
 export const SPEND_SQL = `COALESCE(grp,'Misc') NOT IN (${NOT_SPENDING.map((g) => `'${g}'`).join(',')})`;
+// Spending between two dates (inclusive), group by group: a refund reduces its own group's spending but never below
+// zero, so a big refund (a cancelled trip) doesn't make the rest of the month look free. refunds: what was left out.
+// The one definition of "spent" for the dashboard, the month spread and the budget's totals.
+export function spendingBetween(from, to) {
+  let spent = 0, refunds = 0;
+  for (const g of db.prepare(`SELECT COALESCE(grp, 'Misc') g, SUM(amount) s FROM transactions WHERE date >= ? AND date <= ? AND ${SPEND_SQL} GROUP BY 1`).all(from, to))
+    if (g.s > 0) spent += g.s; else refunds -= g.s;
+  return { spent, refunds };
+}
 export const BUDGET_GROUPS = Object.keys(GROUPS).filter((g) => g !== 'Income' && g !== 'Transfer');
 
 // Plaid's personal_finance_category → subcategory. Detailed wins; the primary is the fallback.

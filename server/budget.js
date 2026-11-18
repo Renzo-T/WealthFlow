@@ -139,7 +139,9 @@ export function budgetMonth(month, today = new Date().toLocaleDateString('en-CA'
     month, prev: shiftMonth(month, -1), next: shiftMonth(month, 1), progress: Math.min(1, Math.max(0, (now - start) / (end - start))),
     income, expenses,
     totals: { income: income.budget, incomeActual: income.actual, expenses: expenses.reduce((s, g) => s + g.budget, 0),
-      expensesActual: expenses.reduce((s, g) => s + g.actual, 0), savedExtra, fixed: kindTotals('fixed'), flexible: kindTotals('flexible'),
+      // A group's refunds reduce only that group (never below zero), as everywhere "spent" is shown; what's left out is
+      // named under the total.
+      expensesActual: expenses.reduce((s, g) => s + Math.max(0, g.actual), 0), refundsLeftOut: expenses.reduce((s, g) => s + Math.max(0, -g.actual), 0), savedExtra, fixed: kindTotals('fixed'), flexible: kindTotals('flexible'),
       nonmonthly: kindTotals('nonmonthly') },
     leftToBudget: income.budget - expenses.reduce((s, g) => s + g.budget, 0),
     trips: { counted: tripsInBudget(), left_out: tripsInBudget() ? 0 : db.prepare(`SELECT COALESCE(SUM(t.amount), 0) v FROM transactions t

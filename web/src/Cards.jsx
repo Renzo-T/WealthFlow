@@ -65,12 +65,15 @@ function Delta({ v, upIsGood = true, unit = '%', vs = 'vs. last month', hint = '
 
 const monthName = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'long' });
 
-// This month so far vs the same days of last month, and all of last month.
+// This month so far vs the same days of last month, and all of last month. Refunds beyond a group's own spending are
+// named, since they aren't taken off the total.
 const monthTip = (s, x, what) => <TipList title={what} rows={[
   ['This month so far', usd(x.value)],
   [`${monthName(s.prevMonth).slice(0, 3)} 1${s.day > 1 ? `–${s.day}` : ''} (same days)`, usd(x.prev)],
   [`All of ${monthName(s.prevMonth)}`, usd(x.lastMonth)],
-]} note={s.early ? 'The % comparison starts on the 5th, when there are enough days to compare.' : 'The % compares the same number of days.'} />;
+  ...(x.refunds > 0.5 ? [['Refunds not counted', usd(x.refunds)]] : []),
+]} note={[s.early ? 'The % comparison starts on the 5th, when there are enough days to compare.' : 'The % compares the same number of days.',
+  x.refunds > 0.5 ? "A refund only reduces its own group's spending, never below zero, so a big one doesn't make the rest of the month look free." : null].filter(Boolean).join(' ')} />;
 
 // Where you stand, read first: one ruled strip, net worth largest, then what's free to spend and the month's spending
 // against the budget. Income lives in Cash flow and on hover in Reports.

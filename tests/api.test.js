@@ -451,6 +451,25 @@ test('net worth breakdown: saved (income − spending), moved to untracked accou
   assert.equal(Math.round(b.moved), 0);
   assert.equal(Math.round(b.market), 100);
   assert.equal(Math.round(b.saved + b.moved + b.market), Math.round(b.change));
+  // The IRA went up $2,900, but $2,800 of that was your own money: its market row says +$100, not +$2,900.
+  const ira = b.investments.find((a) => a.name === 'ira' || a.name === 'Brokerage' || a.added);
+  assert.deepEqual([Math.round(ira.change), Math.round(ira.added)], [100, 2800]);
+
+  // Seen only from checking, naming the IRA by its number: still money you moved in, not a gain.
+  db.prepare('DELETE FROM transactions WHERE account_id = ?').run('ira');
+  db.prepare("UPDATE transactions SET transfer_pair = NULL, transfer_account = 'ira' WHERE id = ?").run(out);
+  b = (await get('/networth/breakdown?period=all')).body;
+  const ira2 = b.investments.find((a) => Math.abs(a.added) > 0);
+  assert.deepEqual([Math.round(ira2.change), Math.round(ira2.added)], [100, 2800]);
+
+  // A pending refund isn't in the card's balance yet, so it isn't "saved" yet either (it would leave −$450 in market).
+  const before = b;
+  const p = tx('card', today, -450, 'TRAVEL CO REFUND', { primary: 'TRAVEL' });
+  db.prepare('UPDATE transactions SET pending = 1 WHERE id = ?').run(p);
+  classify();
+  db.prepare("UPDATE transactions SET transfer_pair = NULL, transfer_account = 'ira' WHERE id = ?").run(out); // as set above
+  b = (await get('/networth/breakdown?period=all')).body;
+  assert.deepEqual([Math.round(b.saved), Math.round(b.market)], [Math.round(before.saved), Math.round(before.market)]);
   db.prepare('DELETE FROM balance_snapshots').run();
 });
 
@@ -740,4 +759,73 @@ test('card interest: the Net worth page gets the APR and a monthly estimate only
   const by = Object.fromEntries((await get('/networth')).body.accounts.map((a) => [a.id, a]));
   assert.deepEqual([by.late.apr, by.late.interest_month], [24.99, 24.99]); // 1,200 × 24.99% ÷ 12
   for (const id of ['paid', 'noapr', 'early', 'chk']) assert.deepEqual([id, by[id].apr, by[id].interest_month], [id, null, null]);
+});
+
+// ---------- Assets you add by hand ----------
+test('assets: add, give a new value from a date, count a transfer toward one, and What moved treats it as a move', async () => {
+  const today = new Date().toLocaleDateString('en-CA');
+  const y = new Date(Date.now() - 864e5).toLocaleDateString('en-CA');
+  for (const [d, v] of [[y, 30000], [today, 2000]]) for (const [a, b] of [['chk', v], ['card', 0], ['ven', 0]])
+    db.prepare('INSERT OR REPLACE INTO balance_snapshots (date, account_id, balance) VALUES (?,?,?)').run(d, a, b);
+  const t = tx('chk', today, 28000, 'TRANSFER TO 9999', { primary: 'TRANSFER_OUT', detailed: 'TRANSFER_OUT_ACCOUNT_TRANSFER' });
+  classify();
+
+  let r = await post('/assets', { name: 'Loan to Alex Rivera', value: '40000', kind: 'receivable' });
+  assert.equal(r.status, 200);
+  const id = r.body.id;
+  r = await get('/networth');
+  assert.equal(r.body.manual[0].entries.length, 1);
+  assert.deepEqual(r.body.candidates.map((c) => c.id), [t]); // the transfer is offered to count toward it
+  let b = (await get('/networth/breakdown?period=all')).body;
+  assert.equal(Math.round(b.moved), -28000);
+
+  r = await post(`/assets/${id}/link`, { tx_id: t, mode: 'add' });
+  assert.equal(r.status, 200);
+  assert.equal((await post(`/assets/${id}/link`, { tx_id: t, mode: 'add' })).status, 400); // only once
+  r = await get('/networth');
+  assert.equal(r.body.manual[0].value, 68000);
+  assert.equal(r.body.candidates.length, 0);
+  b = (await get('/networth/breakdown?period=all')).body;
+  assert.equal(Math.round(b.change), 0); // −$28,000 checking, +$28,000 loan
+  assert.equal(Math.round(b.moved), 0);
+  assert.equal(Math.round(b.revalued), 0);
+  assert.equal(Math.round(b.market), 0);
+
+  // A new value you enter (no transfer) shows as its own row.
+  assert.equal((await post(`/assets/${id}/values`, { date: '2999-01-01', value: 1 })).status, 400);
+  assert.equal((await post(`/assets/${id}/values`, { date: today, value: 70000 })).status, 200);
+  b = (await get('/networth/breakdown?period=all')).body;
+  assert.equal(Math.round(b.revalued), 2000);
+  assert.deepEqual(b.valued.map((a) => a.name), ['Loan to Alex Rivera']);
+  assert.equal(Math.round(b.saved + b.moved + b.revalued + b.market), Math.round(b.change));
+
+  // Rename, change kind, remove a value (not the last), remove the asset.
+  assert.equal((await patch(`/assets/${id}`, { name: 'Loan to Sam', kind: 'other' })).status, 200);
+  let a = (await get('/networth')).body.manual[0];
+  assert.equal(a.name, 'Loan to Sam'); assert.equal(a.kind, 'other');
+  const todays = a.entries.find((e) => e.date === today);
+  assert.equal((await del(`/assets/${id}/values/${todays.id}`)).status, 200);
+  a = (await get('/networth')).body.manual[0];
+  assert.equal(a.value, 40000);
+  assert.equal((await del(`/assets/${id}/values/${a.entries[0].id}`)).status, 400);
+  assert.equal((await del(`/assets/${id}`)).status, 200);
+  assert.equal((await get('/networth')).body.manual.length, 0);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM manual_asset_values').get().n, 0);
+  db.prepare('DELETE FROM balance_snapshots').run();
+});
+
+// ---------- One definition of "spent" ----------
+test('spent this month: a refund reduces only its own group, and the strip, the month spread and the budget agree', async () => {
+  const today = new Date().toLocaleDateString('en-CA'), month = today.slice(0, 7), first = `${month}-01`;
+  tx('chk', first, 300, 'ACME GROCERY', { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_GROCERIES' });
+  tx('card', first, 200, 'ACME AIR', { primary: 'TRAVEL', detailed: 'TRAVEL_FLIGHTS' });
+  tx('card', today, -1000, 'ACME AIR REFUND', { primary: 'TRAVEL', detailed: 'TRAVEL_FLIGHTS' }); // last month's trip, refunded
+  classify();
+  const s = (await get('/summary')).body;
+  assert.equal(Math.round(s.spending.value), 300); // not 0: Travel's refund doesn't pay for groceries
+  assert.equal(Math.round(s.spending.refunds), 800);
+  assert.equal(Math.round((await get(`/month-spread?month=${month}`)).body.total), 300);
+  const b = (await get(`/budget?month=${month}`)).body;
+  assert.equal(Math.round(b.totals.expensesActual), 300);
+  assert.equal(Math.round(b.totals.refundsLeftOut), 800);
 });

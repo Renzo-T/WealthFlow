@@ -1,7 +1,7 @@
 // The month spread (dashboard): one entry per day of a month with what was spent that day, and the bills and
 // paydays that fell on it, already happened or still expected. Read-only; nothing here changes data.
 import db from './db.js';
-import { SPEND_SQL } from './categories.js';
+import { SPEND_SQL, spendingBetween } from './categories.js';
 import { bills, calendar, seriesKey, SPENDABLE, occurrences } from './recurring.js';
 import { accountHistory } from './summary.js';
 
@@ -53,7 +53,9 @@ export function monthSpread(month, today = new Date().toLocaleDateString('en-CA'
     days.push({ date, spent: date <= today ? s : null, step: date <= today ? step(s) : null, marks: marks[date] ?? [],
       future: date > today, today: date === today, weekend: [0, 6].includes(new Date(`${date}T00:00`).getDay()) });
   }
-  return { month, ramp: RAMP, days, total: days.reduce((t, x) => t + (x.spent ?? 0), 0) };
+  // The month's total uses the one definition of spent (refunds only reduce their own group), not the sum of the dots.
+  const last = `${month}-${String(daysIn).padStart(2, '0')}`;
+  return { month, ramp: RAMP, days, total: spendingBetween(`${month}-01`, today < last ? today : last).spent };
 }
 
 // The month replayed (Money flow): the cash in your everyday accounts (the ones Free to spend counts) at the end of each

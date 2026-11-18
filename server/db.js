@@ -192,4 +192,12 @@ if (!db.prepare('PRAGMA table_info(holdings)').all().some((c) => c.name === 'pri
   db.prepare("INSERT OR IGNORE INTO holding_prices (security_id, date, price) SELECT security_id, ?, MAX(price) FROM holdings WHERE price > 0 AND type != 'cash' GROUP BY security_id")
     .run(new Date().toLocaleDateString('en-CA'));
 }
+// A value history for assets and debts you add by hand (assets.js): the value from `date` on ('' = from the start), and
+// the transfer that changed it, if any. Existing assets start with today's value from the start, as they were counted.
+if (!db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'manual_asset_values'").get()) {
+  db.exec(`CREATE TABLE manual_asset_values (id INTEGER PRIMARY KEY AUTOINCREMENT, asset_id INTEGER NOT NULL, date TEXT NOT NULL DEFAULT '',
+      value REAL NOT NULL, tx_id TEXT);
+    CREATE INDEX idx_mav_asset ON manual_asset_values(asset_id, date);
+    INSERT INTO manual_asset_values (asset_id, date, value) SELECT id, '', value FROM manual_assets;`);
+}
 export default db;
