@@ -74,6 +74,8 @@ CREATE TABLE IF NOT EXISTS card_statements (
 CREATE TABLE IF NOT EXISTS income_names (key TEXT PRIMARY KEY, label TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS category_rules (
   id INTEGER PRIMARY KEY AUTOINCREMENT, pattern TEXT NOT NULL, category TEXT NOT NULL);
+-- Your own name for a merchant: pattern is the cleaned name the list shows, label what to show instead.
+CREATE TABLE IF NOT EXISTS merchant_names (pattern TEXT PRIMARY KEY, label TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS balance_snapshots (
   date TEXT, account_id TEXT, balance REAL, PRIMARY KEY (date, account_id));
 CREATE TABLE IF NOT EXISTS recurring (

@@ -72,15 +72,14 @@ function HoldingRow({ h, share, held, indent }) {
       <td className="wrap" style={indent ? { paddingLeft: '1.5rem' } : undefined}>
         <i className="dot" style={{ background: COLORS[h.kind] }} title={h.kind} />{h.name}{h.ticker && <span className="badge">{h.ticker}</span>}
         {held && <div className="small muted">{held}</div>}</td>
-      <td className="r">{cash || !(h.price > 0) ? '' : <>{usd2(h.price)}{stale ? <div className="small muted">as of {day(h.price_as_of)}</div> : null}</>}</td>
+      <td className="r">{cash || !(h.price > 0) ? '' : <>{usd2(h.price)}
+        {change != null && <div className={`small ${tone(change)}`} title={`Since ${day(h.prev_date)}`}>{signed2(change)}</div>}
+        {stale ? <div className="small muted">as of {day(h.price_as_of)}</div> : null}</>}</td>
       <td className="r">{cash ? '' : change == null ? <span className="muted" title={NO_CHANGE}>—</span>
-        : <span className={tone(change)} title={`Since ${day(h.prev_date)}`}>{signed2(change)}<div className="small">{pct((change / h.prev_price) * 100, 2)}</div></span>}</td>
-      <td className="r">{cash ? '' : change == null ? <span className="muted" title={NO_CHANGE}>—</span>
-        : <span className={tone(change)}>{signed2(change * h.quantity)}<div className="small">{pct((change / h.prev_price) * 100, 2)}</div></span>}</td>
+        : <span className={tone(change)} title={`Since ${day(h.prev_date)}`}>{signed2(change * h.quantity)}<div className="small">{pct((change / h.prev_price) * 100, 2)}</div></span>}</td>
       <td className="r">{cash ? '' : <Gain value={h.value} cost={h.cost} />}</td>
       <td className="r"><b>{usd2(h.value)}</b><div className="small muted">{pct(share)}</div></td>
-      <td className="r">{cash ? '' : qty(h.quantity)}</td>
-      <td className="r">{cash || h.cost == null || !h.quantity ? '' : <>{usd2(h.cost / h.quantity)}<div className="small muted">{usd0(h.cost)} total</div></>}</td>
+      <td className="r">{cash ? '' : <>{qty(h.quantity)}{h.cost == null || !h.quantity ? null : <div className="small muted">at {usd2(h.cost / h.quantity)} avg</div>}</>}</td>
       <td className="r">{cash ? '' : <Range low={h.low} high={h.high} price={h.price} since={h.range_since} />}</td>
     </tr>
   );
@@ -137,6 +136,8 @@ export default function Investments() {
     return m.set(h.account_id, g);
   }, new Map()).values()].sort((a, b) => b.value - a.value);
 
+  const holdingParts = sumBy(rows, kindOf), accountParts = sumBy(rows, accountKind);
+
   return (
     <>
       <PageHeader title="Investments" sub="What you hold, across brokerage, retirement and HSA accounts." />
@@ -151,19 +152,19 @@ export default function Investments() {
             <div className={`big ${cost && knownValue - cost < 0 ? 'bad' : 'good'}`}>{cost ? signed(knownValue - cost) : '—'}</div>
             <div className="small muted">{cost ? <>{pct(((knownValue - cost) / cost) * 100)} on the <Hover tip={<TipList title="Left out: no cost basis reported"
               rows={noCost.map((g) => [g.name, usd0(g.value), g.institution])} note="401(k) and similar plans usually don't report what you paid, so their gain is unknown." />}>{usd0(knownValue)} with a known cost</Hover></> : 'No cost basis reported'}</div></div>
-          <div className="card"><h3>Retirement & HSA</h3><div className="big">{pct((retirement / total) * 100, 0)}</div><div className="small muted"><Hover tip={<TipList title="Tax-advantaged" rows={byAccountAll.filter((g) => g.kind !== 'Taxable').map((g) => [g.name, usd0(g.value), g.kind])} />}>{usd0(retirement)} tax-advantaged</Hover>
-              {' · '}<Hover tip={<TipList title="Taxable" rows={byAccountAll.filter((g) => g.kind === 'Taxable').map((g) => [g.name, usd0(g.value), g.institution])} />}>{usd0(total - retirement)} taxable</Hover></div></div>
+          {retirement > 0 && <div className="card"><h3>Retirement & HSA</h3><div className="big">{pct((retirement / total) * 100, 0)}</div><div className="small muted"><Hover tip={<TipList title="Tax-advantaged" rows={byAccountAll.filter((g) => g.kind !== 'Taxable').map((g) => [g.name, usd0(g.value), g.kind])} />}>{usd0(retirement)} tax-advantaged</Hover>
+              {' · '}<Hover tip={<TipList title="Taxable" rows={byAccountAll.filter((g) => g.kind === 'Taxable').map((g) => [g.name, usd0(g.value), g.institution])} />}>{usd0(total - retirement)} taxable</Hover></div></div>}
           <div className="card"><h3>Cash</h3><div className="big">{usd0(cash)}</div><div className="small muted">{pct((cash / total) * 100)} in money market and sweep</div></div>
         </div>
 
         <Panel title="Allocation">
-          <div className="splits">
-            <Split title="By holding type" parts={sumBy(rows, kindOf)} total={total} detail={(k) => {
+          <div className={`splits${holdingParts.length > 1 && accountParts.length > 1 ? '' : ' one'}`}>
+            {holdingParts.length > 1 && <Split title="By holding type" parts={holdingParts} total={total} detail={(k) => {
               const list = positions.filter((p) => p.kind === k);
               return list.length ? <TipList title={k} rows={list.slice(0, 6).map((p) => [p.ticker ?? p.name, usd0(p.value)])} note={list.length > 6 ? `and ${list.length - 6} more` : null} /> : null;
-            }} />
-            <Split title="By account type" parts={sumBy(rows, accountKind)} total={total}
-              detail={(k) => <TipList title={k} rows={byAccountAll.filter((g) => g.kind === k).map((g) => [g.name, usd0(g.value), g.institution])} />} />
+            }} />}
+            {accountParts.length > 1 && <Split title="By account type" parts={accountParts} total={total}
+              detail={(k) => <TipList title={k} rows={byAccountAll.filter((g) => g.kind === k).map((g) => [g.name, usd0(g.value), g.institution])} />} />}
           </div>
         </Panel>
 
@@ -173,9 +174,9 @@ export default function Investments() {
             <button className={view === 'account' ? 'on' : ''} onClick={() => setView('account')}>By account</button>
           </div>}>
           <table className="t holdings">
-            <thead><tr><th>Security</th><th className="r">Last price</th><th className="r">Change</th><th className="r">Today's gain/loss</th>
+            <thead><tr><th>Security</th><th className="r">Last price<div className="small muted">change</div></th><th className="r">Today<div className="small muted">gain/loss</div></th>
               <th className="r">Total gain/loss</th><th className="r">Value<div className="small muted">{view === 'position' ? '% of total' : '% of account'}</div></th>
-              <th className="r">Quantity</th><th className="r">Average cost<div className="small muted">cost basis</div></th><th className="r">Price range</th></tr></thead>
+              <th className="r">Quantity<div className="small muted">average cost</div></th><th className="r">Price range</th></tr></thead>
             <tbody>
               {view === 'position' ? positions.map((p) => (
                 <HoldingRow key={p.key} share={(p.value / total) * 100} h={{ ...p, cost: p.allCost ? p.cost : null }}
@@ -185,10 +186,10 @@ export default function Investments() {
                 const t = totals(list);
                 return (
                   <Fragment key={g.id}>
-                    <tr className="grouprow"><td colSpan="3"><b>{g.name}</b> <span className="small muted">{g.institution}</span></td>
+                    <tr className="grouprow"><td colSpan="2"><b>{g.name}</b> <span className="small muted">{g.institution}</span></td>
                       <td className="r">{t.today == null ? '' : <span className={tone(t.today)}>{signed2(t.today)}</span>}</td>
                       <td className="r">{t.gain == null ? '' : <span className={tone(t.gain)}>{signed2(t.gain)}{t.cost ? <div className="small">{pct((t.gain / t.cost) * 100)}</div> : null}</span>}</td>
-                      <td className="r"><b>{usd2(g.value)}</b><div className="small muted">{pct((g.value / total) * 100)} of total</div></td><td colSpan="3" /></tr>
+                      <td className="r"><b>{usd2(g.value)}</b><div className="small muted">{pct((g.value / total) * 100)} of total</div></td><td colSpan="2" /></tr>
                     {list.map((h) => <HoldingRow key={h.account_id + h.security_id} h={h} share={(h.value / g.value) * 100} indent />)}
                   </Fragment>
                 );
@@ -196,7 +197,7 @@ export default function Investments() {
             </tbody>
           </table>
           <p className="small muted foot">
-            Prices are as of each provider's last update. Change and today's gain/loss compare with the previous price recorded
+            Prices are as of each provider's last update. Price change and today's gain/loss compare with the previous price recorded
             (Plaid only sends today's price, so they appear from the second day); the price range is what's been recorded over the
             past year. Gain is value minus what you paid, where the provider reports it (401(k) plans usually don't). Cash balances
             under a dollar are hidden.</p>

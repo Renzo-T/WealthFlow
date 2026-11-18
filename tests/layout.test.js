@@ -55,3 +55,9 @@ test('a hidden-by-default panel added later starts hidden in a saved layout; a n
   assert.deepEqual(l.hidden, ['extra']);
   assert.ok(l.order.includes('extra') && l.order.includes('fresh'));
 });
+
+test('a saved layout that still names removed dashboard panels drops them', () => {
+  const now = [{ id: 'cards' }, { id: 'recent' }];
+  const l = mergeLayout({ order: ['cards', 'upcoming', 'safe', 'projection', 'recent'], hidden: ['upcoming', 'safe', 'projection'], rail: ['upcoming', 'safe'] }, now);
+  assert.deepEqual(l, { order: ['cards', 'recent'], hidden: [], rail: [] });
+});

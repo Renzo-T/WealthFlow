@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { usdCompact } from './format.js';
+import { usdCompact, niceTicks } from './format.js';
 import { INCOME, SPENDING } from './format.js';
 
 import useWidth from './useWidth.js';
@@ -9,11 +9,11 @@ import { usd } from './format.js';
 
 // Drawn at its real width (useWidth), so text stays the same size at any window size.
 const H = 200, L = 52, T = 8, B = 24;
-const compact = { format: (n) => usdCompact(n, 0) };
 
 export default function CashFlow({ data }) {
   const [ref, W] = useWidth(520);
-  const max = Math.max(...data.flatMap((d) => [d.income, d.spending]), 1);
+  const top = Math.max(...data.flatMap((d) => [d.income, d.spending]), 1);
+  const { ticks, hi: max } = niceTicks(0, top, 4);
   const y = (v) => T + (1 - v / max) * (H - T - B);
   const gw = (W - L) / data.length, bw = gw * 0.26;
   const [tip, show, hide] = useTip();
@@ -24,13 +24,13 @@ export default function CashFlow({ data }) {
       <div ref={ref} />
       <div className="flowchart">
       <svg className="chart" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Income and spending by month" onMouseLeave={() => { hide(); setOn(null); }}>
-        {[0, 1, 2, 3].map((k) => { const v = (max * k) / 3; return <g key={k}><line className="grid" x1={L} x2={W} y1={y(v)} y2={y(v)} /><text x={L - 6} y={y(v) + 4} textAnchor="end">{compact.format(v)}</text></g>; })}
+        {ticks.map((v) => { return <g key={v}><line className="grid" x1={L} x2={W} y1={y(v)} y2={y(v)} /><text x={L - 6} y={y(v) + 4} textAnchor="end">{usdCompact(v, 1)}</text></g>; })}
         {data.map((d, i) => {
           const x0 = L + i * gw + gw / 2;
           return (
             <g key={d.month} opacity={(d.partial ? 0.4 : 1) * (on == null || on === i ? 1 : 0.55)}>
-              <rect className="cf-bar" style={{ '--i': i }} x={x0 - bw - 1} y={y(d.income)} width={bw} height={H - B - y(d.income)} rx="3" fill={INCOME} />
-              <rect className="cf-bar" style={{ '--i': i }} x={x0 + 1} y={y(d.spending)} width={bw} height={H - B - y(d.spending)} rx="3" fill={SPENDING} />
+              <rect className="cf-bar cf-in" style={{ '--i': i }} x={x0 - bw - 1} y={y(d.income)} width={bw} height={H - B - y(d.income)} rx="3" fill={INCOME} />
+              <rect className="cf-bar cf-out" style={{ '--i': i }} x={x0 + 1} y={y(d.spending)} width={bw} height={H - B - y(d.spending)} rx="3" fill={SPENDING} />
               <text x={x0} y={H - 7} textAnchor="middle">{new Date(d.month + '-01T00:00').toLocaleDateString('en-US', { month: 'short' })}</text>
               <rect x={L + i * gw} y={T} width={gw} height={H - T} fill="transparent" onMouseMove={(e) => { setOn(i); show(e, <>
                 <b>{monthLabel(d.month)}</b>

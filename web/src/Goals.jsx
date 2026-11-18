@@ -3,7 +3,7 @@ import { api } from './api.js';
 import Progress from './Progress.jsx';
 import { usd } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
-import { Panel, PageHeader, EmptyState, PageSkeleton, Hover, TipList } from './ui.jsx';
+import { Panel, PageHeader, EmptyState, PageSkeleton, Hover, TipList, Est, confirmDialog } from './ui.jsx';
 import { TextStamp } from './Stamp.jsx';
 import { statusText } from './goalStatus.js';
 
@@ -32,8 +32,8 @@ function ReachedStamp({ g }) {
   return <TextStamp kind="in" tilt>Reached{g.reached ? ` ${monthYear(g.reached)}` : ''}</TextStamp>;
 }
 
-// Edit, Remove and (for a goal you track by hand) the saved amount, behind one icon button.
-function RowMenu({ g, onEdit, onRemove, onSaved }) {
+// A small "···" button that opens a few actions (also used for trips). `before(close)` adds anything above them.
+export function ActionMenu({ name, actions, before }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => {
@@ -43,21 +43,26 @@ function RowMenu({ g, onEdit, onRemove, onSaved }) {
     document.addEventListener('mousedown', away); document.addEventListener('keydown', key);
     return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', key); };
   }, [open]);
-  const commit = (e) => { if (e.target.value !== '' && Number(e.target.value) !== g.saved) { onSaved(e.target.value); setOpen(false); } };
   return (
     <span className="rowmenu" ref={ref}>
-      <button type="button" className="rowmenu-btn" aria-label={`Actions for ${g.name}`} aria-haspopup="true" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <button type="button" className="rowmenu-btn" aria-label={`Actions for ${name}`} aria-haspopup="true" aria-expanded={open} onClick={() => setOpen(!open)}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="8" r="1.4" /><circle cx="8" cy="8" r="1.4" /><circle cx="12.5" cy="8" r="1.4" /></svg>
       </button>
-      {open && <div className="rowmenu-pop" role="group" aria-label={`${g.name} actions`}>
-        {!g.account_id && <label className="small muted">Saved
-          <input className="mini" type="number" min="0" step="any" autoFocus defaultValue={g.saved} aria-label={`Saved for ${g.name}`}
-            onBlur={commit} onKeyDown={(e) => e.key === 'Enter' && commit(e)} /></label>}
-        <button type="button" onClick={() => { setOpen(false); onEdit(); }}>Edit</button>
-        <button type="button" onClick={() => { setOpen(false); onRemove(); }}>Remove</button>
+      {open && <div className="rowmenu-pop" role="group" aria-label={`${name} actions`}>
+        {before?.(() => setOpen(false))}
+        {actions.map(([label, run]) => <button key={label} type="button" onClick={() => { setOpen(false); run(); }}>{label}</button>)}
       </div>}
     </span>
   );
+}
+
+// Edit, Remove and (for a goal you track by hand) the saved amount, behind one icon button.
+function RowMenu({ g, onEdit, onRemove, onSaved }) {
+  const commit = (close) => (e) => { if (e.target.value !== '' && Number(e.target.value) !== g.saved) { onSaved(e.target.value); close(); } };
+  return <ActionMenu name={g.name} actions={[['Edit', onEdit], ['Remove', onRemove]]} before={(close) => !g.account_id && (
+    <label className="small muted">Saved
+      <input className="mini" type="number" min="0" step="any" autoFocus defaultValue={g.saved} aria-label={`Saved for ${g.name}`}
+        onBlur={commit(close)} onKeyDown={(e) => e.key === 'Enter' && commit(close)(e)} /></label>)} />;
 }
 
 function Spark({ data }) {
@@ -95,17 +100,22 @@ function GoalForm({ initial, accounts, onSave, onCancel, submit }) {
 
 // One goal as a card: saved amount, progress, what's left, the monthly amount needed by its date, and
 // (for a linked account) the recent pace and when it would get there.
-function GoalCard({ g, accounts, reload }) {
+function useGoalActions(g, reload) {
   const [edit, setEdit] = useState(false);
   const [err, setErr] = useState('');
-  const p = plan(g);
-  const done = g.saved >= g.target;
   const save = async (f) => {
     const r = await api(`/goals/${g.id}`, { method: 'PATCH', body: JSON.stringify(f) });
     if (r.error_message) return setErr(r.error_message);
     setErr(''); setEdit(false); reload();
   };
-  const remove = async () => { if (window.confirm(`Remove the goal "${g.name}"?`)) { await api(`/goals/${g.id}`, { method: 'DELETE' }); reload(); } };
+  const remove = async () => { if (await confirmDialog({ title: `Delete the goal "${g.name}"?`, body: 'The goal goes away; the account it follows is not touched.', confirm: 'Delete goal', danger: true })) { await api(`/goals/${g.id}`, { method: 'DELETE' }); reload(); } };
+  return { edit, setEdit, err, save, remove };
+}
+
+function GoalCard({ g, accounts, reload }) {
+  const { edit, setEdit, err, save, remove } = useGoalActions(g, reload);
+  const p = plan(g);
+  const done = g.saved >= g.target;
   if (edit) return (
     <div className="card goal">
       <GoalForm initial={{ ...g, saved: g.account_id ? '' : g.saved, target_date: g.target_date ?? '', account_id: g.account_id ?? '' }} accounts={accounts}
@@ -126,11 +136,33 @@ function GoalCard({ g, accounts, reload }) {
         {g.account_id && g.pace != null && <div><span className="muted">
           <Hover className="quiet" tip={<TipList title="Recent pace" rows={[['Change per month', `${g.pace >= 0 ? '+' : '−'}${usd(Math.abs(g.pace))}`]]}
             note={`${g.account}'s balance over the last 3 months${g.estimated ? ', partly estimated from transactions' : ''}.`} />}>Recent pace</Hover></span>
-          <b className={`amt ${g.pace > 1 ? 'good' : ''}`}>{Math.abs(g.pace) < 1 ? 'no change' : `${g.pace > 0 ? '+' : '−'}${usd(Math.abs(g.pace))} a month`}</b></div>}
+          <b className={`amt ${g.pace > 1 ? 'good' : ''}`}>{(() => { const t = Math.abs(g.pace) < 1 ? 'no change' : `${g.pace > 0 ? '+' : '−'}${usd(Math.abs(g.pace))} a month`;
+            return g.everyday ? <Est why="Follows a checking account, so bills and paydays move it">{t}</Est> : t; })()}</b></div>}
+        {g.account_id && g.pace != null && g.everyday && <p className="goalpen small muted">Follows a checking account, so bills and paydays move it. Link a savings account, or track it by hand.</p>}
         {p.eta && <div><span className="muted">At that pace</span><b>{monthYear(p.eta)}</b></div>}
         {!g.target_date && !done && <button className="linkbtn" onClick={() => setEdit(true)}>Add a date to see what it takes each month</button>}
       </div>
       <div className="goalsparkslot"><Spark data={g.spark} /></div>
+    </div>
+  );
+}
+
+// Reached goals, compact: one ruled sheet with a row each (name, target, when it got there, and the same menu).
+function ReachedRow({ g, accounts, reload }) {
+  const { edit, setEdit, err, save, remove } = useGoalActions(g, reload);
+  if (edit) return (
+    <div className="reachedrow editing">
+      <GoalForm initial={{ ...g, saved: g.account_id ? '' : g.saved, target_date: g.target_date ?? '', account_id: g.account_id ?? '' }} accounts={accounts}
+        onSave={save} onCancel={() => setEdit(false)} submit="Save" />
+      {err && <p className="bad small">{err}</p>}
+    </div>
+  );
+  return (
+    <div className="reachedrow">
+      <b className="rl-name" title={g.name}>{g.name}</b>
+      <span className="amt">{usd(g.target)}</span>
+      <ReachedStamp g={g} />
+      <RowMenu g={g} onEdit={() => setEdit(true)} onRemove={remove} onSaved={(v) => save({ saved: v })} />
     </div>
   );
 }
@@ -155,10 +187,13 @@ function GoalRow({ g }) {
 }
 
 export function GoalsPanel({ items }) {
+  const all = items;
+  items = all.filter((g) => g.saved < g.target); // reached goals live on the Plan page
   return (
     <Panel title="Goals" actions={<a href="#/plan">Manage</a>}>
-      {items.length === 0 && <EmptyState art="goals" title="Saving for something?" actions={<a className="btn linkbtn-solid" href="#/plan">Add a goal</a>}>
+      {all.length === 0 && <EmptyState art="goals" title="Saving for something?" actions={<a className="btn linkbtn-solid" href="#/plan">Add a goal</a>}>
         Set a target, optionally tied to an account, and watch it fill up.</EmptyState>}
+      {all.length > 0 && items.length === 0 && <p className="small muted mt-0">All {all.length} goal{all.length > 1 ? 's' : ''} reached. <a href="#/plan">See them on Plan</a>.</p>}
       {items.length > 0 && (
         <div className="rl rl-goals" role="table" aria-label="Goals">
           <div className="rl-head" role="row">
@@ -173,7 +208,8 @@ export function GoalsPanel({ items }) {
 }
 
 // Ideas for new goals, sized from your own spending and trips.
-function Ideas({ ideas, start }) {
+function Ideas({ ideas, goals, start }) {
+  const have = new Set(goals.map((g) => g.name.trim().toLowerCase()));
   const list = [
     ideas.emergency3 && ['Emergency fund', ideas.emergency3, <>3 months of your spending (about <span className="amt">{usd(ideas.monthlySpend)}</span> a month)</>],
     ideas.emergency6 && ['Emergency fund', ideas.emergency6, '6 months of spending: the usual advice if your income varies'],
@@ -181,7 +217,10 @@ function Ideas({ ideas, start }) {
     ['House down payment', null, 'Often 10–20% of the price'],
     ['New car', null, null],
     ['Something else', null, null],
-  ].filter(Boolean);
+  ].filter(Boolean)
+    .filter(([name]) => !have.has(name.toLowerCase()))
+    // one emergency-fund idea is enough (the 3-month one)
+    .filter(([name, , why], i, a) => name !== 'Emergency fund' || a.findIndex((x) => x[0] === name) === i);
   return (
     <Panel title="Ideas">
       {list.map(([name, target, why], i) => (
@@ -211,7 +250,8 @@ export default function Goals() {
     if (r.error_message) return setErr(r.error_message);
     setErr(''); setAdding(null); load();
   };
-  const reached = goals.filter((g) => g.saved >= g.target).length;
+  const doneGoals = goals.filter((g) => g.saved >= g.target), active = goals.filter((g) => g.saved < g.target);
+  const reached = doneGoals.length;
   const saved = goals.reduce((s, g) => s + Math.min(g.saved, g.target), 0), target = goals.reduce((s, g) => s + g.target, 0);
   const monthly = goals.map(plan).reduce((s, p) => s + (p.monthly ?? 0), 0);
 
@@ -234,9 +274,12 @@ export default function Goals() {
         <div>
           {goals.length === 0 && !adding && <Panel><EmptyState art="goals" title="Saving for something?" actions={<button className="btn primary" onClick={() => setAdding({})}>Add a goal</button>}>
             Set a target, optionally with a date or tied to an account, and watch it fill up. The ideas on the right are sized from your own spending.</EmptyState></Panel>}
-          <div className="goalgrid">{goals.map((g) => <GoalCard key={g.id} g={g} accounts={accounts} reload={load} />)}</div>
+          {active.length > 0 && <div className={`goalgrid${active.length === 1 ? ' single' : ''}`}>{active.map((g) => <GoalCard key={g.id} g={g} accounts={accounts} reload={load} />)}</div>}
+          {doneGoals.length > 0 && <Panel className={active.length ? 'mt' : ''} title={<>Reached <span className="asof">{doneGoals.length}</span></>}>
+            <div className="reachedshelf">{doneGoals.map((g) => <ReachedRow key={g.id} g={g} accounts={accounts} reload={load} />)}</div>
+          </Panel>}
         </div>
-        {ideas && <aside><Ideas ideas={ideas} start={(f) => { setAdding(f); window.scrollTo({ top: 0, behavior: 'smooth' }); }} /></aside>}
+        {ideas && <aside><Ideas ideas={ideas} goals={goals} start={(f) => { setAdding(f); window.scrollTo({ top: 0, behavior: 'smooth' }); }} /></aside>}
       </div>
     </>
   );

@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from './api.js';
 import { usd, usd2, signed, label, SERIES, NEUTRAL, shortDate, tint } from './format.js';
-import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, tipText, Trend, Est } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, tipText, Trend, Est, confirmDialog } from './ui.jsx';
 import NetWorthChart from './NetWorthChart.jsx';
 import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
 
-// Accounts & net worth: the net worth chart and summary, every account by type (click one for this month's activity
+// Net worth page: the net worth chart and summary, every account by type (click one for this month's activity
 // and its settings), each bank's connection with what to do about it, and assets Plaid can't see.
 
 const monthName = new Date().toLocaleDateString('en-US', { month: 'long' });
@@ -96,7 +96,7 @@ function AssetRow({ a, candidates, open, setOpen, saved }) {
   };
   const link = async (t, mode) => { const r = await post(`/assets/${a.id}/link`, { tx_id: t.id, mode }); setErr(r.error_message ?? ''); saved(); };
   const remove = async () => {
-    if (!window.confirm(`Remove ${a.name}?\n\nIt stops counting toward net worth, including its history.`)) return;
+    if (!await confirmDialog({ title: `Remove ${a.name}?`, body: "It stops counting toward net worth, including its history.", confirm: "Remove", danger: true })) return;
     await api(`/assets/${a.id}`, { method: 'DELETE' }); saved();
   };
   return (
@@ -185,12 +185,13 @@ const GROUPS = [
 const isDebt = (a) => a.type === 'credit' || a.type === 'loan';
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 // Signed change for display: for debts, the balance going up is bad, so colour by what it means for net worth.
-const Change = ({ v, debt, suffix = '', since }) => {
+// `neutral`: a group's total moves when money moves between accounts, so it isn't coloured good or bad.
+const Change = ({ v, debt, suffix = '', since, neutral }) => {
   if (v == null) return <span className="small muted" title="Investment values can't be worked out backwards, so history starts when Mizo Money started tracking">
     {since ? `tracking since ${shortDate(since)}` : 'no history yet'}</span>;
   if (Math.abs(v) < 0.5) return <span className="small muted">no change{suffix}</span>;
   const good = debt ? v < 0 : v > 0;
-  return <span className={`small amt ${good ? 'good' : 'bad'}`}><Trend up={v > 0} /> {usd(Math.abs(v))}{suffix}</span>;
+  return <span className={`small amt${neutral ? ' muted' : good ? ' good' : ' bad'}`}><Trend up={v > 0} /> {usd(Math.abs(v))}{suffix}</span>;
 };
 
 // 30-day trend, coloured by what the change means for net worth (a debt going up is bad). A flat line
@@ -226,9 +227,9 @@ function BankStatus({ i }) {
 
 function Banks({ meta, accounts, saved }) {
   const remove = async (i) => {
-    if (!window.confirm(`Remove ${i.institution}?\n\nThis disconnects it from Plaid and deletes its accounts, transactions, and history from this app. On the Trial plan it does NOT free up a connection slot.`)) return;
+    if (!await confirmDialog({ title: `Remove ${i.institution}?`, body: "This disconnects it from Plaid and deletes its accounts, transactions, and history from this app. On the Trial plan it does NOT free up a connection slot.", confirm: "Remove bank", danger: true })) return;
     let r = await api(`/items/${i.id}`, { method: 'DELETE' });
-    if (r.can_force && window.confirm(`Plaid couldn't remove it: ${r.error_message}\n\nRemove it anyway?`)) r = await api(`/items/${i.id}?force=1`, { method: 'DELETE' });
+    if (r.can_force && await confirmDialog({ title: "Remove it anyway?", body: `Plaid could not remove it: ${r.error_message}`, confirm: "Remove anyway", danger: true })) r = await api(`/items/${i.id}?force=1`, { method: "DELETE" });
     saved();
   };
   return (
@@ -298,7 +299,7 @@ function AccountRow({ a, act, open, setOpen, saved }) {
   );
 }
 
-// What moved your net worth: what you saved (income − spending), money moved to accounts that aren't tracked, and
+// What moved your net worth: what you earned minus what you spent (income − spending), money moved to accounts that aren't tracked, and
 // everything else, mostly the market.
 const PERIODS = [['month', 'This month'], ['30d', 'Last 30 days'], ['all', 'Since tracking']];
 const signedUsd = (v) => `${v < 0 ? '−' : '+'}${usd(Math.abs(v))}`;
@@ -332,8 +333,8 @@ function WhatMoved({ stamp }) {
       <div className={`wm rows${2 + showMoved + showValued}`}>
         <div className="wmtotal"><span className="small muted">{shortDate(b.from)} → {shortDate(b.to)}</span>
           <b className={`amt big ${b.change < 0 ? 'bad' : 'good'}`}>{signedUsd(b.change)}</b></div>
-        <div className="wmrow"><Hover className="quiet" tip={<TipList title="Saved" rows={[['Income', usd(b.income)], ['Spending', `−${usd(b.spending)}`]]}
-          note="From your transactions. Transfers between your own accounts don't count." />}>Saved</Hover>{bar(b.saved, 'saved')}<b className="amt">{signedUsd(b.saved)}</b></div>
+        <div className="wmrow"><Hover className="quiet" tip={<TipList title="Earned minus spent" rows={[['Income', usd(b.income)], ['Spending', `−${usd(b.spending)}`]]}
+          note="Income minus spending, from your transactions. Transfers between your own accounts don't count, so this is not what you put into savings." />}>Earned minus spent</Hover>{bar(b.saved, 'saved')}<b className="amt">{signedUsd(b.saved)}</b></div>
         {showMoved && <div className="wmrow"><Hover className="quiet" tip={<TipList title="Moved to accounts not tracked" rows={movedRows}
           note="Transfers, savings and debt payments to an account that isn't linked. The money is still yours, but Mizo Money can't see where it went. Link that account, or count the transfer toward an asset you added below, to move it out of this row." />}>Moved to accounts not tracked</Hover>
           {bar(b.moved, 'moved')}<b className="amt">{signedUsd(b.moved)}</b></div>}
@@ -350,6 +351,19 @@ function WhatMoved({ stamp }) {
 }
 
 // Assets and liabilities, each as one bar with a legend.
+// The lead band's right side: what you own and what you owe, the two halves of the figure (the Summary sheet breaks them down).
+function BandParts({ accounts, manual }) {
+  const inc = accounts.filter((a) => a.in_networth), DEBT = ['credit', 'loan'];
+  const owe = inc.filter((a) => DEBT.includes(a.type)).reduce((s, a) => s + a.balance, 0) + manual.filter((m) => m.kind === 'liability').reduce((s, m) => s + m.value, 0);
+  const own = inc.filter((a) => !DEBT.includes(a.type)).reduce((s, a) => s + a.balance, 0) + manual.filter((m) => m.kind !== 'liability').reduce((s, m) => s + m.value, 0);
+  return (
+    <dl className="bandparts">
+      <div><dt>You own</dt><dd className="amt">{usd(own)}</dd></div>
+      <div><dt>You owe</dt><dd className="amt">{usd(owe)}</dd></div>
+    </dl>
+  );
+}
+
 function Summary({ accounts, manual }) {
   const [pct, setPct] = useState(false);
   const inc = accounts.filter((a) => a.in_networth);
@@ -391,23 +405,34 @@ function Summary({ accounts, manual }) {
 export default function NetWorth({ onChange }) {
   const [d, setD] = useState(null);
   const [history, setHistory] = useState(null);
+  const [nw, setNw] = useState(null);
   const [meta, setMeta] = useState(null), [activity, setActivity] = useState({});
   const [open, setOpen] = useState(null);
   const load = useCallback(async () => {
-    const [nw, sum, items, act] = await Promise.all([api('/networth'), api('/summary'), api('/items'), api('/accounts/activity')]);
-    setD(nw); setHistory(sum.history); setMeta(items); setActivity(act);
+    const [accts, sum, items, act] = await Promise.all([api('/networth'), api('/summary'), api('/items'), api('/accounts/activity')]);
+    setD(accts); setHistory(sum.history); setNw(sum.netWorth); setMeta(items); setActivity(act);
   }, []);
   useEffect(() => { load(); }, [load]);
   // Connecting, approving or removing a bank also changes the top bar's "needs attention" chip.
   const saved = () => { load(); onChange?.(); };
-  if (!d || !history || !meta) return <PageSkeleton />;
+  if (!d || !history || !meta || !nw) return <PageSkeleton />;
 
   return (
     <>
-      <PageHeader title="Accounts & net worth" sub="Grouped by type, with anything Plaid can't see, like a house or a loan.">
+      <PageHeader title="Net worth" sub="Your accounts grouped by type, with anything Plaid can't see, like a house or a loan.">
         {meta.items.length < meta.max && <ConnectBank />}
       </PageHeader>
       {meta.items.length === 0 && <div className="card empty mt"><EmptyState art="banks" title="No banks yet">Connect a bank to see its accounts here.</EmptyState></div>}
+      {d.accounts.length > 0 && (
+        <section className="standing solo mt" aria-label="Net worth">
+          <div className="stand lead">
+            <span className="slabel">Net worth today</span>
+            <span className="sfig big"><Hover className="quiet" tip={nw.ago == null ? null : <TipList title="Net worth" rows={[['30 days ago', usd(nw.ago)], ['Today', usd(nw.value)]]} />}>{usd(nw.value)}</Hover></span>
+            {nw.ago != null && <span className="small muted"><span className="amt">{signedUsd(nw.value - nw.ago)}</span> in the last 30 days</span>}
+            <BandParts accounts={d.accounts} manual={d.manual} />
+          </div>
+        </section>
+      )}
       <div className="nwtop mt">
         <NetWorthChart history={history} />
         <Summary accounts={d.accounts} manual={d.manual} />
@@ -424,7 +449,7 @@ export default function NetWorth({ onChange }) {
         const change = untracked.length ? null : inc.reduce((s, a) => s + a.change, 0);
         const since = untracked.map((a) => a.tracking_since).sort().at(-1);
         return (
-          <Panel key={type} title={<>{title} <span className="titlenote"><Change v={change} debt={type === 'credit' || type === 'loan'} suffix=" in 30 days" since={since} /></span></>}
+          <Panel key={type} title={<>{title} <span className="titlenote"><Change v={change} debt={type === 'credit' || type === 'loan'} suffix=" in 30 days" since={since} neutral /></span></>}
             actions={<b className="amt">{(type === 'credit' || type === 'loan') && total >= 0.5 ? '−' : ''}{usd(total)}</b>}>
             {list.map((a) => <AccountRow key={a.id} a={a} act={activity[a.id]} open={open === a.id} setOpen={setOpen} saved={load} />)}
           </Panel>

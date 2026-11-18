@@ -11,6 +11,7 @@ export default function Jump({ pages }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const [txs, setTxs] = useState([]);
+  const [places, setPlaces] = useState([]); // bills, goals and accounts, fetched when the dialog opens
   const [at, setAt] = useState(0);
 
   useEffect(() => {
@@ -28,6 +29,18 @@ export default function Jump({ pages }) {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
+  useEffect(() => {
+    if (!open) return undefined;
+    let stale = false;
+    const list = (path, kind, to, name) => api(path).then((r) => (Array.isArray(r) ? r.map((x) => ({ kind, to, name: name(x), id: x.id ?? x.key })) : [])).catch(() => []);
+    Promise.all([
+      list('/bills', 'Bill', '#/bills', (b) => b.name),
+      list('/goals', 'Goal', '#/plan', (g) => g.name),
+      list('/accounts', 'Account', '#/networth', (a) => a.nickname || a.name),
+    ]).then((all) => { if (!stale) setPlaces(all.flat().filter((x) => x.name)); });
+    return () => { stale = true; };
+  }, [open]);
+
   // After 2 characters, ask the transactions list (its text filter is `q`). A slower, older answer never overwrites a newer one.
   const term = text.trim();
   useEffect(() => {
@@ -41,13 +54,14 @@ export default function Jump({ pages }) {
 
   const low = term.toLowerCase();
   const hits = pages.filter((p) => p.label.toLowerCase().includes(low));
-  const items = [...hits.map((p) => ({ kind: 'page', key: `p-${p.id}`, page: p })), ...txs.map((t) => ({ kind: 'tx', key: `t-${t.id}`, tx: t }))];
+  const found = term.length >= 2 ? places.filter((x) => x.name.toLowerCase().includes(low)).slice(0, 5) : [];
+  const items = [...hits.map((p) => ({ kind: 'page', key: `p-${p.id}`, page: p })), ...found.map((x) => ({ kind: 'place', key: `l-${x.kind}-${x.id}`, place: x })), ...txs.map((t) => ({ kind: 'tx', key: `t-${t.id}`, tx: t }))];
   const cur = Math.min(at, Math.max(items.length - 1, 0));
 
   const close = () => dlg.current?.close();
   const go = (item) => {
     if (!item) return;
-    window.location.hash = item.kind === 'page' ? `#/${item.page.id}` : `#/transactions?${new URLSearchParams({ q: term })}`;
+    window.location.hash = item.kind === 'page' ? `#/${item.page.id}` : item.kind === 'place' ? item.place.to : `#/transactions?${new URLSearchParams({ q: term, open: item.tx.id })}`;
     close();
   };
   const onInputKey = (e) => {
@@ -71,6 +85,7 @@ export default function Jump({ pages }) {
               onMouseMove={() => setAt(i)} onClick={() => go(it)}>
               {it.kind === 'page'
                 ? <><span>{it.page.label}</span><span className="muted small">Page</span></>
+                : it.kind === 'place' ? <><span>{it.place.name}</span><span className="muted small">{it.place.kind}</span></>
                 : <><span className="jtx"><b>{it.tx.merchant || it.tx.name}</b> <span className="muted small">{it.tx.date}</span></span>
                   <Amt>{signed(-it.tx.amount)}</Amt></>}
             </li>))}

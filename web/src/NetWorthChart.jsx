@@ -1,4 +1,4 @@
-import { usdCompact } from './format.js';
+import { usdCompact, niceTicks } from './format.js';
 import { useState } from 'react';
 import { usd } from './Cards.jsx';
 import useWidth from './useWidth.js';
@@ -7,7 +7,6 @@ import { Panel } from './ui.jsx';
 // Drawn at its real width (useWidth), so text stays the same size at any window size.
 const H = 230, L = 58, R = 14, T = 12, B = 26;
 const RANGES = { '1M': 30, '3M': 90, '6M': 180, '1Y': 365, All: 1e9 };
-const compact = { format: (n) => usdCompact(n, 1) };
 const day = (d) => new Date(d + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
 // Starts on the range that's mostly real data: until daily snapshots build up, a long range is mostly guesswork.
@@ -27,7 +26,8 @@ export default function NetWorthChart({ history }) {
     // The axis always spans at least 4% of net worth, so a 0.3% wobble reads as the small move it is.
     const minSpan = Math.max(Math.abs(hi), Math.abs(lo)) * 0.04 || 2;
     if (hi - lo < minSpan) { const mid = (hi + lo) / 2; lo = mid - minSpan / 2; hi = mid + minSpan / 2; }
-    const pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+    const pad = (hi - lo) * 0.08;
+    const nice = niceTicks(lo - pad, hi + pad, 5); lo = nice.lo; hi = nice.hi;
     const x = (i) => L + (i * (W - L - R)) / (data.length - 1);
     const y = (v) => T + ((hi - v) * (H - T - B)) / (hi - lo);
     const line = data.map((d, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(d.value).toFixed(1)}`).join(' ');
@@ -46,7 +46,7 @@ export default function NetWorthChart({ history }) {
     };
     body = (
       <svg className="chart" width={W} height={H} viewBox={`0 0 ${W} ${H}`} onMouseMove={move} onMouseLeave={() => setHover(null)}>
-        {[0, 1, 2, 3, 4].map((k) => { const v = lo + ((hi - lo) * k) / 4; return <g key={k}><line className="grid" x1={L} x2={W - R} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{compact.format(v)}</text></g>; })}
+        {nice.ticks.map((v) => { return <g key={v}><line className="grid" x1={L} x2={W - R} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{usdCompact(v, 1)}</text></g>; })}
         {[0, 1, 2, 3, 4, 5].map((k) => { const i = Math.round((k * (data.length - 1)) / 5); return <text key={k} x={x(i)} y={H - 6} textAnchor={k === 0 ? 'start' : k === 5 ? 'end' : 'middle'}>{day(data[i].date)}</text>; })}
         <defs>
           <pattern id="nw-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" strokeWidth="1" style={{ stroke: 'var(--blue)' }} /></pattern>

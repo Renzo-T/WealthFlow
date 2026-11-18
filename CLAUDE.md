@@ -91,6 +91,11 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
    coming this month (from tomorrow) − bills still due this month − card balances (card-payment bills aren't counted
    again) − a cushion (meta `safe_cushion`). A single paycheck with no pattern is offered via `paycheckCandidates()`.
    `seriesKey()` decides which series a transaction belongs to; the transactions list uses it for the ↻ marker.
+   Adding a bill starts from a past payment (`scheduleFromPayment`, `POST /bills/from-payment`, also "Repeats" on a
+   transaction and the paycheck prompt): your rule on that series in `bill_settings`, so it shows with one payment
+   (`detect(today, pinned)`) and a pattern found later is the same bill. Typed-in (manual) bills are for money outside
+   connected accounts; when detection finds one anyway, the detected bill takes over (under your name) and the manual
+   one gets `same_as` and is left out of every total.
 4. **Budget** (`server/budget.js`): one monthly amount per subcategory (`budgets`), rolled up by group; actuals are
    signed (refunds reduce spending); "fixed" = the category has a recurring bill ("nonmonthly" when all its bills
    come every few months or yearly); suggestions come from bills (converted to a monthly amount) or the average
@@ -100,7 +105,8 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
    across banks whose history reaches last month, never before the 5th, no % on small bases; "what changed" and
    "frequent spending" leave recurring bills out (bills post on different days each month). Watchlist = a
    category or merchant with average, year to date, this month, target and straight-line projection.
-6. **Trips** (`server/trips.js`, `server/geo.js`): home bases (set on the Trips page, or inferred from where most
+6. **Trips** (`server/trips.js`, `server/geo.js`; shown as the Trips tab of Reports, `#/trips` redirects to
+   `#/reports?tab=trips`): home bases (set on the Trips tab, or inferred from where most
    in-person spending happens; bills are placed at company HQs, so they're ignored), an "away" setting (distance,
    default 100 miles, from Plaid's coordinates or the bundled US city table; another state; abroad only), trips
    suggested from runs of in-person purchases away, and `assignTrips()` writing `transactions.trip_id` (a
@@ -140,8 +146,10 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
   everyday accounts day by day, paydays and bills that moved it, days ahead from scheduled items only.
 - Dashboard: `lead` panels (where you stand, the month spread `MonthSpread.jsx` + `server/spread.js`, the
   Needs you / Coming up / Budget sheet `Glance.jsx`) run full width; the rest pack into grid rows (`usePacked`).
+  The header's sub-line is a since-last-visit digest (`Digest` in `Cards.jsx`, `GET /api/since?from=`). Free to spend
+  is the only "how much can I spend" number; Budget's lead figure is "Not yet assigned", a planning number.
 - Money (`web/src/format.js`): cents (`usd2`) for individual transactions and bills, whole dollars (`usd`) for totals,
-  `usdCompact` on chart axes, real minus sign via `signed`.
+  `usdCompact(v, 1)` on chart axes with round ticks from `niceTicks()`, real minus sign via `signed`.
 - Colours: theme tokens in `styles.css` `:root` (light + dark). Chart series `SERIES` are theme variables `--s1..--s4`,
   validated for colour-blind separation against each theme's own surface; anything beyond four is grey. Green/red mean in/out or good/bad only.
 - Charts measure their width (`useWidth`) so text stays the same size; Sankeys are capped at 1000px.

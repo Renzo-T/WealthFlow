@@ -230,7 +230,6 @@ tr.dim td { opacity: .6; }
 .caldots { position: absolute; left: 0; right: 0; bottom: 3px; display: flex; justify-content: center; gap: 2px; }
 .caldots i { width: 4px; height: 4px; border-radius: 50%; }
 .calday.sel .caldots i { background: var(--paper-white) !important; }
-.daysheet .trow { padding: .4rem 0; }
 
 /* ---------- Sidebar: icons only on narrow windows (it no longer disappears) ---------- */
 @media (max-width: 1099px) {
@@ -254,8 +253,6 @@ tr.dim td { opacity: .6; }
 .calgrid.compact .caldots { bottom: 2px; }
 .upnote { margin: .6rem 0 .1rem; padding-top: .5rem; border-top: 1px solid var(--line); }
 .upnote .linkbtn { font-size: inherit; }
-.billsgrid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1rem; align-items: start; }
-@media (max-width: 1099px) { .billsgrid { grid-template-columns: 1fr; } }
 .explain { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: .6rem .8rem; margin: .25rem 0 1rem; }
 .explain .muted { margin-top: .2rem; }
 /* Chart tooltip (Tip.jsx) */
@@ -430,7 +427,9 @@ img, svg { color-scheme: inherit; }
 /* ---------- Customizable dashboard ---------- */
 /* Panels flow in your order through a 3-column grid (dense packing fills gaps); each keeps its own width.
    Wide screens: side-column panels sit in a right-hand column. Narrower: they join the main flow. */
-.dashbar { display: flex; justify-content: flex-end; align-items: center; gap: .6rem; margin: .5rem 0 0; min-height: 2rem; }
+.dashbar { display: flex; justify-content: flex-end; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.wempty { padding: .15rem 0 .1rem; }
+.wempty p { margin: 0; }
 .dboard { margin-top: .5rem; }
 .dmain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: row dense; gap: 1rem; align-items: stretch; }
 .dcell { min-width: 0; display: flex; flex-direction: column; }
@@ -494,14 +493,35 @@ img, svg { color-scheme: inherit; }
    truncates (full name on hover); schedule and next date wrap; the amount column keeps a fixed width. */
 .billtable { table-layout: fixed; }
 .billtable th, .billtable td { padding-left: .5rem; padding-right: .5rem; }
-.billtable .c-sched { width: 8rem; }
-.billtable .c-next { width: 6rem; }
-.billtable .c-amt { width: 8.25rem; }
-.billtable .c-act { width: 4rem; }
+.billtable .c-sched { width: 10.5rem; }
+.billtable .c-next { width: 6.5rem; }
+.billtable .c-amt { width: 9rem; }
 .billtable td:nth-child(1) { white-space: nowrap; }
 .billtable td:nth-child(2), .billtable td:nth-child(3) { white-space: normal; }
-.billtable td:last-child { padding-left: 0; }
-.billtable td:last-child .linkbtn { display: block; margin-left: auto; text-align: right; line-height: 1.6; }
+/* Each bill row opens its editor: the whole row is the control (hover tint, keyboard focus ring). */
+.billtable tr.billrow { cursor: pointer; }
+.billtable tr.billrow:hover td, .billtable tr.billrow.open td { background: var(--surface-2); }
+.billtable tr.billrow:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.billtable tbody + thead th { padding-top: 1.4rem; }
+.billtable tr.billedit td { white-space: normal; }
+.billform-extra { display: inline-flex; gap: 1rem; margin-left: auto; }
+.billaside b { color: var(--ink); font-weight: 600; }
+/* Add a bill: search past payments, pick one, say how often. */
+.addbill { display: grid; gap: .6rem; }
+.addbill > p { margin: 0; }
+.addbill-q { max-width: 26rem; }
+.addbill-list { display: grid; border-top: 1px solid var(--line); }
+.addbill-row { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 12rem) 6.5rem; gap: .75rem; align-items: baseline;
+  padding: .45rem .25rem; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.addbill-row:hover { background: var(--surface-2); }
+.addbill-row.on { background: var(--surface-2); outline: 1px solid var(--line-strong); outline-offset: -1px; }
+.addbill-row.on .addbill-name { font-weight: 700; }
+.addbill-row .tamt { text-align: right; }
+.addbill-name, .addbill-acct { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.addbill-how { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; }
+.addbill-foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+@media (max-width: 640px) { .addbill-row { grid-template-columns: 4rem minmax(0, 1fr) 5.5rem; } .addbill-acct { display: none; } }
+.billcount { margin: 1rem 0 .5rem; }
 .txtable td.merch { white-space: normal; max-width: none; min-width: 11rem; }
 .txtable .catsel { max-width: 10.5rem; text-overflow: ellipsis; }
 
@@ -560,12 +580,12 @@ img, svg { color-scheme: inherit; }
 
 /* ---------- Budget page: one ruled sheet, like a planner ledger ----------
    Column heads once at the top; groups are title rows on a 1px ink rule; a section's total closes it on the
-   page header's double rule (2px ink, then 1px at 30%); "Left to budget" is the closing line. Every row shares
+   page header's double rule (2px ink, then 1px at 30%); "Not yet assigned" leads the page. Every row shares
    the same fixed columns, so amounts line up down the whole sheet. */
 .card.bsheet { --bcols: minmax(0, 1fr) 7.5rem 6.5rem 7.5rem; --bx: 1.3rem; padding: 1.15rem 0 0; min-width: 0; }
 .bsheethead { padding: 0 var(--bx); }
 .bview button { font-size: .75rem; padding: .15rem .55rem; }
-.bcolhead, .bhead, .brow, .btot, .bleft { display: grid; grid-template-columns: var(--bcols); align-items: center; column-gap: .75rem; padding-inline: var(--bx); }
+.bcolhead, .bhead, .brow, .btot { display: grid; grid-template-columns: var(--bcols); align-items: center; column-gap: .75rem; padding-inline: var(--bx); }
 .bcolhead { font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-bottom: .45rem; }
 .bsection { font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 2rem var(--bx) .1rem; }
 .bgroup + .bgroup { margin-top: .9rem; }
@@ -594,12 +614,14 @@ img, svg { color-scheme: inherit; }
   border-top: 1px solid var(--line); border-bottom: 2px solid var(--ink); }
 .btot::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; border-bottom: 1px solid var(--ink); opacity: .3; pointer-events: none; }
 .btot .good { color: var(--green); } .btot .bad { color: var(--red); }
-.bleft { padding-block: 1.6rem 1.35rem; margin-top: .4rem; background: var(--surface-2); border-top: 1px solid var(--line); border-radius: 0 0 5px 5px; }
-.bleft > span:first-child { display: flex; flex-direction: column; gap: .15rem; font-size: 1.05rem; }
-.bleft > span:first-child b { font-weight: 600; }
-.bleft .big { grid-column: 2 / -1; justify-self: end; font-size: 2.2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; color: var(--green); }
-.bleft.neg .big { color: var(--red); }
-.bleft.none .big { color: var(--ink); }
+.bassign { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; padding: 1.1rem 1.3rem; }
+.bassign > span:first-child { display: flex; flex-direction: column; gap: .15rem; font-size: 1.05rem; }
+.bassign > span:first-child b { font-weight: 600; }
+.bassign .big { font-size: 2.6rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; color: var(--ink); }
+.bassign.neg .big { color: var(--red); }
+.rem.over { color: var(--red); } .rem.muted { color: var(--muted); }
+.bidle { display: flex; align-items: baseline; gap: .6rem; padding: .9rem var(--bx) .2rem; font-size: .9rem; color: var(--muted); }
+.bidle span { min-width: 0; }
 .bside-card { padding-top: .75rem; }
 .btabs { justify-content: center; margin-bottom: .5rem; }
 .bsplit { padding: .8rem 0; border-bottom: 1px solid var(--line); }
@@ -824,9 +846,7 @@ a { color: var(--blue); text-underline-offset: 3px; }
 /* The cover: an indigo rail with the seal and the navigation. */
 .side { background: var(--rail); border-right: 0; padding: 1.4rem .85rem; color: var(--rail-ink); scrollbar-color: var(--rail-2) transparent; }
 .logo { display: flex; align-items: center; gap: .7rem; padding: 0 .45rem 1.6rem; }
-.wordmark { color: var(--paper-white); font-weight: 800; font-size: 1.12rem; letter-spacing: .01em; display: inline-flex; align-items: baseline; gap: .28em; }
-.wm-dot { width: .38em; height: .38em; border-radius: 50%; background: var(--rail-ink); align-self: flex-end; margin: 0 0 .2em .02em; }
-.firstrun .wm-dot { background: currentColor; }
+.wordmark { color: var(--paper-white); font-weight: 800; font-size: 1.12rem; letter-spacing: .01em; display: inline-flex; align-items: baseline; }
 .side .nav { color: var(--rail-ink); border-radius: 6px; padding: .5rem .65rem; font-size: .95rem; margin-bottom: 1px; }
 .side .nav:hover { background: rgba(255, 255, 255, .06); color: var(--paper-white); }
 .side .nav.on { background: var(--rail-2); color: var(--paper-white); font-weight: 700; }
@@ -845,11 +865,12 @@ a { color: var(--blue); text-underline-offset: 3px; }
 .top { border-bottom: 1.5px solid var(--ink); padding-bottom: .7rem; margin-bottom: 1.25rem; align-items: flex-end; }
 h1 { font-size: 2.15rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
 .sub { font-size: .95rem; margin-top: .3rem; }
-/* Secondary figures (summary cards, goal amounts) are 700; each page's lead figure stays 800 (.sfig.big, .bleft .big, .rp-fig). */
+/* Secondary figures (summary cards, goal amounts) are 700; each page's lead figure stays 800 (.sfig.big, .bassign, .rp-fig). */
 .big, .stsbig { font-weight: 700; letter-spacing: -.02em; }
 
 /* Controls: standard ones, in the world's ink. */
 .btn { border-radius: 6px; border-color: var(--line-strong); font-weight: 500; }
+a.btn { text-decoration: none; color: var(--ink); display: inline-flex; align-items: center; }
 .btn:hover:not(:disabled) { border-color: var(--ink); }
 .btn.primary { background: var(--btn); border-color: var(--btn); color: var(--paper-white); font-weight: 700; }
 .btn.primary:hover:not(:disabled) { background: var(--btn-hover); border-color: var(--btn-hover); }
@@ -859,6 +880,13 @@ input:hover, select:hover { border-color: var(--hub); }
 .ranges { background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; padding: 2px; }
 .ranges button { border-radius: 5px; }
 .ranges button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(27, 32, 48, .12); }
+/* A month stepper inside a range control: ‹ Nov 2026 ›, raised as one segment while a month is picked. */
+.rangestep { display: inline-flex; align-items: center; border-radius: 5px; }
+.rangestep.on { background: var(--card); box-shadow: 0 1px 2px rgba(27, 32, 48, .12); }
+.rangestep.on button.rangemonth { color: var(--ink); font-weight: 700; }
+.rangestep button:not(.rangemonth) { padding-left: .35rem; padding-right: .35rem; display: inline-flex; align-items: center; }
+.rangestep button:disabled { opacity: .35; cursor: default; }
+.rangemonth { min-width: 5.6rem; }
 .chipbtn, .pill, .badge, .kind, .ftag, .splitchip, .tripchip, .rulecat { border-radius: 99px; }
 :focus-visible, .btn:focus-visible, .iconbtn:focus-visible, .ranges button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible,
 .linkbtn:focus-visible, .calday:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
@@ -941,8 +969,6 @@ button.sday { width: 100%; background: none; font: inherit; color: inherit; bord
 .sday.sel.today { box-shadow: inset 0 2px 0 var(--blue), inset 0 -2px 0 var(--blue); }
 .sday.sel .snum { color: var(--blue); font-weight: 800; }
 button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
-.sfoot { display: flex; flex-wrap: wrap; gap: .4rem 1.5rem; margin-top: .7rem; }
-.sfoot b { color: var(--ink); }
 .skelrow { height: 112px; }
 @keyframes ink { from { transform: scale(.35); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes stamp { from { transform: scale(1.5); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -987,6 +1013,7 @@ button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 .gquiet { display: flex; gap: .45rem; align-items: center; color: var(--muted); margin: .2rem 0 0; }
 .gquiet svg { color: var(--green); flex: none; }
 .gtotal { margin-bottom: .4rem; }
+.gnote { margin: -.25rem 0 .5rem; }
 .gbud { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: .75rem; row-gap: .3rem; padding: .35rem 0; }
 .gbud .meter { grid-column: 1 / -1; border-radius: 2px; }
 .gbud .meter i { border-radius: 2px; background: var(--blue); }
@@ -1031,8 +1058,8 @@ button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 
 /* Money flow: hairline gaps between streams, smooth focus on hover, and the streams drawing in once, left to right. */
 .sankey .ribbon { stroke: var(--card); stroke-width: 1.25; transition: opacity .22s cubic-bezier(.16, 1, .3, 1); }
-.sankey-draw { transform-box: fill-box; transform-origin: left center; animation: sankeydraw 1.1s cubic-bezier(.16, 1, .3, 1) both; }
-@keyframes sankeydraw { from { transform: scaleX(0); } to { transform: none; } }
+.sankey.moving .ribbon { transition: none; } /* the period morph sets opacity every frame; a transition would lag it */
+.flowchart.stale { opacity: .55; transition: opacity .2s; }
 .chart text.hubname { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted); }
 .chart text.amtsvg { font-size: 13px; font-weight: 700; fill: var(--ink); }
 .flowstats b { font-weight: 800; }
@@ -1174,9 +1201,20 @@ h1 {
   background: var(--cloth), linear-gradient(135deg, var(--rail-2) 0%, var(--rail) 62%, color-mix(in srgb, var(--rail) 86%, black) 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
 }
+/* At night the cloth is nearly the page's own colour: a lighter fold at the top and a faint lighter edge keep it a cover. */
+:root[data-theme="dark"] .stand.lead {
+  background: var(--cloth), linear-gradient(160deg, color-mix(in srgb, var(--rail-2) 58%, #a9bbf2) 0%, color-mix(in srgb, var(--rail-2) 88%, #a9bbf2) 46%, var(--rail) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), inset 0 0 0 1px rgba(255, 255, 255, .18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .stand.lead {
+    background: var(--cloth), linear-gradient(160deg, color-mix(in srgb, var(--rail-2) 58%, #a9bbf2) 0%, color-mix(in srgb, var(--rail-2) 88%, #a9bbf2) 46%, var(--rail) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), inset 0 0 0 1px rgba(255, 255, 255, .18);
+  }
+}
 .stand.lead > * { position: relative; z-index: 1; }
 .stand.lead .slabel { color: var(--rail-ink); }
-.stand.lead .sfig.big { color: var(--paper-white); font-size: 3.7rem; letter-spacing: -.035em; text-shadow: 0 2px 0 rgba(0, 0, 0, .18); }
+.stand.lead .sfig.big { color: var(--paper-white); font-size: 3.7rem; letter-spacing: -.035em; text-shadow: none; }
 .stand.lead :focus-visible { outline-color: var(--paper-white); }
 @media (max-width: 1099px) { .stand.lead .sfig.big { font-size: 2.9rem; } }
 
@@ -1239,7 +1277,7 @@ h1 {
 /* ---------- Richer planner: finish ---------- */
 /* Transactions: a long group name ("Savings & investments ›") drops above its category menu instead of pushing the
    amount column out of the card (the "›" forbids a line break, so the prefix is its own box). */
-.txtable td:has(> .catsel) { white-space: normal; min-width: 17rem; }
+.txtable td:has(.catpick) { white-space: normal; min-width: 15rem; }
 .txtable td > .grp { display: inline-block; white-space: nowrap; }
 .txtable .catsel { max-width: 8.5rem; }
 
@@ -1324,14 +1362,6 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 @media (max-width: 1099px) {
   .side .navgroup { font-size: 0; line-height: 0; height: 0; padding: 0; border-top: 1px dashed rgba(255, 255, 255, .17); margin: .6rem .4rem; }
 }
-
-/* ---------- Feature check: month strip on Bills and Budget ---------- */
-.spread.compact { padding: .25rem .75rem .4rem; }
-.spread.compact .sday { grid-template-rows: 12px 30px 14px; gap: 1px; padding: .25rem 0 .2rem; }
-.spread.compact .snum { font-size: .68rem; line-height: 12px; }
-.spread.compact .sink { height: 30px; }
-.spread.compact .stamp { width: 14px; height: 14px; }
-.spread.compact .sdays.skelrow { height: 70px; }
 
 /* ---------- Drawings: empty states and the first-run welcome ---------- */
 /* Each drawing is ink on its own paper, so it sits on the page as a small sheet (never inverted for dark mode). */
@@ -1463,24 +1493,11 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 .rtable td.rfocus { box-shadow: inset 1px 0 0 var(--blue), inset -1px 0 0 var(--blue); } /* keeps the cell's own shading */
 .rtable th.rfocus { color: var(--blue); background-color: var(--soft); box-shadow: inset 0 2px 0 var(--blue), inset 1px 0 0 var(--blue), inset -1px 0 0 var(--blue); }
 
-/* ---------- Index tabs: the rail's sections as cloth tabs on the page's right edge ----------
-   They only show where you are (navigation stays in the rail): the current section's tab is raised, lighter cloth
-   standing further out from the edge; the rest sit tucked in. Wide windows only, inside the page's right margin. */
-.idxtabs { position: fixed; right: 0; top: 7.5rem; z-index: 3; display: none; flex-direction: column; align-items: flex-end; gap: 5px; }
-@media (min-width: 1100px) { .idxtabs { display: flex; } }
-.idxtab { writing-mode: vertical-rl; display: block; padding: .8rem 0; width: 22px; text-align: center;
-  font-size: .6rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--rail-ink-2); white-space: nowrap;
-  background: var(--cloth), linear-gradient(90deg, var(--rail), color-mix(in srgb, var(--rail) 82%, black));
-  border-radius: 5px 0 0 5px; box-shadow: -2px 1px 4px rgba(12, 17, 34, .22), inset 1px 0 0 rgba(255, 255, 255, .1), inset 0 1px 0 rgba(255, 255, 255, .08); }
-.idxtab.on { color: var(--paper-white); width: 30px;
-  background: var(--cloth), linear-gradient(90deg, color-mix(in srgb, var(--rail-2) 86%, white), var(--rail-2));
-  box-shadow: -3px 2px 8px rgba(12, 17, 34, .35), inset 1px 0 0 rgba(255, 255, 255, .14); }
-
 /* ---------- Ribbon bookmark: today's column in the month spread ----------
    A thin indigo ribbon hangs from the spread's top rule on today's column (in place of a "this month" pill), with a
    notched tail. It unrolls once on arrival. */
-.spread:not(.compact) .sday.today { position: relative; box-shadow: none; }
-.spread:not(.compact) .sday.today.sel { box-shadow: inset 0 -2px 0 var(--blue); }
+.spread .sday.today { position: relative; box-shadow: none; }
+.spread .sday.today.sel { box-shadow: inset 0 -2px 0 var(--blue); }
 .ribbon { position: absolute; top: -5px; right: 1px; width: 5px; height: 30px; background: var(--blue);
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 4px), 0 100%);
   transform-origin: top; animation: ribbon .7s var(--ease) .35s both; pointer-events: none; }
@@ -1493,40 +1510,22 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 .mnote, p.small.foot { display: block; margin-left: auto; max-width: 40ch; color: var(--pencil); font-size: .76rem; line-height: 1.45; text-wrap: pretty; }
 p.small.foot { margin-top: .9rem; }
 .mnote::before, p.small.foot::before { content: ''; display: block; width: 2.5rem; margin-bottom: .35rem; border-top: 1px solid var(--pencil); opacity: .45; }
-.sfoot { align-items: flex-start; }
-.sfoot .mnote { flex: 0 1 40ch; }
 
 /* ---------- Date blocks: Transactions as a daily log ----------
    Each day's rows open with the day number large in a left margin column, the weekday under it and the day's net
    below; the block stays in view while its day scrolls. A month heading runs across when the month changes. */
-.txtable th.datecol { width: 4.2rem; padding: 0; }
-.txtable td.datecell { vertical-align: top; width: 4.2rem; padding: .55rem .4rem .6rem .9rem; border-right: 1px solid var(--line); cursor: default; }
+.txtable th.datecol { width: 4.6rem; padding: 0; }
+.txtable td.datecell { vertical-align: top; width: 4.6rem; padding: .5rem .4rem .5rem .9rem; border-right: 1px solid var(--line); cursor: default; }
 .txtable tr:hover td.datecell { background: none; }
 .dateblock { position: sticky; top: 2.6rem; display: flex; flex-direction: column; align-items: flex-start; }
-.dbnum { font-size: 1.75rem; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--ink); }
-.dbday { font-size: .66rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-top: .25rem; }
-.dbnet { font-size: .72rem; color: var(--muted); margin-top: .35rem; white-space: nowrap; }
+.dbline { display: flex; align-items: baseline; gap: .35rem; }
+.dbnum { font-size: 1.15rem; font-weight: 800; line-height: 1; letter-spacing: -.02em; color: var(--ink); }
+.dbday { font-size: .64rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.dbnet { font-size: .72rem; color: var(--muted); margin-top: .2rem; white-space: nowrap; }
 .dbnet.good { color: var(--green); }
 .txtable tr.monthrow td { padding: .9rem .9rem .35rem; font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
   color: var(--ink); border-bottom: 1px solid var(--ink); }
 .txtable tr.monthrow:first-child td { padding-top: .6rem; }
-
-/* ---------- Round 2: Index tabs ----------
-   The tabs are links to each section's last page; one is raised for the section you are in (none on Settings). Hover
-   slides a tab out 3px and opens a card listing the section's pages. */
-.idxwrap { position: relative; display: flex; justify-content: flex-end; }
-.idxtab { text-decoration: none; cursor: pointer; transition: transform .2s var(--ease); }
-.idxtab:hover, .idxwrap:hover .idxtab { transform: translateX(-3px); color: var(--paper-white); }
-.idxcard { position: absolute; right: 100%; top: 0; margin-right: 8px; min-width: 9rem; display: none; flex-direction: column; gap: .1rem;
-  padding: .55rem .4rem .45rem; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px;
-  box-shadow: 0 6px 18px rgba(12, 17, 34, .18); }
-.idxcard::after { content: ''; position: absolute; left: 100%; top: 0; bottom: 0; width: 10px; } /* keeps hover across the gap */
-.idxwrap:hover .idxcard { display: flex; }
-.idxcard b { font-size: .6rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 0 .5rem .25rem; }
-.idxcard a { padding: .3rem .5rem; border-radius: 4px; font-size: .84rem; color: var(--ink); text-decoration: none; white-space: nowrap; }
-.idxcard a:hover { background: var(--soft); }
-.idxcard a.cur { font-weight: 700; box-shadow: inset 2px 0 0 var(--blue); }
-@media (prefers-reduced-motion: reduce) { .idxtab { transition: none; } }
 
 /* ---------- Round 2: Active rail tab ---------- */
 /* The active item is a divider tab: its fold runs across the stitched edge and meets the page. The rail lets it overhang
@@ -1577,3 +1576,104 @@ p.small.foot { margin-top: .9rem; }
 @media (max-width: 1099px) {
   .side .navgroup { margin: .6rem .4rem; padding: 0; border-top: 1px dashed rgba(255, 255, 255, .17); }
 }
+
+/* ---------- In-app dialogs and the undo toast (ui.jsx: confirmDialog, notice, askText, toast) ---------- */
+.dlg { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow);
+  padding: 1.25rem 1.35rem 1.1rem; width: min(26rem, calc(100vw - 2rem)); animation: dlgin .22s var(--ease) both; }
+.dlg::backdrop { background: rgba(15, 20, 40, .42); animation: dlgfade .22s var(--ease) both; }
+.dlg-title { margin: 0 0 .5rem; font-size: 1.05rem; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.dlg-body { margin: 0 0 .6rem; font-size: .92rem; line-height: 1.45; color: var(--muted); }
+.dlg-field { display: block; margin: .4rem 0 .2rem; font-size: .85rem; color: var(--muted); }
+.dlg-field span { display: block; margin-bottom: .3rem; }
+.dlg-field input { display: block; width: 100%; box-sizing: border-box; margin: 0; }
+.dlg-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
+.btn.dlg-danger { color: var(--red); font-weight: 600; }
+.btn.dlg-danger:hover:not(:disabled) { border-color: var(--red); }
+.toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%); z-index: 1000; display: flex; align-items: center; gap: 1rem;
+  max-width: min(32rem, calc(100vw - 2rem)); padding: .65rem .9rem; border-radius: 6px; font-size: .9rem; color: var(--paper-white, #fff);
+  background: var(--cloth), linear-gradient(180deg, color-mix(in srgb, var(--btn) 84%, white), var(--btn));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 2px 4px rgba(15, 20, 40, .3), 0 14px 30px -10px rgba(15, 20, 40, .55);
+  animation: toastin .25s var(--ease) both; }
+.toast-undo { background: none; border: 0; padding: .1rem .3rem; font: inherit; font-weight: 700; color: inherit; text-decoration: underline; cursor: pointer; border-radius: 4px; }
+.toast-undo:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+@keyframes dlgin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes dlgfade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes toastin { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .dlg, .dlg::backdrop, .toast { animation: none; } }
+
+/* Transactions: long merchant names truncate to one line (full name in the title); badges stay beside it. */
+.txtable td.merch { white-space: nowrap; max-width: 22rem; overflow: hidden; }
+.txtable .merchcell { max-width: 100%; min-width: 0; }
+.txtable .mname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.txtable .mbadges { flex-shrink: 0; white-space: nowrap; }
+.txtable tr.txrow.found td { background: var(--soft); }
+
+/* Dashboard budget meters carry the even-pace tick (flexible groups); the tick pokes out of the track. */
+.gbud .meter { overflow: visible; }
+.gbud .meter b { position: absolute; top: -3px; width: 2px; height: 13px; background: var(--muted); border-radius: 1px; opacity: .7; }
+/* Budget group footer menu opens upward from the card's bottom edge. */
+.bfoot .groupmenu { flex: 0 0 auto; align-self: center; }
+.bfoot .groupmenu .rowmenu-btn { margin: 0; }
+.bfoot .groupmenu .rowmenu-pop { top: auto; bottom: 100%; white-space: nowrap; }
+/* Plan: Assumptions disclosure, a lone goal card spanning the grid, the checking-account note. */
+.assump { margin: 0 0 1rem; border-top: 1px solid var(--line); padding-top: .6rem; }
+.assump > summary { cursor: pointer; font-size: .9rem; color: var(--muted); list-style: none; display: flex; gap: .5rem; align-items: baseline; }
+.assump > summary::-webkit-details-marker { display: none; }
+.assump > summary b { color: var(--ink); font-weight: 700; }
+.assump > summary::before { content: ""; width: .45rem; height: .45rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s; flex: none; align-self: center; }
+.assump[open] > summary::before { transform: rotate(45deg); }
+.assump > summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.assump .form { margin: .8rem 0 0; }
+.goalgrid.single { grid-template-columns: 1fr; }
+.goalgrid.single > .card { max-width: none; }
+.goalgrid.single > .card > * { max-width: 46rem; }
+.goalgrid.single > .card > .goalsparkslot { max-width: none; }
+.goalpen { margin: .4rem 0 0; font-size: .82rem; }
+
+/* ---------- Transactions: category as text until you reach for it; one compact filter bar ---------- */
+.catpick { position: relative; display: inline-flex; align-items: center; gap: .3rem; max-width: 100%; padding: .1rem .35rem; margin-left: -.35rem; border: 1px solid transparent; border-radius: 6px; vertical-align: middle; }
+.catpick .catname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.catpick .catsel { position: absolute; inset: 0; width: 100%; max-width: none; opacity: 0; cursor: pointer; }
+.catpick .catchev { flex: none; color: var(--muted); opacity: 0; transition: opacity .15s; }
+.txrow:hover .catpick, .catpick:focus-within { border-color: var(--line); background: var(--card); }
+.txrow:hover .catpick .catchev, .catpick:focus-within .catchev { opacity: 1; }
+.catpick:has(.catsel:focus-visible) { outline: 2px solid var(--blue); outline-offset: 1px; }
+.filterbar { display: flex; align-items: center; gap: .4rem; margin: 1rem 0 0; padding: .45rem .6rem; background: var(--card); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--paper-shadow); }
+.filterbar input, .filterbar select { padding: .25rem .5rem; font-size: .86rem; border-radius: 6px; box-shadow: none; }
+.filterbar input[type=search] { flex: 1 1 14rem; min-width: 10rem; }
+.filterbar select { flex: 0 1 auto; max-width: 11rem; }
+.sweeptoggle { display: inline-flex; align-items: center; gap: .4rem; margin-left: auto; padding: .2rem .55rem; border: 1px solid var(--line); border-radius: 99px; font-size: .8rem; color: var(--muted); cursor: pointer; }
+.sweeptoggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.sweeptoggle::before { content: ''; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--muted); }
+.sweeptoggle.on { color: var(--ink); border-color: var(--blue); background: var(--soft); }
+.sweeptoggle.on::before { background: var(--blue); border-color: var(--blue); }
+.sweeptoggle:has(input:focus-visible) { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+/* ---------- Charts: round ticks, one-range projection, softer night bars, net worth lead ---------- */
+.standing.solo { grid-template-columns: minmax(0, 1fr); }
+.chart .edge { fill: none; stroke: var(--blue); stroke-width: 1.25; stroke-dasharray: 5 4; opacity: .75; }
+.chart .mid { fill: none; stroke: var(--blue); stroke-width: 2.75; stroke-linejoin: round; }
+.chart text.endlab { fill: var(--muted); font-size: 11px; }
+.chart text.endlab.mid { fill: var(--ink); font-weight: 700; stroke: none; }
+:root[data-theme="dark"] .chart .cf-in, :root[data-theme="dark"] .chart .cf-out { opacity: .72; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chart .cf-in, :root:not([data-theme="light"]) .chart .cf-out { opacity: .72; } }
+
+/* Reports › Trips tab header, the one-line "away" rule, and the compact shelf of reached goals. */
+.tabhead { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.tabhead .sub { margin: 0; }
+.awayline { margin: 1rem 0 0; padding: .6rem 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: .9rem; color: var(--muted); }
+.reachedshelf { display: grid; }
+.reachedrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: .9rem; padding: .55rem 0; border-top: 1px solid var(--line); }
+.reachedrow:first-child { border-top: 0; }
+.reachedrow.editing { display: block; }
+.reachedrow .amt { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- Review polish ---------- */
+/* Stamps-only spread (Bills): no ink row, so a day is the date and its stamps. */
+.sdays.nodots .sday { grid-template-rows: auto 18px; }
+/* One allocation split takes the full width. */
+.splits.one { grid-template-columns: minmax(0, 1fr); }
+/* Net worth page's lead band: what you own and owe sit at its right, in cover ink. */
+.stand.lead > .bandparts { position: absolute; right: 1.5rem; bottom: 1.4rem; display: flex; gap: 2.5rem; margin: 0; }
+.bandparts dt { font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--rail-ink); }
+.bandparts dd { margin: .2rem 0 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; color: var(--paper-white); }

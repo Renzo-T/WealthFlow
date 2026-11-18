@@ -7,3 +7,8 @@ export function reachedOn(hist, target) {
   while (i > 0 && hist[i - 1].balance >= target) i--;
   return i === 0 ? null : hist[i].date;
 }
+
+// An account that bills and paydays move around (checking, cash management), so its recent change says little about
+// how fast money is being put aside.
+export const isEverydayAccount = (type, subtype) =>
+  type === 'depository' && /^(checking|cash management)$/i.test(String(subtype ?? '').trim());

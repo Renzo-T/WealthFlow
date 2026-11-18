@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePlaidLink } from 'react-plaid-link';
 import { api } from './api.js';
+import { notice } from './ui.jsx';
 
 // Plaid Link buttons: connect a new bank, or update an existing one (sign in again / approve more products).
 // Normally Plaid's Hosted Link: its page opens in a new tab (it handles banks' sign-in redirects itself) and this
@@ -26,7 +27,7 @@ function useHostedLink() {
     const w = window.open('', '_blank');
     setState('opening');
     const r = await getToken();
-    if (!r?.link_token) { w?.close(); setState(null); window.alert(r?.error_message || 'Could not start Plaid.'); return; }
+    if (!r?.link_token) { w?.close(); setState(null); notice({ title: 'Could not start Plaid', body: r?.error_message || 'Could not start Plaid.' }); return; }
     if (!r.hosted_link_url || !w) { w?.close(); setState(null); fallback(r); return; } // no hosted page, or pop-up blocked
     w.opener = null; w.location.href = r.hosted_link_url; tab.current = w;
     setState('waiting');
@@ -89,7 +90,7 @@ export function UpdateLink({ item, label, products, onDone, className = 'btn' })
   const getToken = async (hosted = true) => {
     const r = await api(path(hosted), { method: 'POST' });
     if (!r.link_token) { if (r.dismissed) onDone?.(); return r; }
-    if (r.dropped?.length) window.alert(`${item.institution} doesn't share ${r.dropped.join(' or ')} through Plaid; asking for the rest.`);
+    if (r.dropped?.length) notice({ title: 'Some data is not available', body: `${item.institution} doesn't share ${r.dropped.join(' or ')} through Plaid; asking for the rest.` });
     return { ...r, update: true };
   };
   const finished = async () => { await finishUpdate(item.id, products ?? ''); clearLink(); reload(); };

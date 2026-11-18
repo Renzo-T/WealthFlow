@@ -14,11 +14,12 @@ const inDays = (d) => {
 // "Needs you" column gives way and Coming up grows to match the Budget column's height.
 export const comingCount = (todo = []) => (todo.length ? 5 : 7);
 
-export default function Glance({ todo = [], upcoming = [], budgets }) {
+export default function Glance({ todo = [], upcoming = [], budgets, spentAll }) {
   const rows = useStampedExit(todo, (t) => t.key); // a kind of thing that got sorted holds its place for a stamp
   const caught = rows.length === 0;
   const groups = (budgets?.items ?? []).filter((b) => b.amount > 0);
-  const total = groups.reduce((s, b) => s + b.amount, 0), spent = groups.reduce((s, b) => s + b.spent, 0), left = total - spent;
+  const spent = groups.reduce((s, b) => s + b.spent, 0);
+  const over = groups.filter((b) => b.spent > b.amount + 0.5), list = (a) => (a.length < 3 ? a.join(' and ') : `${a.slice(0, -1).join(', ')} and ${a.at(-1)}`);
   // The four groups closest to (or past) their budget; one that hasn't started yet says nothing at a glance.
   const watch = [...groups].sort((a, b) => b.spent / b.amount - a.spent / a.amount).slice(0, 4);
   return (
@@ -44,13 +45,17 @@ export default function Glance({ todo = [], upcoming = [], budgets }) {
       <div className="gsec">
         <div className="ghead"><h2>Budget</h2><a className="small" href="#/budget">Budget</a></div>
         {groups.length === 0 ? <p className="gquiet small">No budget yet. <a href="#/budget">Set one up</a> and this shows how each group is tracking.</p> : <>
-          <div className="gtotal small"><b className={`amt${left < -0.5 ? ' bad' : ''}`}>{usd(Math.abs(left))}</b> <span className="muted">{left < -0.5 ? 'over' : 'left'} of <span className="amt">{usd(total)}</span> budgeted</span></div>
+          <div className="gtotal small">{over.length > 0 ? <span className="bad">{list(over.map((b) => b.category))} {over.length === 1 ? 'is' : 'are'} over</span> : <span className="muted">Everything is within budget</span>}</div>
+          {/* The standing strip's "spent" is every group; this counts budgeted groups only. Say so when they differ. */}
+          {spentAll != null && Math.abs(spentAll - spent) >= 1 && <div className="gnote small muted">Budgeted groups only: <span className="amt">{usd(spent)}</span> of the <span className="amt">{usd(spentAll)}</span> spent this month.</div>}
           {watch.map((b) => {
             const p = b.amount ? (b.spent / b.amount) * 100 : 0;
+            const pace = b.kind === 'flexible' && b.pace > 0 && b.pace < 1 ? b.pace : null; // same rule as the Budget page
             return (
               <div className="gbud" key={b.category} title={tipText(`${b.category}: ${usd2(b.spent)} of ${usd2(b.amount)}`)}>
                 <span className="gname">{b.category}</span><span className="small muted amt">{usd(b.spent)} of {usd(b.amount)}</span>
-                <span className="meter"><i className={p > 100 ? 'over' : ''} style={{ width: `${Math.min(100, p)}%` }} /></span>
+                <span className="meter"><i className={p > 100 ? 'over' : ''} style={{ width: `${Math.min(100, p)}%` }} />
+                  {pace != null && <b style={{ left: `${pace * 100}%` }} title="An even pace for today" />}</span>
               </div>
             );
           })}

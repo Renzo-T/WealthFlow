@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from './api.js';
 import { usd, usd2, shortDate, SERIES, NEUTRAL } from './format.js';
-import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, Close } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, Close, confirmDialog } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 import { TextStamp } from './Stamp.jsx';
+import { ActionMenu } from './Goals.jsx';
 
 // "Sep 7 – 12, 2026", "Nov 16 – Dec 1, 2025", "Dec 28, 2025 – Jan 3, 2026".
 const range = (t) => {
@@ -31,7 +32,7 @@ function CategoryBar({ cats, total }) {
   );
 }
 
-// Suggestions for a trip (bookings made before it, settle-ups with friends): + adds one, × says it isn't part of the
+// Suggestions for a trip (bookings made before it, settle-ups with friends): + adds one, the close button says it isn't part of the
 // trip (so it stops being suggested), and the whole list can be added or dismissed at once.
 function Suggest({ title, items, trip, onTrip, reload, label }) {
   if (!items.length) return null;
@@ -58,7 +59,7 @@ function TripCard({ trip, reload }) {
   const patch = async (body) => { await api(`/trips/${trip.id}`, { method: 'PATCH', body: JSON.stringify(body) }); reload(); };
   const onTrip = async (id, value) => { await api(`/transactions/${id}/trip`, { method: 'POST', body: JSON.stringify({ trip: value }) }); reload(); };
   const remove = async () => {
-    if (!window.confirm(`Delete "${trip.name}"? Its purchases stay as they are; they just aren't grouped as a trip.`)) return;
+    if (!await confirmDialog({ title: `Delete "${trip.name}"?`, body: "Its purchases stay as they are; they just aren't grouped as a trip.", confirm: 'Delete trip', danger: true })) return;
     await api(`/trips/${trip.id}`, { method: 'DELETE' }); reload();
   };
   return (
@@ -72,7 +73,7 @@ function TripCard({ trip, reload }) {
         </form>
       ) : (
         <div className="row base"><span><b className="tripname">{trip.name}</b>{trip.place && <span className="small muted"> · {trip.place}</span>}</span>
-          <span className="btnrow"><button className="linkbtn" onClick={() => setEdit(true)}>Edit</button><button className="linkbtn" onClick={remove}>Delete</button></span></div>
+          <ActionMenu name={trip.name} actions={[['Edit', () => setEdit(true)], ['Delete', remove]]} /></div>
       )}
       <div className="tripwhen"><TextStamp kind="out" ink={trip.id}>{range(trip)}</TextStamp><span className="small muted">{trip.days} day{trip.days > 1 ? 's' : ''}</span></div>
       <div className="tripnums">
@@ -113,6 +114,7 @@ function Suggestion({ trip, reload }) {
 const monthYear = (d) => new Date(`${d}T00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 const MODES = [['distance', 'More than'], ['state', 'In another state'], ['country', 'Only in another country']];
 function HomeAndAway({ home, settings, reload }) {
+  const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(false);
   const [rows, setRows] = useState(home.map(({ city, region, since, until }) => ({ city, region: region ?? '', since, until: until ?? '' })));
   const [s, setS] = useState(settings);
@@ -124,8 +126,17 @@ function HomeAndAway({ home, settings, reload }) {
     setErr(''); setEdit(false); reload();
   };
   const inferred = !home.some((b) => b.set);
+  if (!open) {
+    const now = home.filter((b) => !b.until), list = now.length ? now : home;
+    const place = (b) => `${b.city}${b.region ? `, ${b.region}` : ''}`;
+    const from = list.length ? `${place(list[0])}${list.length > 1 ? ` and ${list.length - 1} other${list.length > 2 ? 's' : ''}` : ''}` : 'home';
+    const rule = settings.mode === 'state' ? `Away means in another state than ${from}`
+      : settings.mode === 'country' ? `Away means in another country than ${from}`
+      : `Away means more than ${settings.miles} miles from ${from}`;
+    return <p className="awayline mt">{rule}. <button className="linkbtn" onClick={() => setOpen(true)} aria-label="Change what counts as away and your home">Change</button></p>;
+  }
   return (
-    <Panel className="mt" title="Home & away">
+    <Panel className="mt" title="Home & away" actions={<button className="linkbtn" onClick={() => { setOpen(false); setEdit(false); }}>Done</button>}>
       <p className="small muted mt-0">Purchases count as away from home when they're made in person far enough from where home was at the time.</p>
       <div className="awayrow">
         <span>Away means</span>
@@ -163,7 +174,7 @@ function HomeAndAway({ home, settings, reload }) {
   );
 }
 
-export default function Trips() {
+export default function Trips({ embedded = false }) {
   const [d, setD] = useState(null);
   const [adding, setAdding] = useState(false);
   const [f, setF] = useState({ name: '', start: '', end: '' });
@@ -183,9 +194,12 @@ export default function Trips() {
   const thisYear = trips.filter((t) => t.start.startsWith(year)).reduce((s, t) => s + t.total, 0);
   return (
     <>
-      <PageHeader title="Trips" sub="Spending away from home; confirmed trips are left out of month-to-month comparisons.">
-        <button className="btn primary" onClick={() => setAdding(!adding)}>{adding ? 'Cancel' : 'Add a trip'}</button>
-      </PageHeader>
+      {embedded
+        ? <div className="tabhead"><p className="sub">Spending away from home; confirmed trips are left out of month-to-month comparisons.</p>
+          <button className="btn primary" onClick={() => setAdding(!adding)}>{adding ? 'Cancel' : 'Add a trip'}</button></div>
+        : <PageHeader title="Trips" sub="Spending away from home; confirmed trips are left out of month-to-month comparisons.">
+          <button className="btn primary" onClick={() => setAdding(!adding)}>{adding ? 'Cancel' : 'Add a trip'}</button>
+        </PageHeader>}
       {adding && <Panel className="mt" title="New trip">
         <form className="form" onSubmit={add}>
           <label className="lbl">Name<input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Big Bend weekend" required /></label>

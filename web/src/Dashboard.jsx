@@ -1,18 +1,17 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from './api.js';
 import { DashboardSkeleton, Trend, Check } from './ui.jsx';
 import Cards from './Cards.jsx';
 import MonthSpread from './MonthSpread.jsx';
-import Glance, { comingCount } from './Glance.jsx';
+import Glance from './Glance.jsx';
 import NetWorthChart from './NetWorthChart.jsx';
 import AssetAllocation from './AssetAllocation.jsx';
-import Upcoming from './Upcoming.jsx';
 import CashFlow from './CashFlow.jsx';
 import Categories from './Categories.jsx';
 import { RecentTransactions } from './Transactions.jsx';
 import { GoalsPanel } from './Goals.jsx';
-import { ProjectionPanel } from './Projection.jsx';
-import { InsightStrip, FrequentPanel, WatchlistPanel, SafeToSpendPanel, InvestmentsCard } from './Insights.jsx';
+import { InsightStrip, FrequentPanel, WatchlistPanel, InvestmentsCard } from './Insights.jsx';
 import { defaultLayout, mergeLayout } from './layout.js';
 
 // Every dashboard panel, in default order. `span` is its width in a 3-column row (3 = full width); `rail` means it
@@ -23,19 +22,16 @@ import { defaultLayout, mergeLayout } from './layout.js';
 export const PANELS = [
   { id: 'cards', name: 'Where you stand', span: 3, lead: true, render: ({ s, extra }) => <Cards s={s} safe={extra.safe} budgets={extra.budgets} /> },
   { id: 'month', name: 'Month spread', span: 3, lead: true, render: () => <MonthSpread /> },
-  { id: 'glance', name: 'Needs you, coming up, budget', span: 3, lead: true, render: ({ extra }) => <Glance todo={extra.todo} upcoming={extra.upcoming} budgets={extra.budgets} /> },
+  { id: 'glance', name: 'Needs you, coming up, budget', span: 3, lead: true, render: ({ s, extra }) => <Glance todo={extra.todo} upcoming={extra.upcoming} budgets={extra.budgets} spentAll={s.spending.value} /> },
   { id: 'insight', name: 'What changed', span: 3, lead: true, render: ({ extra }) => <InsightStrip changed={extra.insights?.changed} todo={extra.todo} /> },
   { id: 'networth', name: 'Net worth chart', span: 2, render: ({ s }) => <NetWorthChart history={s.history} /> },
   { id: 'allocation', hidden: true, name: 'Asset allocation', span: 1, render: ({ extra }) => <AssetAllocation a={extra.allocation} /> },
   { id: 'investments', hidden: true, name: 'Investments', span: 1, render: ({ extra }) => <InvestmentsCard d={extra.invest} /> },
-  { id: 'upcoming', hidden: true, name: 'Upcoming bills & income', span: 1, rail: true, render: ({ extra }) => <Upcoming items={extra.upcoming} calendar={false} skip={comingCount(extra.todo)} /> },
-  { id: 'safe', hidden: true, name: 'Free to spend', span: 1, rail: true, render: ({ extra, reload }) => <SafeToSpendPanel d={extra.safe} reload={reload} /> },
   { id: 'recent', name: 'Recent transactions', span: 1, render: ({ extra }) => <RecentTransactions items={extra.recent} /> },
   { id: 'cashflow', name: 'Cash flow', span: 1, render: ({ extra }) => <CashFlow data={extra.cashflow} /> },
   { id: 'top', hidden: true, name: 'Top spending', span: 1, rail: true, render: ({ extra }) => <Categories c={extra.categories} changes={extra.insights?.groupChanges} /> },
   { id: 'watchlist', name: 'Watchlist', span: 2, render: ({ extra, reload }) => <WatchlistPanel data={extra.watchlist} reload={reload} /> },
   { id: 'frequent', hidden: true, name: 'Frequent spending', span: 1, render: ({ extra }) => <FrequentPanel items={extra.insights?.frequent ?? []} early={extra.insights?.changed?.reason === 'early'} /> },
-  { id: 'projection', hidden: true, name: 'Net worth projection', span: 2, render: ({ s, extra }) => <ProjectionPanel s={s} cashflow={extra.cashflow} /> },
   { id: 'goals', name: 'Goals', span: ({ extra }) => ((extra.watchlist?.items.length ?? 0) <= 1 ? 2 : 3), render: ({ extra }) => <GoalsPanel items={extra.goals} /> },
 ];
 const DEFAULT = defaultLayout(PANELS);
@@ -140,6 +136,8 @@ export default function Dashboard(props) {
   const wide = useWide();
   const [layout, setLayout] = useState(null);
   const [editing, setEditing] = useState(false);
+  const [slot, setSlot] = useState(null); // the page header's actions area (App renders it)
+  useLayoutEffect(() => { setSlot(document.getElementById('dash-actions')); }, []);
   const mainRef = useRef(null), railRef = useRef(null);
   useEffect(() => { api('/settings/dashboard').then((l) => setLayout(merge(l))); }, []);
   usePacked(mainRef, [layout, editing, wide, props.extra]);
@@ -162,13 +160,13 @@ export default function Dashboard(props) {
 
   return (
     <>
-      <div className="dashbar">
+      {slot && createPortal(<div className="dashbar">
         {editing ? <>
           <span className="small muted">Move, hide or reset panels. Changes save as you go.</span>
           <button className="btn" onClick={reset}>Reset to default</button>
           <button className="btn primary" onClick={() => setEditing(false)}>Done</button>
         </> : <button className="linkbtn" onClick={() => setEditing(true)}>Customize dashboard</button>}
-      </div>
+      </div>, slot)}
       {editing && layout.hidden.length > 0 && (
         <div className="note"><span>Hidden: {layout.hidden.map((id) => byId[id]?.name).filter(Boolean).join(', ')}</span>
           <span className="btnrow">{layout.hidden.map((id) => byId[id] && (

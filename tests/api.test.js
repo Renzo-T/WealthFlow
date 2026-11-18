@@ -110,6 +110,37 @@ test('"Always for <person>" makes one rule for every payment with them', async (
   assert.equal(db.prepare('SELECT pattern FROM category_rules').get().pattern, 'Sam Lee "');
 });
 
+test('renaming a merchant changes the name shown (list and CSV) for every row with it; an empty name restores it', async () => {
+  db.prepare('DELETE FROM merchant_names').run();
+  const a = tx('chk', '2026-09-01', 12, 'DIRECT DEBIT ACME PAYMNT 123456789', { primary: 'GENERAL_SERVICES' });
+  const b = tx('chk', '2026-09-08', 12, 'DIRECT DEBIT ACME PAYMNT 987654321', { primary: 'GENERAL_SERVICES' });
+  const shown = async (id) => (await get('/transactions')).body.find((t) => t.id === id).display;
+  const before = await shown(a);
+  assert.equal((await put('/merchant-names', { from: before, to: 'Acme Corp' })).status, 200);
+  assert.equal(await shown(a), 'Acme Corp');
+  assert.equal(row(a).name.includes('PAYMNT'), true); // the raw name (used for categorizing) is untouched
+  assert.equal(await shown(b), 'Acme Corp'); // same cleaned name
+  assert.equal((await put('/merchant-names', { from: before, to: '' })).status, 200);
+  assert.equal(await shown(a), before);
+  assert.equal((await put('/merchant-names', { from: '', to: 'x' })).status, 400);
+});
+
+test('recategorizing returns the rule it made; deleting the rule, or clearing a one-off, undoes it', async () => {
+  const a = tx('card', '2026-09-01', 30, 'CORNER STORE 1', { primary: 'GENERAL_MERCHANDISE' });
+  classify();
+  const was = row(a).category;
+  let r = await patch(`/transactions/${a}`, { category: 'Groceries', all: false });
+  assert.equal(r.body.rule, null);
+  assert.equal(row(a).category, 'Groceries');
+  assert.equal((await patch(`/transactions/${a}`, { clear: true })).status, 200);
+  assert.equal(row(a).category, was);
+  r = await patch(`/transactions/${a}`, { category: 'Groceries', all: true });
+  assert.equal(typeof r.body.rule, 'number');
+  assert.equal(row(a).category, 'Groceries');
+  await del(`/rules/${r.body.rule}`);
+  assert.equal(row(a).category, was);
+});
+
 test('money a friend sent back counts against the charge it paid back; undo restores it', async () => {
   const charge = tx('card', '2026-09-01', 90, 'CINEMA TICKETS', { primary: 'ENTERTAINMENT', detailed: 'ENTERTAINMENT_TV_AND_MOVIES' });
   const back = tx('ven', '2026-09-03', -30, 'Riley Brooks "🍿"', { primary: 'OTHER' });
@@ -167,9 +198,26 @@ test('answering "how often are you paid?" adds recurring income that sets payday
   assert.equal((await post('/bills/paychecks', { key: c.key, cadence: 'sometimes' })).status, 400);
   assert.equal((await post('/bills/paychecks', { key: c.key, cadence: 'biweekly' })).status, 200);
   assert.equal((await get('/bills/paychecks')).body.length, 0);
-  const income = (await get('/bills')).body.find((b) => b.direction === 'in');
-  assert.equal(income.schedule, 'every 2 weeks');
-  assert.equal(income.category, 'Salary');
+  const income = (await get('/bills')).body.filter((b) => b.direction === 'in');
+  assert.equal(income.length, 1);
+  assert.equal(income[0].schedule, 'every 2 weeks');
+  assert.equal(income[0].category, 'Salary');
+  assert.ok(income[0].name.endsWith('paycheck'));
+  assert.notEqual(income[0].source, 'manual', 'the schedule goes on the deposits themselves, so a later pattern is the same bill');
+});
+
+test('bills from a payment: "this repeats" schedules it; bad input is refused', async () => {
+  tx('chk', new Date(Date.now() - 300 * 864e5).toLocaleDateString('en-CA'), 480, 'ACME INSURANCE', { primary: 'GENERAL_SERVICES', detailed: 'GENERAL_SERVICES_INSURANCE' });
+  classify();
+  const id = db.prepare("SELECT id FROM transactions WHERE name = 'ACME INSURANCE'").get().id;
+  assert.equal((await post('/bills/from-payment', { id: 'nope', cadence: 'yearly' })).status, 404);
+  assert.equal((await post('/bills/from-payment', { id, cadence: 'sometimes' })).status, 400);
+  const r = await post('/bills/from-payment', { id, cadence: 'yearly', name: 'Car insurance' });
+  assert.equal(r.status, 200);
+  const b = (await get('/bills')).body.find((x) => x.key === r.body.key);
+  assert.equal(b.name, 'Car insurance');
+  assert.equal(b.frequency, 'Yearly');
+  assert.equal((await get('/transactions')).body.find((t) => t.id === id).recurring, true, 'its payments get the repeat marker');
 });
 
 // ---------- Everything loads ----------
@@ -828,4 +876,37 @@ test('spent this month: a refund reduces only its own group, and the strip, the 
   const b = (await get(`/budget?month=${month}`)).body;
   assert.equal(Math.round(b.totals.expensesActual), 300);
   assert.equal(Math.round(b.totals.refundsLeftOut), 800);
+});
+
+test('bills: a paycheck you added that detection also finds is set aside, and "They\'re different" counts both', async () => {
+  const today = new Date().toLocaleDateString('en-CA');
+  const d2 = (n) => new Date(Date.parse(today + 'T00:00Z') - n * 864e5).toISOString().slice(0, 10);
+  for (const n of [56, 42, 28, 14]) tx('chk', d2(n), -3000, 'DIRECT DEPOSIT ACME CORP', { primary: 'INCOME', detailed: 'INCOME_SALARY' });
+  classify();
+  db.prepare(`INSERT INTO bill_settings (key, manual, name, direction, account_id, rule, amount_mode, amount, category)
+    VALUES ('man:9', 1, 'Acme paycheck', 'in', 'chk', ?, 'fixed', 3000, 'Salary')`).run(JSON.stringify({ kind: 'weeks', n: 2, anchor: d2(14) }));
+  const list = (await get('/bills')).body, det = list.find((b) => b.source === 'detected' && b.direction === 'in');
+  assert.equal(list.find((b) => b.key === 'man:9').same_as?.key, det.key);
+  assert.equal(det.name, 'Acme paycheck');
+  assert.equal((await post('/bills/distinct', { a: 'man:9' })).status, 400);
+  assert.equal((await post('/bills/distinct', { a: 'man:9', b: det.key })).status, 200);
+  assert.equal((await get('/bills')).body.find((b) => b.key === 'man:9').same_as, undefined);
+});
+
+test('since: counts new transactions (not split parts), bills paid and the next income', async () => {
+  const day = (n) => new Date(Date.now() + n * 864e5).toLocaleDateString('en-CA');
+  tx('chk', day(-10), 20, 'Old purchase');
+  tx('chk', day(-1), 12, 'Corner Cafe');
+  tx('chk', day(-1), 30, 'Acme Market');
+  const parent = tx('chk', day(-2), 50, 'Big Box');
+  tx('chk', day(-2), 25, 'Big Box part', { id: 'part1' });
+  db.prepare("UPDATE transactions SET split_of = ? WHERE id = 'part1'").run(parent);
+  db.prepare(`INSERT INTO bill_settings (key, manual, name, direction, rule, amount_mode, amount) VALUES ('man:pay', 1, 'Acme Corp', 'in', ?, 'fixed', 2000)`)
+    .run(JSON.stringify({ kind: 'weeks', n: 2, anchor: day(5), roll: 0 }));
+  const d = (await get(`/since?from=${day(-5)}`)).body;
+  assert.equal(d.transactions, 3);
+  assert.equal(d.nextIncome.name, 'Acme Corp');
+  assert.equal(d.nextIncome.amount, 2000);
+  assert.ok(d.nextIncome.date >= day(0));
+  assert.equal((await get('/since')).body.transactions, 0); // no date: since today
 });

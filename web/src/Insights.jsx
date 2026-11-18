@@ -124,12 +124,10 @@ export function WatchlistPanel({ data, reload }) {
         </form>
       )}
       {data.items.length === 0 && !adding && (
-        <EmptyState icon="eye" title="Keep an eye on a shop or category"
-          actions={<>{[...data.merchants.slice(0, 4).map((m) => ['merchant', m.merchant]), ['category', 'Restaurants'], ['category', 'Groceries']].map(([kind, value]) => (
+        <div className="wempty"><p className="small muted">Pick a shop or category to follow its average, this month so far and where it's headed.</p>
+          <div className="estate-actions">{[...data.merchants.slice(0, 4).map((m) => ['merchant', m.merchant]), ['category', 'Restaurants'], ['category', 'Groceries']].map(([kind, value]) => (
             <button key={value} className="chipbtn" onClick={async () => { await api('/watchlist', { method: 'POST', body: JSON.stringify({ kind, value }) }); reload(); }}>+ {value}</button>))}
-            <button className="chipbtn" onClick={() => setAdding(true)}>Something else…</button></>}>
-          See your monthly average, this month so far, and where you're headed. Your most frequent shops are below.
-        </EmptyState>)}
+            <button className="chipbtn" onClick={() => setAdding(true)}>Something else…</button></div></div>)}
       {data.items.length > 0 && (
         <div className="rl rl-watch" role="table" aria-label="Watched items">
           <div className="rl-head" role="row">
@@ -158,37 +156,6 @@ export function WatchlistPanel({ data, reload }) {
           })}
         </div>
       )}
-    </Panel>
-  );
-}
-
-// Cash in checking-type accounts minus the bills due before the next paycheck.
-// Free to spend this month: cash, plus income still coming, minus bills, card balances and your cushion.
-export function SafeToSpendPanel({ d, reload }) {
-  const [edit, setEdit] = useState(false);
-  if (!d) return null;
-  const until = new Date(`${d.until}T00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const day = (x) => new Date(`${x}T00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const saveCushion = async (v) => { setEdit(false); await api('/settings/cushion', { method: 'PUT', body: JSON.stringify({ amount: v }) }); reload?.(); };
-  return (
-    <Panel title="Free to spend" actions={<a href="#/bills">Bills</a>}>
-      <div className={`stsbig amt ${d.free < 0 ? 'bad' : ''}`}>{d.free < 0 ? '−' : ''}{usd(Math.abs(d.free))}</div>
-      <p className="small muted mt-0">through {until}, after bills, card balances{d.cushion ? ' and your cushion' : ''}</p>
-      <dl className="kv">
-        <dt><Hover tip={<TipList title="Everyday accounts" rows={d.accounts.map((a) => [a.name, usd2(a.balance)])} />}>Cash</Hover></dt><dd className="amt">{usd(d.cash)}</dd>
-        {d.income.length > 0 && <><dt><Hover tip={<TipList title="Still coming this month" rows={d.income.map((o) => [o.name, usd2(o.amount), day(o.date)])} />}>Income still coming</Hover></dt>
-          <dd className="amt good">+{usd(d.incomeTotal)}</dd></>}
-        <dt><Hover tip={d.due.length ? <TipList title="Still due this month" rows={d.due.map((o) => [o.name, usd2(o.amount), day(o.date)])} /> : null}>Bills due ({d.due.length})</Hover></dt>
-        <dd className="amt">−{usd(d.dueTotal)}</dd>
-        {d.cards.length > 0 && <><dt><Hover tip={<TipList title="Owed on cards" rows={d.cards.map((c) => [c.name, usd2(c.balance)])} note="Already spent, so set aside to pay off. Card payments aren't counted again as bills." />}>Card balances</Hover></dt>
-          <dd className="amt">−{usd(d.owed)}</dd></>}
-        <dt>Cushion</dt>
-        <dd>{edit ? <input className="mini" type="number" min="0" step="100" autoFocus defaultValue={d.cushion || ''} aria-label="Cushion to keep aside"
-          onBlur={(e) => saveCushion(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
-          : <button className="linkbtn plain amt" onClick={() => setEdit(true)}>{d.cushion ? `−${usd(d.cushion)}` : 'Set'}</button>}</dd>
-      </dl>
-      {d.planned != null && d.planned > 0 && <p className="small muted foot">Your flexible budget has <b className="amt">{usd(d.planned)}</b> left this month,
-        {d.free - d.planned >= 0 ? <> leaving <b className="amt">{usd(d.free - d.planned)}</b> unplanned.</> : <> more than is free.</>}</p>}
     </Panel>
   );
 }

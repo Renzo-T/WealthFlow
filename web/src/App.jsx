@@ -1,10 +1,10 @@
 import { Fragment, useEffect, useState, useCallback } from 'react';
 import Dashboard, { SetupChecklist } from './Dashboard.jsx';
+import { Digest } from './Cards.jsx';
 import { InkDefs } from './Stamp.jsx';
 import Transactions from './Transactions.jsx';
 import Budget from './Budget.jsx';
 import Goals from './Goals.jsx';
-import Trips from './Trips.jsx';
 import Reports from './Reports.jsx';
 import Forecast from './Forecast.jsx';
 import Investments from './Investments.jsx';
@@ -17,16 +17,15 @@ import Jump from './Jump.jsx';
 import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
 import { FirstRun } from './PlaidSetup.jsx';
 import { api } from './api.js';
-import { sectionOf, tabTarget } from './sections.js';
 import { syncLine } from './syncStatus.js';
-import { PageHeader, DashboardSkeleton, PageBoundary, Seal } from './ui.jsx';
+import { PageHeader, DashboardSkeleton, PageBoundary, Seal, DialogHost } from './ui.jsx';
 
 const HIDE_KEY = 'wealthflow.hideAmounts', THEME_KEY = 'wealthflow.theme';
 const systemDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* storage unavailable */ } } };
 const NAV = [
   { id: 'dashboard', label: 'Dashboard' }, { id: 'transactions', label: 'Transactions' },
-  { id: 'budget', label: 'Budget' }, { id: 'bills', label: 'Bills' }, { id: 'flow', label: 'Money flow' }, { id: 'trips', label: 'Trips' }, { id: 'reports', label: 'Reports' }, { id: 'networth', label: 'Net worth' },
+  { id: 'budget', label: 'Budget' }, { id: 'bills', label: 'Bills' }, { id: 'flow', label: 'Money flow' }, { id: 'reports', label: 'Reports' }, { id: 'networth', label: 'Net worth' },
   { id: 'investments', label: 'Investments' }, { id: 'plan', label: 'Plan' }, { id: 'settings', label: 'Settings' },
 ];
 // How the rail groups NAV. A heading shows as a divider when the rail is icons only; `rule` puts a divider above a
@@ -34,17 +33,11 @@ const NAV = [
 const RAIL = [
   { ids: ['dashboard'] },
   { head: 'Spending', ids: ['transactions', 'budget', 'bills'] },
-  { head: 'Looking back', ids: ['flow', 'reports', 'trips'] },
+  { head: 'Looking back', ids: ['flow', 'reports'] },
   { head: 'What you own', ids: ['networth', 'investments'] },
   { ids: ['plan'], rule: true },
   { ids: ['settings'], rule: true, foot: true },
 ];
-// The index tabs on the page's right edge: one per section (Settings has none), the current one raised. Each opens the
-// last page you used in its section. The rail stays the main navigation; the tabs are a second way in.
-const SECTIONS = [{ label: 'Today', ids: ['dashboard'] }, ...RAIL.filter((g) => g.head).map((g) => ({ label: g.head, ids: g.ids })), { label: 'Plan', ids: ['plan'] }];
-const SECTION_KEY = 'wealthflow.sectionPages';
-const lastPages = () => { try { return JSON.parse(store.get(SECTION_KEY)) ?? {}; } catch { return {}; } };
-const pageLabel = (id) => NAV.find((n) => n.id === id)?.label ?? id;
 // What a sync found, in words. Plaid only has what banks have sent it, so "nothing new" is the common answer.
 const syncSummary = (r) => {
   const added = r.reduce((s, x) => s + (x.added ?? 0), 0);
@@ -53,11 +46,14 @@ const syncSummary = (r) => {
     failed.length ? `${failed.join(', ')} need${failed.length === 1 ? 's' : ''} attention` : ''].filter(Boolean).join('. ');
 };
 // Pages that were merged into another: old links (bookmarks, the setup checklist) land on the new one.
-const MOVED = { accounts: 'networth', goals: 'plan', forecast: 'plan' };
+const MOVED = { accounts: 'networth', goals: 'plan', forecast: 'plan', trips: 'reports?tab=trips' };
 function usePage() {
   const get = () => {
     const [p, q] = window.location.hash.replace('#/', '').split('?'); // "#/transactions?category=…" → transactions
-    if (MOVED[p]) { window.history.replaceState(null, '', `#/${MOVED[p]}${q ? `?${q}` : ''}`); return MOVED[p]; }
+    if (MOVED[p]) { // a target may carry its own query ("reports?tab=trips")
+      const [to, tq] = MOVED[p].split('?'), rest = [tq, q].filter(Boolean).join('&');
+      window.history.replaceState(null, '', `#/${to}${rest ? `?${rest}` : ''}`); return to;
+    }
     return p || 'dashboard';
   };
   const [p, setP] = useState(get);
@@ -72,12 +68,6 @@ function usePage() {
 export default function App() {
   const resume = window.location.pathname === '/oauth';
   const [page, pageQs] = usePage();
-  const [lastBySection, setLastBySection] = useState(lastPages);
-  useEffect(() => { // remember the last page used in each section
-    const sec = sectionOf(SECTIONS, page);
-    if (!sec) return;
-    setLastBySection((l) => { if (l[sec.label] === page) return l; const n = { ...l, [sec.label]: page }; store.set(SECTION_KEY, JSON.stringify(n)); return n; });
-  }, [page]);
   const [meta, setMeta] = useState({ items: [], max: 10 });
   const [s, setS] = useState(null);
   const [extra, setExtra] = useState(null);
@@ -133,9 +123,10 @@ export default function App() {
   return (
     <div className="shell">
       <InkDefs />
+      <DialogHost />
       <Jump pages={NAV} />
       <aside className="side">
-        <div className="logo"><Seal size={30} /><span className="wordmark">Mizo Money<i className="wm-dot" aria-hidden="true" /></span></div>
+        <div className="logo"><Seal size={30} /><span className="wordmark">Mizo Money</span></div>
         {RAIL.map((g) => (
           <Fragment key={g.ids[0]}>
             {g.head && <div className="navgroup">{g.head}</div>}
@@ -153,23 +144,9 @@ export default function App() {
         ))}
       </aside>
       <main className="main">
-        <nav className="idxtabs" aria-label="Section tabs">
-          {SECTIONS.map((g) => {
-            const to = tabTarget(SECTIONS, g, lastBySection), on = g.ids.includes(page);
-            return (
-              <div key={g.label} className="idxwrap">
-                <a href={`#/${to}`} tabIndex={-1} className={`idxtab${on ? ' on' : ''}`} aria-current={on ? 'page' : undefined} title={`${g.label}: ${pageLabel(to)}`}>{g.label}</a>
-                {g.ids.length > 1 && (
-                  <div className="idxcard">
-                    <b>{g.label}</b>
-                    {g.ids.map((id) => <a key={id} href={`#/${id}`} tabIndex={-1} className={id === page ? 'cur' : ''}>{pageLabel(id)}</a>)}
-                  </div>)}
-              </div>);
-          })}
-        </nav>
         <div className="topbar">
           {update?.available && <a className="chip-link info" href="#/settings" title={`You have version ${update.version}. See Settings › Updates.`}>Version {update.latest} is available</a>}
-          {attention > 0 && <a className="chip-link" href="#/networth" title="See your banks on Accounts & net worth">
+          {attention > 0 && <a className="chip-link" href="#/networth" title="See your banks on Net worth">
             {attention} bank{attention > 1 ? 's' : ''} need{attention > 1 ? '' : 's'} attention</a>}
           {/* What the last Refresh found shows here for a few seconds; the sync time itself lives at the rail's foot. */}
           {synced && <span className="small muted" role="status">{synced}</span>}
@@ -194,10 +171,10 @@ export default function App() {
         ))}
         {/* Transactions reads its filters from the address once, when it mounts: a new search must remount it. */}
         <PageBoundary key={page === 'transactions' ? `${page}?${pageQs}` : page}>
-        {page === 'transactions' ? <Transactions /> : page === 'budget' ? <Budget /> : page === 'plan' ? <><Goals /><Forecast /></> : page === 'trips' ? <Trips /> : page === 'reports' ? <Reports />
+        {page === 'transactions' ? <Transactions /> : page === 'budget' ? <Budget /> : page === 'plan' ? <><Goals /><Forecast /></> : page === 'reports' ? <Reports />
           : page === 'investments' ? <Investments /> : page === 'networth' ? <NetWorth onChange={load} />
             : page === 'settings' ? <Settings onChange={load} /> : page === 'flow' ? <Flow /> : page === 'bills' ? <Bills /> : <>
-              <PageHeader title={new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} sub={`${greeting}. Here's where you stand.`} />
+              <PageHeader title={new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} sub={<Digest greeting={`${greeting}. Here's where you stand.`} />}><span id="dash-actions" /></PageHeader>
               {loaded && <SetupChecklist />}
               {!loaded ? <DashboardSkeleton /> : ready ? <Dashboard s={s} extra={extra} meta={meta} reload={load} />
                 : <div className="card empty mt"><p>No accounts yet. Connect a bank to see your dashboard.</p><ConnectBank /></div>}

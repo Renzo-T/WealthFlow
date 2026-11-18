@@ -22,10 +22,10 @@ const tipName = (x) => (
   <span className="tipstamp"><Stamp kind={x.direction === 'in' ? 'in' : 'out'} done={x.done} label={initialOf(x.name)} className="mini" />{x.name}{x.done ? '' : ' (expected)'}</span>
 );
 
-function Day({ d, i, selected, onPick, ribbon }) {
+function Day({ d, i, selected, onPick, dots }) {
   const outs = d.marks.filter((x) => x.direction !== 'in'), ins = d.marks.filter((x) => x.direction === 'in');
   const rows = [
-    ...(d.spent != null ? [['Spent', usd2(d.spent)]] : []),
+    ...(dots && d.spent != null ? [['Spent', usd2(d.spent)]] : []),
     ...d.marks.map((x) => [tipName(x), `${x.direction === 'in' ? '+' : ''}${usd2(x.amount)}${x.estimate ? ' est' : ''}`]),
   ];
   const cls = `sday${d.future ? ' future' : ''}${d.today ? ' today' : ''}${d.weekend ? ' weekend' : ''}${selected ? ' sel' : ''}${onPick ? ' pick' : ''}`;
@@ -36,9 +36,9 @@ function Day({ d, i, selected, onPick, ribbon }) {
   return (
     <Hover className="quiet" tabbable={!onPick} tip={rows.length ? <TipList title={dayName(d.date)} rows={rows} /> : <TipList title={dayName(d.date)} note={d.future ? 'Nothing expected.' : 'Nothing spent.'} />}>
       <Tag className={cls} style={{ '--i': i }} {...pickProps}>
-        {ribbon && d.today && <i className="ribbon" aria-hidden="true" />}
+        {d.today && <i className="ribbon" aria-hidden="true" />}
         <span className="snum">{+d.date.slice(8)}</span>
-        <span className="sink">{d.step > 0 ? <i className="amt" style={{ width: SIZES[d.step], height: SIZES[d.step] }} /> : d.future ? <i className="fut" /> : null}</span>
+        {dots && <span className="sink">{d.step > 0 ? <i className="amt" style={{ width: SIZES[d.step], height: SIZES[d.step] }} /> : d.future ? <i className="fut" /> : null}</span>}
         <span className="sstamps">
           {outs.length > 0 && <DayStamp kind="out" list={outs} i={i} />}
           {ins.length > 0 && <DayStamp kind="in" list={ins} i={i + 1} />}
@@ -49,10 +49,10 @@ function Day({ d, i, selected, onPick, ribbon }) {
 }
 
 // `month` makes the strip follow a page's own month (no arrows of its own, unless `onMonth` is given: then the arrows
-// hand the new month back to the page); `compact` drops the title, legend and footer for a slim strip under a page
-// header. `onPick(date)` makes the days clickable and `selected` marks the chosen one. Same data (/month-spread) and
+// hand the new month back to the page); `onPick(date)` makes the days clickable and `selected` marks the chosen one. Same data (/month-spread) and
 // the same dot scale either way.
-export default function MonthSpread({ month: fixed, onMonth, compact = false, selected, onPick }) {
+// `dots={false}` renders it stamps-only (the Bills page: no spending dots, no "Spent that day" in the legend).
+export default function MonthSpread({ month: fixed, onMonth, selected, onPick, dots = true }) {
   const thisMonth = new Date().toLocaleDateString('en-CA').slice(0, 7);
   const [own, setOwn] = useState(thisMonth);
   const month = fixed ?? own, setMonth = onMonth ?? setOwn, nav = fixed == null || onMonth != null;
@@ -62,14 +62,14 @@ export default function MonthSpread({ month: fixed, onMonth, compact = false, se
   const due = d?.days ? d.days.flatMap((x) => x.marks.filter((m) => !m.done && m.direction !== 'in')).reduce((s, m) => s + m.amount, 0) : 0;
   const days = d?.failed && d.month === month ? <p className="small muted spreadfail">The month's days couldn't be loaded. Refresh the page to try again.</p>
     : d && d.month === month
-    ? <div className="sdays" style={{ '--n': d.days.length }} key={month}>{d.days.map((x, i) => <Day key={x.date} d={x} i={i} selected={x.date === selected} onPick={onPick} ribbon={!compact} />)}</div>
+    ? <div className={`sdays${dots ? '' : ' nodots'}`} style={{ '--n': d.days.length }} key={month}>{d.days.map((x, i) => <Day key={x.date} d={x} i={i} selected={x.date === selected} onPick={onPick} dots={dots} />)}</div>
     : <div className="sdays skelrow" aria-busy="true" />;
-  if (compact) return <section className="card panel spread compact" aria-label={`${monthName(month)}, day by day`}>{days}</section>;
   return (
-    <Panel className="spread" title={<>{monthName(month)}{month !== thisMonth && <span className="asof">{month < thisMonth ? 'past' : 'ahead'}</span>}</>}
+    <Panel className="spread" title={<>{monthName(month)}{month !== thisMonth && <span className="asof">{month < thisMonth ? 'past' : 'ahead'}</span>}
+      {due > 0 && <span className="asof">Bills still due <b className="amt">{usd(due)}</b></span>}</>}
       actions={<span className="spreadnav">
         <span className="legend">
-          <span><i className="lgdot" />Spent that day</span>
+          {dots && <Hover tip="Dots use one size scale for every month, so busy days compare at a glance."><span><i className="lgdot" />Spent that day</span></Hover>}
           <span><Stamp kind="out" done icon="receipt" />Bill paid</span><span><Stamp kind="out" />Bill due</span><span><Stamp kind="in" done icon="arrowin" />Money in</span>
         </span>
         {nav && <>
@@ -78,11 +78,6 @@ export default function MonthSpread({ month: fixed, onMonth, compact = false, se
         </>}
       </span>}>
       {days}
-      {d?.days && <div className="sfoot small muted">
-        <span>Spent so far <b className="amt">{usd(d.total)}</b></span>
-        {due > 0 && <span>Bills still due <b className="amt">{usd(due)}</b></span>}
-        <span className="mnote">Dots use one size scale for every month, so busy days compare at a glance.</span>
-      </div>}
     </Panel>
   );
 }

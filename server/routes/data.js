@@ -9,7 +9,7 @@ import { describe } from '../describe.js';
 import { accountHistory } from '../summary.js';
 import { manualAssets, linkCandidates } from '../assets.js';
 import { monthSpread, monthReplay } from '../spread.js';
-import { bills, calendar, seriesKey, freeToSpend, paycheckCandidates, paycheckRule, markPaycheckHandled } from '../recurring.js';
+import { bills, calendar, seriesKey, freeToSpend, paycheckCandidates, paycheckRule, markPaycheckHandled, markDistinct, scheduleFromPayment, HOW_OFTEN } from '../recurring.js';
 import { budgetMonth } from '../budget.js';
 import { whatChanged, groupChanges, frequentSpend, watchlist, addWatch, topMerchants } from '../watch.js';
 
@@ -123,14 +123,25 @@ function txParams(req) {
 }
 const IS_SPEND = `COALESCE(shown_grp, 'Misc') NOT IN (${NOT_SPEND})`;
 const billOf = (b) => (b ? { recurring: true, bill: { name: b.name, schedule: b.schedule, next_date: b.next_date } } : { recurring: false });
+// Your own names for merchants (merchant_names): keyed by the cleaned name, so every row with it changes.
+const renamed = () => new Map(db.prepare('SELECT pattern, label FROM merchant_names').all().map((m) => [m.pattern, m.label]));
+const shownName = (r, names) => { const d = r.merchant || describe(r.name); return names.get(d) ?? d; };
+router.put('/merchant-names', (req, res) => {
+  const from = String(req.body.from ?? '').trim(), to = String(req.body.to ?? '').trim();
+  if (!from) return res.status(400).json({ error_message: 'Say which name to change.' });
+  if (to) db.prepare('INSERT INTO merchant_names (pattern, label) VALUES (?, ?) ON CONFLICT(pattern) DO UPDATE SET label = excluded.label').run(from, to);
+  else db.prepare('DELETE FROM merchant_names WHERE pattern = ?').run(from);
+  res.json({ ok: true });
+});
 router.get('/transactions', (req, res) => {
   const params = txParams(req);
   const limit = Math.min(Number(req.query.limit) || 100, 1000);
   // Rows that belong to a recurring bill get `recurring: true` (same series logic as the Bills page).
   const series = new Map(bills().filter((b) => !b.hidden && !b.ended && b.source !== 'manual').map((b) => [b.key, b]));
   const partsOf = db.prepare('SELECT id, amount, category, grp FROM transactions WHERE split_of = ? ORDER BY id');
+  const names = renamed();
   const rows = db.prepare(`SELECT * FROM (${TX_ROWS}) WHERE ${TX_WHERE} ORDER BY date DESC, id LIMIT @limit`)
-    .all({ ...params, limit }).map((r) => ({ ...r, display: r.merchant || describe(r.name),
+    .all({ ...params, limit }).map((r) => ({ ...r, display: shownName(r, names), cleaned: r.merchant || describe(r.name),
       ...billOf(series.get(seriesKey({ ...r, pair_account: r.pair_account_id }))), parts: r.is_split ? partsOf.all(r.id) : undefined }));
   if (req.query.summary !== '1') return res.json(rows);
   const summary = db.prepare(`SELECT COUNT(*) count,
@@ -147,9 +158,10 @@ router.get('/transactions', (req, res) => {
 // The current filters as a spreadsheet. Amounts use the everyday sign: negative = money out.
 router.get('/transactions.csv', (req, res) => {
   const rows = db.prepare(`SELECT * FROM (${TX_ROWS}) WHERE ${TX_WHERE} ORDER BY date DESC, id`).all({ ...txParams(req), parts: 1 });
+  const names = renamed();
   const q = (v) => (v == null ? '' : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
   const lines = [['Date', 'Description', 'Merchant', 'Category', 'Group', 'Account', 'To account', 'Amount', 'Pending'].join(',')];
-  for (const r of rows) lines.push([r.date, r.name, r.merchant, r.shown, r.shown_grp, r.account, r.to_account,
+  for (const r of rows) lines.push([r.date, r.name, r.merchant && (names.get(r.merchant) ?? r.merchant), r.shown, r.shown_grp, r.account, r.to_account,
     (-r.amount).toFixed(2), r.pending ? 'yes' : ''].map(q).join(','));
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="mizo-money-transactions-${new Date().toLocaleDateString('en-CA')}.csv"`);
@@ -208,6 +220,18 @@ function cleanRule(r) {
   return out;
 }
 router.get('/bills', (_req, res) => res.json(bills()));
+// A digest of what happened since a date (your last visit): new transactions (split parts aren't separate purchases),
+// bills paid, income received, and the next income expected.
+router.get('/since', (req, res) => {
+  const today = new Date().toLocaleDateString('en-CA');
+  const from = /^\d{4}-\d{2}-\d{2}$/.test(req.query.from ?? '') ? req.query.from : today;
+  const transactions = db.prepare('SELECT COUNT(*) n FROM transactions WHERE split_of IS NULL AND pending = 0 AND date > ? AND date <= ?').get(from, today).n;
+  const live = bills(today).filter((b) => !b.hidden && !b.ended && !b.same_as);
+  const done = (dir) => live.filter((b) => b.direction === dir && b.last_date && b.last_date > from && b.last_date <= today).length;
+  const nextIn = live.filter((b) => b.direction === 'in' && !b.unscheduled && b.next_date && b.next_date >= today).sort((a, b) => a.next_date.localeCompare(b.next_date))[0];
+  res.json({ from, transactions, billsPaid: done('out'), incomeReceived: done('in'),
+    nextIncome: nextIn ? { name: nextIn.name, date: nextIn.next_date, amount: nextIn.amount } : null });
+});
 router.get('/coverage', (_req, res) => res.json(coverage()));
 // Free to spend this month, and how much of it your flexible budget has already planned for.
 router.get('/safe-to-spend', (_req, res) => {
@@ -250,8 +274,8 @@ router.put('/bills/:key', (req, res) => {
   res.json({ ok: true });
 });
 // Add your own bill (or recurring income).
-// Paychecks waiting for "how often are you paid?", and the answer: a recurring income on that schedule
-// (category Salary, so Safe to spend uses it as payday), or 'no' when it isn't a paycheck.
+// Paychecks waiting for "how often are you paid?", and the answer: that schedule on the paycheck's own deposits (so
+// the amount follows what you're actually paid, and detection finding the pattern later changes nothing), or 'no'.
 router.get('/bills/paychecks', (_req, res) => res.json(paycheckCandidates()));
 router.post('/bills/paychecks', (req, res) => {
   const c = paycheckCandidates().find((x) => x.key === req.body.key);
@@ -259,18 +283,41 @@ router.post('/bills/paychecks', (req, res) => {
   if (req.body.cadence !== 'no') {
     const rule = paycheckRule(req.body.cadence, c.date);
     if (!rule) return res.status(400).json({ error_message: 'Pick how often you are paid.' });
-    db.prepare(`INSERT INTO bill_settings (key, manual, name, direction, account_id, rule, amount_mode, amount, category)
-      VALUES (?, 1, ?, 'in', ?, ?, 'fixed', ?, 'Salary')`).run(`man:${Date.now()}`, `${c.name} paycheck`.slice(0, 60), c.account_id, JSON.stringify(rule), c.amount);
+    const t = paymentRow(c.id), name = `${c.name} paycheck`.slice(0, 60);
+    if (!t || !scheduleFromPayment(t, req.body.cadence, name)) { // shouldn't happen for a recent deposit; keep the answer anyway
+      db.prepare(`INSERT INTO bill_settings (key, manual, name, direction, account_id, rule, amount_mode, amount, category)
+        VALUES (?, 1, ?, 'in', ?, ?, 'fixed', ?, 'Salary')`).run(`man:${Date.now()}`, name, c.account_id, JSON.stringify(rule), c.amount);
+    }
   }
   markPaycheckHandled(c.key);
   res.json({ ok: true });
 });
 
+// A payment and the fields its series key needs.
+const paymentRow = (id) => db.prepare(`SELECT t.*, p.account_id pair_account FROM transactions t
+  LEFT JOIN transactions p ON p.id = t.transfer_pair WHERE t.id = ?`).get(String(id ?? ''));
+// "This repeats": schedule a bill from one of its payments (a yearly bill, or one that hasn't repeated yet).
+router.post('/bills/from-payment', (req, res) => {
+  const t = paymentRow(req.body?.id);
+  if (!t) return res.status(404).json({ error_message: 'That payment is gone. Refresh and pick it again.' });
+  if (!HOW_OFTEN.includes(req.body.cadence)) return res.status(400).json({ error_message: 'Pick how often it comes.' });
+  const name = String(req.body.name ?? '').trim().slice(0, 60);
+  const bill = scheduleFromPayment(t, req.body.cadence, name);
+  if (!bill) return res.status(400).json({ error_message: "That one can't be a bill: it's money moved between your own accounts, a refund, or more than a year old." });
+  res.json({ ok: true, key: bill.key, name: bill.name, next_date: bill.next_date });
+});
 router.post('/bills', (req, res) => {
   const b = req.body, rule = cleanRule(b.rule), name = String(b.name ?? '').trim().slice(0, 60);
   if (!name || !rule || !(Number(b.amount) > 0)) return res.status(400).json({ error_message: 'Give it a name, an amount and a schedule.' });
   db.prepare(`INSERT INTO bill_settings (key, manual, name, direction, account_id, rule, amount_mode, amount)
     VALUES (?, 1, ?, ?, ?, ?, 'fixed', ?)`).run(`man:${Date.now()}`, name, b.direction === 'in' ? 'in' : 'out', b.account_id || null, JSON.stringify(rule), Number(b.amount));
+  res.json({ ok: true });
+});
+// Two bills that looked like the same one are both real: count both from now on.
+router.post('/bills/distinct', (req, res) => {
+  const { a, b } = req.body ?? {};
+  if (typeof a !== 'string' || typeof b !== 'string' || !a || !b) return res.status(400).json({ error_message: 'Pick the two bills.' });
+  markDistinct(a, b);
   res.json({ ok: true });
 });
 // Remove a bill you added, or reset a detected one to what was detected.
@@ -294,17 +341,23 @@ router.patch('/transactions/:id', (req, res) => {
   const t = db.prepare('SELECT * FROM transactions WHERE id = ?').get(req.params.id);
   const category = req.body.category;
   if (!t) return res.status(404).json({ error_message: 'Unknown transaction.' });
+  if (req.body.clear) { // undo of a one-off choice: back to whatever rules and Plaid say
+    db.prepare('UPDATE transactions SET user_category = NULL WHERE id = ?').run(t.id);
+    classify(); assignTrips();
+    return res.json({ ok: true });
+  }
   if (!CATEGORIES.includes(category)) return res.status(400).json({ error_message: 'Unknown category.' });
   // person=1: a rule for every payment with this person (Venmo/Zelle), e.g. all of Sam Lee's → Fitness.
   const peer = req.body.person ? peerOf(t, db.prepare('SELECT i.institution FROM accounts a JOIN items i ON i.id = a.item_id WHERE a.id = ?').get(t.account_id)?.institution) : null;
   const pattern = peer ? peer.pattern : req.body.all ? t.name : null;
+  let rule = null;
   if (pattern) {
     db.prepare('DELETE FROM category_rules WHERE pattern = ?').run(pattern);
-    db.prepare('INSERT INTO category_rules (pattern, category) VALUES (?, ?)').run(pattern, category);
+    rule = Number(db.prepare('INSERT INTO category_rules (pattern, category) VALUES (?, ?)').run(pattern, category).lastInsertRowid);
     db.prepare('UPDATE transactions SET user_category = NULL WHERE instr(lower(name), lower(?)) > 0').run(pattern);
   } else db.prepare('UPDATE transactions SET user_category = ?, reimburses = NULL WHERE id = ?').run(category, t.id);
   classify(); assignTrips();
-  res.json({ ok: true });
+  res.json({ ok: true, rule }); // rule: the id of the rule made (all=1 or person=1), so it can be undone
 });
 
 // ---- Payments with people that still need a category (no keyword in the note, no rule, not chosen by you).

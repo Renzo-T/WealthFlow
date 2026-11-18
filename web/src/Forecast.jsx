@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from './api.js';
 import { usd } from './Cards.jsx';
-import { ProjectionChart, Legend } from './Projection.jsx';
+import { ProjectionChart } from './Projection.jsx';
 import { useAssumptions, buildSeries } from './projection.js';
 import { Panel, PanelSkeleton } from './ui.jsx';
 
@@ -25,25 +25,30 @@ export default function Forecast() {
       <p className="muted mt-0">Project your net worth from <span className="amt">{usd(s.netWorth.value)}</span> today, in {dollars}.</p>
       <div className="form">
         <label className="lbl">Monthly contribution
-          <input type="number" step="any" value={a.monthly} onChange={(e) => update({ monthly: e.target.value })} placeholder={String(Math.round(avg ?? 0))} /></label>
+          <input type="number" step="any" value={a.monthly} onChange={(e) => update({ monthly: e.target.value })} placeholder={Math.round(avg ?? 0).toLocaleString('en-US')} /></label>
         <label className="lbl">Horizon
           <select value={a.years} onChange={(e) => update({ years: e.target.value })}>
             {[10, 20, 30, 40].map((y) => <option key={y} value={y}>{y} years</option>)}
           </select></label>
-        <label className="lbl">Inflation (%)
-          <input className="mini" type="number" step="any" min="0" value={a.inflation} onChange={(e) => update({ inflation: e.target.value })} /></label>
-        <label className="lbl">Show figures in
-          <select value={real ? 'today' : 'future'} onChange={(e) => update({ dollars: e.target.value })}>
-            <option value="today">Today's dollars</option>
-            <option value="future">Future dollars</option>
-          </select></label>
         <label className="lbl">Target (optional)
-          <input type="number" step="any" min="0" value={a.target} onChange={(e) => update({ target: e.target.value })} placeholder="e.g. 1000000" /></label>
-        {series.map((sc) => (
-          <label className="lbl" key={sc.key}>{sc.label} return (%)
-            <input className="mini" type="number" step="any" value={a.rates[sc.key]} onChange={(e) => update({ rates: { ...a.rates, [sc.key]: e.target.value } })} /></label>
-        ))}
+          <input type="number" step="any" min="0" value={a.target} onChange={(e) => update({ target: e.target.value })} placeholder="e.g. 1,000,000" /></label>
       </div>
+      <details className="assump">
+        <summary><b>Assumptions</b><span>Returns {series.map((sc) => sc.rate).join(' / ')}%, inflation {+inflation}%, {dollars}</span></summary>
+        <div className="form">
+          <label className="lbl">Inflation (%)
+            <input className="mini" type="number" step="any" min="0" value={a.inflation} onChange={(e) => update({ inflation: e.target.value })} /></label>
+          <label className="lbl">Show figures in
+            <select value={real ? 'today' : 'future'} onChange={(e) => update({ dollars: e.target.value })}>
+              <option value="today">Today's dollars</option>
+              <option value="future">Future dollars</option>
+            </select></label>
+          {series.map((sc) => (
+            <label className="lbl" key={sc.key}>{sc.label} return (%)
+              <input className="mini" type="number" step="any" value={a.rates[sc.key]} onChange={(e) => update({ rates: { ...a.rates, [sc.key]: e.target.value } })} /></label>
+          ))}
+        </div>
+      </details>
       <div className="explain small">
         {avg == null ? <>
           <b>Your average: not available yet, so an empty contribution uses $0.</b>
@@ -63,13 +68,13 @@ export default function Forecast() {
         </>}
       </div>
       <div className="fsec">
-        <div className="head"><h2>Net worth projection</h2><Legend series={series} /></div>
+        <div className="head"><h2>Net worth projection</h2></div>
         <ProjectionChart series={series} years={years} target={target} real={real} />
         <table className="t">
           <thead><tr><th>Scenario</th><th className="r">Annual return</th><th className="r">In {years} years <span className="muted dollars">in {dollars}</span></th>
             {target && <th className="r">Reaches target</th>}</tr></thead>
           <tbody>{[...series].reverse().map((sc) => (
-            <tr key={sc.key}><td><i className="dot" style={{ background: sc.color }} />{sc.label}</td><td className="r">{sc.rate}%</td><td className="r"><b>{usd(sc.values.at(-1))}</b></td>
+            <tr key={sc.key}><td>{sc.label}</td><td className="r">{sc.rate}%</td><td className="r"><b>{usd(sc.values.at(-1))}</b></td>
               {target && <td className="r">{sc.reaches == null ? <span className="muted">not within {years} years</span>
                 : sc.reaches === 0 ? 'Already there' : <>in {sc.reaches} {sc.reaches === 1 ? 'year' : 'years'} <span className="muted">({thisYear + sc.reaches})</span></>}</td>}
             </tr>

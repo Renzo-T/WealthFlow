@@ -62,7 +62,7 @@ const perMonth = (b) => (b.rule?.kind === 'semi' ? b.amount * 2 : b.rule?.kind =
 // deliveries) is. Hide one on the Bills page ("Not a bill") if it isn't.
 const NOT_SUBSCRIPTION = new Set(['Housing', 'Utilities', 'Insurance', 'Healthcare', 'Debt repayment', 'Transfer', 'Savings & investments', 'Income']);
 export function subscriptions(today = new Date().toLocaleDateString('en-CA')) {
-  const list = bills(today).filter((b) => b.direction === 'out' && !b.hidden && !b.ended && !b.can_card && !b.card
+  const list = bills(today).filter((b) => b.direction === 'out' && !b.hidden && !b.ended && !b.same_as && !b.can_card && !b.card
     && !NOT_SUBSCRIPTION.has(b.grp ?? 'Misc') && b.amount >= 0.5).map((b) => {
     const r = b.recent ?? [];
     // A price change: the latest charge differs from the one before by more than 1% (and 50¢).

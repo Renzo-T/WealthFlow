@@ -86,6 +86,19 @@ export function ruleText(r) {
     default: return '';
   }
 }
+// The same rule in a few words, for a table column; ruleText is the full sentence (shown on hover).
+export function scheduleShort(r) {
+  const biz = r?.roll ? ' · business day' : '';
+  switch (r?.kind) {
+    case 'dom': return `${ord(r.n)} monthly${biz}`;
+    case 'eom': return (r.n ? `${r.n} day${r.n > 1 ? 's' : ''} before month end` : 'Month end') + biz;
+    case 'bday': return `${ord(r.n)} business day`;
+    case 'lastbday': return r.n === 1 ? 'Last business day' : `${ord(r.n)}-to-last business day`;
+    case 'semi': return `${ord(r.n)} and month end${biz}`;
+    case 'due': return r.n ? `${r.n} day${r.n > 1 ? 's' : ''} before due` : 'Card due date';
+    default: return ruleText(r) ? ruleText(r)[0].toUpperCase() + ruleText(r).slice(1) : '';
+  }
+}
 export const frequencyOf = (r) => ({ semi: 'Twice a month', weeks: r?.n === 1 ? 'Weekly' : `Every ${r?.n} weeks`, months: r?.n === 12 ? 'Yearly' : r?.n === 3 ? 'Quarterly' : `Every ${r?.n} months` }[r?.kind] ?? 'Monthly');
 
 // Where to look for the next date after a payment on `last`: a payment covers the occurrence it's nearest to, so one
@@ -180,7 +193,9 @@ export function seriesKey(t) {
 
 // ---- Detection from transactions. A series is the same payee (or, for a transfer, the same destination
 // account: a card autopay) repeating on a steady schedule. Needs 3 occurrences, or 2 for bill-like categories.
-function detect(today) {
+// `pinned`: series you scheduled yourself from a payment (a yearly bill, a first paycheck). They're kept even with
+// too few payments for a pattern; your schedule says when the next one comes.
+function detect(today, pinned = new Set()) {
   const rows = db.prepare(`SELECT t.date, t.amount, t.name, t.merchant, t.category, t.grp, t.account_id, t.pfc_detailed,
       COALESCE(a.nickname, a.name) account, p.account_id pair_account, t.transfer_account,
       COALESCE(da.nickname, da.name) dest_name, da.type dest_type, da.subtype dest_subtype
@@ -227,19 +242,33 @@ function detect(today) {
       byDate = byDate.filter((t) => cents(t) === modal)
         .filter((t, i, a) => i === 0 || d2n(t.date) - d2n(a[i - 1].date) > 3);
     }
-    const last = byDate.at(-1);
-    const billy = BILL_GROUPS.has(last.grp) || BILL_SUBS.has(last.category) || SUBSCRIPTION.test(last.pfc_detailed ?? '') || s.key.startsWith('to:');
+    const billy = BILL_GROUPS.has(byDate.at(-1).grp) || BILL_SUBS.has(byDate.at(-1).category) || SUBSCRIPTION.test(byDate.at(-1).pfc_detailed ?? '') || s.key.startsWith('to:');
     const min = billy ? 2 : 3;
     if (byDate.length < min) continue;
-    const gaps = byDate.slice(1).map((t, i) => d2n(t.date) - d2n(byDate[i].date));
     // Judge the most recent steady run, so a bill that recently moved to autopay (irregular before) still counts.
-    let c = null, run = 0;
-    for (let k = Math.min(gaps.length, 6); k >= min - 1 && !c; k--) { c = cadence(gaps.slice(-k)); run = k + 1; }
-    if (!c || (run === 2 && c.name !== 'MONTHLY')) continue; // two points only prove a monthly bill
+    const steady = (list) => {
+      const gaps = list.slice(1).map((t, i) => d2n(t.date) - d2n(list[i].date));
+      for (let k = Math.min(gaps.length, 6); k >= min - 1; k--) { const c = cadence(gaps.slice(-k)); if (c) return { c, run: k + 1 }; }
+      return null;
+    };
+    let found = steady(byDate);
+    // An extra payment between regular ones (a bonus or an expense refund a few days after payday) would break the
+    // pattern. One that lands within a third of the usual gap after the previous payment is left out of the series.
+    if (!found && byDate.length > min) {
+      const gaps = byDate.slice(1).map((t, i) => d2n(t.date) - d2n(byDate[i].date)).sort((a, b) => a - b);
+      const usual = gaps[Math.floor(gaps.length / 2)];
+      const kept = [];
+      for (const t of byDate) if (!kept.length || d2n(t.date) - d2n(kept.at(-1).date) >= usual / 3) kept.push(t);
+      if (kept.length < byDate.length && kept.length >= min) { found = steady(kept); if (found) byDate = kept; }
+    }
+    if (!found) continue;
+    const { c, run } = found;
+    if (run === 2 && c.name !== 'MONTHLY') continue; // two points only prove a monthly bill
+    const last = byDate.at(-1);
     // Everyday spending (a shop, a restaurant) only counts with steady amounts: a few grocery runs that happen to fall
     // two weeks apart aren't a bill, while autoship or a membership charges the same each time. Bills, subscriptions
     // and pay keep the looser rule (electricity and hourly pay vary).
-    if (!billy && last.grp !== 'Income') {
+    if (!billy && last.grp !== 'Income' && !pinned.has(s.key)) {
       const runAmts = byDate.slice(-run).map((t) => Math.abs(t.amount));
       if (Math.max(...runAmts) / Math.min(...runAmts) > 1.25) continue;
     }
@@ -254,6 +283,22 @@ function detect(today) {
       card_account: s.key.startsWith('to:') && last.dest_type === 'credit' ? s.key.slice(3) : null,
     });
   }
+  for (const key of pinned) {
+    const s = series.get(key);
+    if (!s || out.some((b) => b.key === key)) continue;
+    const byDate = [];
+    for (const t of s.txns.sort((a, b) => a.date.localeCompare(b.date))) {
+      const prev = byDate.at(-1);
+      if (prev && prev.date === t.date) prev.amount += t.amount; else byDate.push({ ...t });
+    }
+    const last = byDate.at(-1), amts = byDate.slice(-6).map((t) => Math.abs(t.amount));
+    out.push({
+      key, name: s.name, direction: last.amount > 0 ? 'out' : 'in', source: 'detected', pinned: true, rule: null, last_date: last.date,
+      last_amount: amts.at(-1), avg_amount: [...amts].sort((a, b) => a - b)[Math.floor(amts.length / 2)],
+      recent: byDate.slice(-6).map((t) => ({ date: t.date, amount: Math.abs(t.amount) })).reverse(),
+      variable: amts.length > 1 && Math.max(...amts) / Math.min(...amts) > 1.15, account: last.account, category: last.category, card_account: null,
+    });
+  }
   return out;
 }
 
@@ -264,14 +309,15 @@ export function bills(today = new Date().toLocaleDateString('en-CA')) {
     .map((s) => [s.key, { ...s, rule: s.rule ? JSON.parse(s.rule) : null }]));
   const list = new Map();
 
-  for (const b of detect(today)) list.set(b.key, b);
+  const pinned = new Set(Object.values(settings).filter((s) => !s.manual && s.rule && !s.hidden).map((s) => s.key));
+  for (const b of detect(today, pinned)) list.set(b.key, b);
 
   // Plaid's streams, unless detection already has the same payee.
   const norm = (s) => (s ?? '').toLowerCase().replace(/[^a-z]/g, '');
   const names = new Set([...list.values()].map((b) => norm(b.name)));
   for (const r of db.prepare(`SELECT r.*, COALESCE(a.nickname, a.name) account FROM recurring r
       LEFT JOIN accounts a ON a.id = r.account_id`).all()) {
-    if (names.has(norm(r.name))) continue;
+    if (names.has(norm(r.name)) || names.has(norm(describe(r.name)))) continue;
     const p = ym(r.next_date);
     const rule = r.frequency === 'WEEKLY' ? { kind: 'weeks', n: 1, anchor: r.next_date }
       : r.frequency === 'BIWEEKLY' || r.frequency === 'SEMI_MONTHLY' ? { kind: 'weeks', n: 2, anchor: r.next_date }
@@ -313,10 +359,12 @@ export function bills(today = new Date().toLocaleDateString('en-CA')) {
     else if (b.source === 'plaid') next = b.plaid_next;
     else if (b.source === 'card') next = nextFromRule(rule, b.paid ? addDays(b.due, 1) : addDays(today, -3), b);
     else next = nextFromRule(rule, afterPayment(rule, b.last_date, b), b);
+    // Plaid keeps predicting a stream for a while after you cancel, so its date stays in the past; treat that the same.
     let ended = false;
     if (next && next < today) {
       const late = d2n(today) - d2n(next);
-      if (b.source === 'detected' && !set?.rule && late > Math.max(4, (b.gap ?? 30) * 0.15)) ended = true;
+      const gap = b.gap ?? GAP[rule?.kind]?.(rule) ?? 30;
+      if (['detected', 'plaid'].includes(b.source) && !set?.rule && late > Math.max(4, gap * 0.15)) ended = true;
       else next = today; // a few days late: due now
     }
     // Amount: what you chose, else the statement for cards, else the last amount (fixed) or recent average.
@@ -324,18 +372,42 @@ export function bills(today = new Date().toLocaleDateString('en-CA')) {
     const amount = { fixed: set?.amount, last: b.last_amount, average: b.avg_amount, statement: b.statement,
       minimum: b.minimum, current: b.current }[mode] ?? b.avg_amount ?? 0;
     out.push({
-      key: b.key, name, direction: b.direction, source: b.source, rule, schedule: ruleText(rule), frequency: frequencyOf(rule),
+      key: b.key, name, direction: b.direction, source: b.source, rule, schedule: ruleText(rule), schedule_short: scheduleShort(rule), frequency: frequencyOf(rule),
       next_date: next, ended, amount: Math.abs(amount ?? 0), amount_mode: mode, estimate: !['fixed', 'statement', 'minimum', 'last'].includes(mode) || (mode === 'last' && b.variable),
       account: b.account, category: b.category, grp: b.category ? groupOf(b.category) : null, last_date: b.last_date ?? null, hidden: !!set?.hidden, edited: !!set && !set.manual,
       card: b.source === 'card' ? { due: b.due, statement: b.statement, minimum: b.minimum, current: b.current, paid: b.paid } : null,
       // A paid card has no bill until the next statement is issued, unless you chose to pay from the running
       // balance (amount "current"), in which case that's a real, scheduled payment.
       unscheduled: b.source === 'card' && b.paid && set?.amount_mode !== 'current',
-      can_card: !!b.card_account,
+      can_card: !!b.card_account, pinned: !!b.pinned,
       recent: b.recent ?? null,
     });
   }
+  // A bill you added that your transactions now show too (a paycheck you described before it had a pattern): same
+  // direction, account and schedule, next date within 3 days. The one from your transactions takes over, under your
+  // name unless you renamed it; yours gets `same_as` and is left out of every total. "They're different" is remembered.
+  const distinct = distinctPairs();
+  for (const m of out.filter((b) => b.source === 'manual' && !b.hidden && b.next_date)) {
+    const o = out.find((o) => o.source !== 'manual' && !o.hidden && !o.ended && !o.unscheduled && o.next_date && !o.took_over
+      && o.direction === m.direction && o.account === m.account && o.frequency === m.frequency
+      && Math.abs(d2n(o.next_date) - d2n(m.next_date)) <= 3 && !distinct.has(pairKey(m.key, o.key)));
+    if (!o) continue;
+    const found = o.name;
+    if (!settings[o.key]?.name) o.name = m.name;
+    o.took_over = { key: m.key, name: m.name };
+    m.same_as = { key: o.key, name: found };
+  }
   return out.sort((a, b) => (a.next_date ?? '9').localeCompare(b.next_date ?? '9'));
+}
+
+const pairKey = (a, b) => [a, b].sort().join('|');
+function distinctPairs() {
+  try { return new Set(JSON.parse(db.prepare("SELECT value FROM meta WHERE key = 'bill_distinct'").get()?.value ?? '[]')); } catch { return new Set(); }
+}
+// "They're different": two bills that look alike but are both real.
+export function markDistinct(a, b) {
+  const s = distinctPairs(); s.add(pairKey(a, b));
+  db.prepare("INSERT INTO meta (key, value) VALUES ('bill_distinct', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value").run(JSON.stringify([...s]));
 }
 
 // Every bill date in a month (YYYY-MM), repeats included, from each bill's next date onward. Past days only
@@ -345,7 +417,7 @@ export function bills(today = new Date().toLocaleDateString('en-CA')) {
 export function occurrences(start, end, today = new Date().toLocaleDateString('en-CA'), list = bills(today)) {
   const out = [];
   for (const b of list) {
-    if (b.hidden || b.ended || b.unscheduled || !b.next_date || !b.rule || b.amount < 0.5) continue;
+    if (b.hidden || b.ended || b.unscheduled || b.same_as || !b.next_date || !b.rule || b.amount < 0.5) continue;
     const ctx = b.card ? { due: b.card.due } : {};
     let d = b.next_date;
     for (let i = 0; d && d <= end && i < 40; i++) {
@@ -379,15 +451,35 @@ export function paycheckCandidates(today = new Date().toLocaleDateString('en-CA'
     if (seen.has(key) || scheduled.has(key) || done.has(key)) continue;
     seen.add(key);
     const payer = (t.merchant || describe(t.name)).replace(/\b(direct deposit|dir dep|payroll|inc|llc|ach)\b\.?,?/gi, '').replace(/\s+/g, ' ').trim().split(',')[0].trim(); // "Acme Corp, Incdir Dep" -> "Acme Corp"
-    out.push({ key, name: `${payer || 'Paycheck'}`.replace(/,$/, ''), amount: -t.amount, date: t.date, account: t.account, account_id: t.account_id });
+    out.push({ key, id: t.id, name: `${payer || 'Paycheck'}`.replace(/,$/, ''), amount: -t.amount, date: t.date, account: t.account, account_id: t.account_id });
   }
   return out;
 }
-// The schedule for an answer, from the last paycheck's date.
-export function paycheckRule(cadence, last) {
-  const day = +last.slice(8);
+// The schedule for "how often?", from the date of the last payment. Pay moves to the business day before a weekend;
+// bills to the one after.
+export const HOW_OFTEN = ['weekly', 'biweekly', 'semimonthly', 'monthly', 'quarterly', 'yearly'];
+export function cadenceRule(cadence, last, direction = 'in') {
+  const day = +last.slice(8), roll = direction === 'in' ? -1 : 1;
   return { weekly: { kind: 'weeks', n: 1, anchor: last }, biweekly: { kind: 'weeks', n: 2, anchor: last },
-    semimonthly: { kind: 'semi', n: day <= 20 ? day : 15, roll: -1 }, monthly: { kind: 'dom', n: day, roll: -1 } }[cadence] ?? null;
+    semimonthly: { kind: 'semi', n: day <= 20 ? day : 15, roll }, monthly: { kind: 'dom', n: day, roll },
+    quarterly: { kind: 'months', n: 3, day, anchor: last, roll }, yearly: { kind: 'months', n: 12, day, anchor: last, roll } }[cadence] ?? null;
+}
+export const paycheckRule = (cadence, last) => (['quarterly', 'yearly'].includes(cadence) ? null : cadenceRule(cadence, last, 'in'));
+
+// Schedule a series from one of its payments: your rule on that series, so the bill follows its real payments (paid
+// stamps, amounts) and needs no pattern first. Returns the bill, or null when that payment can't be a bill.
+export function scheduleFromPayment(t, cadence, name, today = new Date().toLocaleDateString('en-CA')) {
+  const key = seriesKey(t), rule = cadenceRule(cadence, t.date, t.amount > 0 ? 'out' : 'in');
+  if (!rule) return null;
+  const prev = db.prepare('SELECT * FROM bill_settings WHERE key = ?').get(key);
+  db.prepare(`INSERT INTO bill_settings (key, name, rule, hidden) VALUES (?, ?, ?, 0)
+    ON CONFLICT(key) DO UPDATE SET name = COALESCE(excluded.name, name), rule = excluded.rule, hidden = 0`).run(key, name || null, JSON.stringify(rule));
+  const bill = bills(today).find((b) => b.key === key && !b.hidden);
+  if (bill) return bill;
+  // Not something that can be a bill (money moved between your everyday accounts, a refund, too old): undo.
+  if (prev) db.prepare('UPDATE bill_settings SET name = ?, rule = ?, hidden = ? WHERE key = ?').run(prev.name, prev.rule, prev.hidden, key);
+  else db.prepare('DELETE FROM bill_settings WHERE key = ?').run(key);
+  return null;
 }
 
 // Safe to spend: cash in checking-type accounts minus the bills due before your next paycheck. Payday comes from a

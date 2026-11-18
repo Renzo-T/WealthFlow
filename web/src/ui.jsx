@@ -1,5 +1,5 @@
 // Shared building blocks, so every page's cards and headers look and space the same.
-import { useState, useRef, Component } from 'react';
+import { useState, useRef, useEffect, Component } from 'react';
 import { createPortal } from 'react-dom';
 
 // The Mizo Money seal: a round ink stamp with an M, like a hanko pressed on a planner page. The logo only; vermillion
@@ -173,4 +173,70 @@ export class PageBoundary extends Component {
       </div>
     );
   }
+}
+
+// ---- In-app dialogs and the undo toast (replace the browser's alert / confirm / prompt) ----
+// A module-level store: callers await a promise, <DialogHost /> (mounted once in App.jsx) renders the current dialog.
+const dlg = { state: null, toast: null, subs: new Set(), seq: 0 };
+const emit = () => dlg.subs.forEach((f) => f());
+const openDialog = (spec) => new Promise((resolve) => {
+  dlg.state?.done(dlg.state.kind === 'confirm' ? false : null); // a new dialog replaces an unanswered one
+  dlg.state = { ...spec, id: ++dlg.seq, done: (v) => { if (dlg.state?.id === dlg.seq) dlg.state = null; resolve(v); emit(); } };
+  emit();
+});
+export const confirmDialog = ({ title, body, confirm = 'OK', cancel = 'Cancel', danger = false }) =>
+  openDialog({ kind: 'confirm', title, body, confirm, cancel, danger });
+export const notice = ({ title, body }) => openDialog({ kind: 'notice', title, body, confirm: 'OK' }).then(() => undefined);
+export const askText = ({ title, label, value = '' }) => openDialog({ kind: 'text', title, label, value, confirm: 'Save', cancel: 'Cancel' });
+let toastTimer = null;
+export function toast(message, { undo } = {}) {
+  clearTimeout(toastTimer);
+  dlg.toast = { id: ++dlg.seq, message, undo };
+  emit();
+  toastTimer = setTimeout(() => { dlg.toast = null; emit(); }, 6000);
+}
+const closeToast = () => { clearTimeout(toastTimer); dlg.toast = null; emit(); };
+
+export function DialogHost() {
+  const [, bump] = useState(0);
+  useEffect(() => { const f = () => bump((n) => n + 1); dlg.subs.add(f); return () => dlg.subs.delete(f); }, []);
+  const d = dlg.state, t = dlg.toast;
+  return (
+    <>
+      {d && <DialogSheet key={d.id} d={d} />}
+      {t && (
+        <div className="toast" role="status" key={t.id}>
+          <span>{t.message}</span>
+          {t.undo && <button type="button" className="toast-undo" onClick={async () => { closeToast(); await t.undo(); }}>Undo</button>}
+        </div>
+      )}
+    </>
+  );
+}
+
+function DialogSheet({ d }) {
+  const ref = useRef(null), [text, setText] = useState(d.value ?? '');
+  useEffect(() => { const el = ref.current; if (el && !el.open) el.showModal(); }, []);
+  const cancelled = d.kind === 'confirm' ? false : null;
+  const ok = () => d.done(d.kind === 'confirm' ? true : d.kind === 'text' ? text : undefined);
+  const paras = d.body ? String(d.body).split('\n\n') : [];
+  return (
+    <dialog ref={ref} className="dlg" aria-labelledby="dlg-title"
+      onCancel={(e) => { e.preventDefault(); d.done(cancelled); }}
+      onClick={(e) => { if (e.target === ref.current) d.done(cancelled); }}>
+      <form onSubmit={(e) => { e.preventDefault(); ok(); }}>
+        <h2 id="dlg-title" className="dlg-title">{d.title}</h2>
+        {paras.map((p, i) => <p key={i} className="dlg-body">{p}</p>)}
+        {d.kind === 'text' && (
+          <label className="dlg-field">{d.label && <span>{d.label}</span>}
+            <input autoFocus value={text} onChange={(e) => setText(e.target.value)} />
+          </label>
+        )}
+        <div className="dlg-actions">
+          {d.kind !== 'notice' && <button type="button" className="btn" onClick={() => d.done(cancelled)}>{d.cancel}</button>}
+          <button type="submit" autoFocus={d.kind !== 'text'} className={d.danger ? 'btn dlg-danger' : 'btn primary'}>{d.confirm}</button>
+        </div>
+      </form>
+    </dialog>
+  );
 }

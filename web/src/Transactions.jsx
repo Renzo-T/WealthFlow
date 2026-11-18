@@ -4,7 +4,8 @@ import { usd2, usd, signed, label, shortDate, SERIES, tint } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 import { RowStamp, useStampedExit } from './Stamp.jsx';
-import { Panel, PageHeader, Skeleton, Hover, TipList, Repeat, Close, tipText } from './ui.jsx';
+import { RepeatPick } from './Bills.jsx';
+import { Panel, PageHeader, Skeleton, Hover, TipList, Repeat, Close, tipText, askText, toast } from './ui.jsx';
 
 const txIcon = (t) => (t.to_account ? { group: t.shown_grp === 'Transfer' ? 'Transfer' : t.shown_grp, kind: t.shown_grp === 'Transfer' ? 'swap' : undefined }
   : { group: t.shown_grp ?? t.grp, sub: t.shown ?? t.category });
@@ -282,7 +283,8 @@ export default function Transactions() {
   const [trips, setTrips] = useState([]);
   const [splitting, setSplitting] = useState(null);
   const [prompt, setPrompt] = useState(null);
-  const [open, setOpen] = useState(null);
+  const [opened, setOpened] = useState(init.get('open')); // from Ctrl+K: the row to open and scroll to once the list has loaded
+  const [open, setOpen] = useState(opened);
   const [editing, setEditing] = useState(false);
   const [sel, setSel] = useState(() => new Set());
   const LIMIT = 300;
@@ -300,8 +302,32 @@ export default function Transactions() {
   const patch = (id, body) => api(`/transactions/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
   const decide = async (id, cat) => { await patch(id, { category: cat, all: true }); load(); };
   // Apply to this one right away; the prompt then offers to extend it to the rest.
-  const change = async (t, cat) => { await patch(t.id, { category: cat, all: false }); setPrompt({ t, cat }); load(); };
-  const applyAll = async () => { await patch(prompt.t.id, { category: prompt.cat, all: true }); setPrompt(null); load(); };
+  // Undo puts the one-off choice back (or clears it when there was none); for "all", it also removes the rule made.
+  const restore = (t) => (t.user_category ? patch(t.id, { category: t.user_category, all: false }) : patch(t.id, { clear: true }));
+  const change = async (t, cat) => {
+    await patch(t.id, { category: cat, all: false }); setPrompt({ t, cat }); load();
+    toast(`Moved to ${cat}`, { undo: async () => { await restore(t); setPrompt(null); load(); } });
+  };
+  const applyAll = async () => {
+    const { t, cat } = prompt;
+    const r = await patch(t.id, { category: cat, all: true }); setPrompt(null); load();
+    toast(`Always ${cat} for ${title(t)}`, { undo: async () => { if (r.rule) await api(`/rules/${r.rule}`, { method: 'DELETE' }); await restore(t); load(); } });
+  };
+  const rename = async (t) => {
+    const from = t.cleaned ?? title(t), old = t.display || from;
+    const to = (await askText({ title: 'Rename this merchant', label: "Shown instead of the bank's name, on every transaction with it", value: old }))?.trim();
+    if (!to || to === old) return;
+    const put = (v) => api('/merchant-names', { method: 'PUT', body: JSON.stringify({ from, to: v }) });
+    await put(to === from ? '' : to); load();
+    toast(`Renamed ${old} to ${to}`, { undo: async () => { await put(old === from ? '' : old); load(); } });
+  };
+  // Ctrl+K while already on this page: pick up the new search and row.
+  useEffect(() => {
+    const on = () => { const h = linked(); setQ(h.get('q') ?? ''); setOpen(h.get('open')); setOpened(h.get('open')); };
+    window.addEventListener('hashchange', on);
+    return () => window.removeEventListener('hashchange', on);
+  }, []);
+  useEffect(() => { if (opened && !data.loading) document.getElementById(`tx-${opened}`)?.scrollIntoView({ block: 'center' }); }, [opened, data.loading]);
 
   const { rows, summary } = data;
   const [from, to] = range(preset, custom);
@@ -319,16 +345,18 @@ export default function Transactions() {
     await api('/transactions/bulk', { method: 'POST', body: JSON.stringify({ ids: [...sel], category: cat }) });
     setSel(new Set()); setEditing(false); load();
   };
+  const filtered = !!(q || category || account || preset !== 'all');
   const cols = editing ? 5 : 4;
   return (
     <>
       <PageHeader title="Transactions" sub="Transfers between your own accounts show as one row.">
+        <a className="btn" href={`/api/transactions.csv?${filterQs}`}>Download CSV</a>
         <button className={`btn${editing ? ' primary' : ''}`} onClick={() => { setEditing(!editing); setSel(new Set()); }}>{editing ? 'Done' : 'Edit multiple'}</button>
       </PageHeader>
       <Review dir="in" items={review.in} decide={decide} cats={cats} />
       <Review dir="out" items={review.out} decide={decide} cats={cats} />
       <PeoplePanel data={people} cats={cats} reload={load} />
-      <div className="filters">
+      <div className="filters filterbar">
         <input type="search" placeholder="Search merchant or description" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search transactions" />
         <select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">
           <option value="">All categories</option>
@@ -352,8 +380,8 @@ export default function Transactions() {
           <input type="date" value={custom.from} onChange={(e) => setCustom({ ...custom, from: e.target.value })} aria-label="From" />
           <input type="date" value={custom.to} onChange={(e) => setCustom({ ...custom, to: e.target.value })} aria-label="To" />
         </>}
-        <label className="check small muted"><input type="checkbox" checked={sweeps} onChange={(e) => setSweeps(e.target.checked)} />
-          <span title="Cash moving between an account and its own money-market fund. Not income or spending.">Show sweeps</span></label>
+        <label className={`sweeptoggle${sweeps ? ' on' : ''}`} title="Cash moving between an account and its own money-market fund. Not income or spending.">
+          <input type="checkbox" checked={sweeps} onChange={(e) => setSweeps(e.target.checked)} /><span>Show sweeps</span></label>
       </div>
       {prompt && <ApplyPrompt p={prompt} apply={applyAll} dismiss={() => setPrompt(null)} />}
       {editing && (
@@ -367,13 +395,12 @@ export default function Transactions() {
         </div>
       )}
       <div className="ledger mt-sm">
-        {summary && (
+        {summary && filtered && (
           <div className="cards ruled txstrip" aria-label="Summary">
             <div className="card"><h3>Transactions</h3><div className="txfig">{summary.count.toLocaleString()}</div></div>
             <div className="card"><h3>Total income</h3><div className="txfig amt good">{usd(summary.income)}</div></div>
             <div className="card"><h3 title="Net of refunds and cash back; transfers, savings and debt repayment aren't counted">Total spending</h3><div className="txfig amt">{usd(summary.spent)}</div></div>
-            {summary.largest_expense != null && <div className="card"><h3>Largest expense</h3><div className="txfig amt">{usd2(summary.largest_expense)}</div></div>}
-            <div className="card txcsv"><a className="btn" href={`/api/transactions.csv?${filterQs}`}>Download CSV</a></div>
+            <div className="card"><h3>Net</h3><div className={`txfig amt${summary.income - summary.spent > 0 ? ' good' : ''}`}>{signed(summary.income - summary.spent)}</div></div>
           </div>
         )}
         <section className="card scroll sticky-head">
@@ -389,10 +416,9 @@ export default function Transactions() {
                 const newMonth = di === 0 || days[di - 1].date.slice(0, 7) !== d.date.slice(0, 7);
                 const block = (
                   <td className="datecell" rowSpan={span} onClick={(e) => e.stopPropagation()}>
-                    <span className="dateblock" title={when.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}>
-                      <b className="dbnum">{when.getDate()}</b>
-                      <span className="dbday">{when.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                      {Math.abs(d.net) >= 0.005 && <span className={`dbnet amt${d.net > 0 ? ' good' : ''}`}>{signed(d.net)}</span>}
+                    <span className="dateblock" title={`${when.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}${Math.abs(d.net) >= 0.005 ? `, net ${signed(d.net)}` : ''}`}>
+                      <span className="dbline"><b className="dbnum">{when.getDate()}</b><span className="dbday">{when.toLocaleDateString('en-US', { weekday: 'short' })}</span></span>
+                      {d.rows.length > 1 && Math.abs(d.net) >= 0.005 && <span className={`dbnet amt${d.net > 0 ? ' good' : ''}`}>{signed(d.net)}</span>}
                     </span>
                   </td>
                 );
@@ -401,13 +427,13 @@ export default function Transactions() {
                   {newMonth && <tr className="monthrow"><td colSpan={cols + 1}>{when.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</td></tr>}
                   {d.rows.map((t, ti) => (
                     <Fragment key={t.id}>
-                      <tr className={`txrow${sel.has(t.id) ? ' picked' : ''}${ti === 0 ? ' dayfirst' : ''}`} onClick={(e) => {
+                      <tr id={`tx-${t.id}`} className={`txrow${opened === t.id && open === t.id ? ' found' : ''}${sel.has(t.id) ? ' picked' : ''}${ti === 0 ? ' dayfirst' : ''}`} onClick={(e) => {
                         if (['SELECT', 'INPUT', 'BUTTON'].includes(e.target.tagName)) return;
                         if (editing) toggleSel(t.id); else setOpen(open === t.id ? null : t.id);
                       }}>
                         {ti === 0 && block}
                         {editing && <td><input type="checkbox" checked={sel.has(t.id)} onChange={() => toggleSel(t.id)} aria-label={`Select ${title(t)}`} /></td>}
-                        <td className="merch" title={t.name}><span className="merchcell"><Logo t={t} /><span>{title(t)}
+                        <td className="merch" title={t.name}><span className="merchcell"><Logo t={t} /><span className="mname" title={title(t)}>{title(t)}</span><span className="mbadges">
                           {t.recurring && <Hover className="quiet" tip={<TipList title={t.bill?.name ?? 'Recurring bill'} rows={[['Schedule', t.bill?.schedule ?? '—'],
                             ['Next', t.bill?.next_date ? shortDate(t.bill.next_date) : '—']]} note="Part of a recurring bill. Change it on the Bills page." />}><span className="recur" aria-label="Recurring"><Repeat /></span></Hover>}
                           {t.pending ? <span className="badge">Pending</span> : null}
@@ -417,12 +443,14 @@ export default function Transactions() {
                           }}>✈ {t.trip_name}</button>}</span></span></td>
                         <td>{t.is_split ? <span className="splitchip">Split · {t.parts?.length ?? 0} parts</span> : t.to_account || editing ? <><span className="grp">{t.shown_grp} ›</span>{t.shown}</> : (<>
                           <span className="grp">{t.grp} ›</span>
-                          <select className="catsel" value={t.category ?? ''} onChange={(e) => change(t, e.target.value)} aria-label={`Category for ${title(t)}`}>
-                            {!cats.some((g) => g.subs.includes(t.category)) && <option value={t.category ?? ''}>{label(t.category)}</option>}
-                            {cats.map(({ group, subs }) => (
-                              <optgroup key={group} label={group}>{subs.map((c) => <option key={c} value={c}>{c}</option>)}</optgroup>
-                            ))}
-                          </select></>)}</td>
+                          <span className="catpick">
+                            <span className="catname">{label(t.category)}</span>
+                            <select className="catsel" value={t.category ?? ''} onChange={(e) => change(t, e.target.value)} aria-label={`Category for ${title(t)}`}>
+                              {!cats.some((g) => g.subs.includes(t.category)) && <option value={t.category ?? ''}>{label(t.category)}</option>}
+                              {cats.map(({ group, subs }) => (
+                                <optgroup key={group} label={group}>{subs.map((c) => <option key={c} value={c}>{c}</option>)}</optgroup>
+                              ))}
+                            </select><svg className="catchev" width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 5.5l4 4 4-4" /></svg></span></>)}</td>
                         <td className="acct">{accounts(t)}</td><td className="r">{amount(t)}</td>
                       </tr>
                       {t.parts?.map((p) => (
@@ -435,12 +463,14 @@ export default function Transactions() {
                         <tr className="txdetail"><td colSpan={cols}>
                           <div><span className="muted">Date</span> {shortDate(t.date)}</div>
                           <div><span className="muted">Bank description</span> {t.name}</div>
+                          {!t.to_account && <div><span className="muted">Name shown</span> {title(t)} <button className="linkbtn" onClick={() => rename(t)}>Rename…</button></div>}
                           {t.pair_name && <div><span className="muted">Other side</span> {t.pair_name}</div>}
                           <div><span className="muted">Why this category</span> {why(t)}</div>
                           <div><span className="muted">Trip</span> <TripPick t={t} trips={trips} reload={load} /></div>
                           {t.paidback_name && <div><span className="muted">Paid back</span> {t.paidback_name}, {shortDate(t.paidback_date)} ({usd2(t.paidback_amount)})</div>}
                           <div><span className="muted">Plaid category</span> {label(t.pfc_detailed || t.pfc_primary)}</div>
                           <div><span className="muted">Same description</span> {t.same_name} transaction{t.same_name === 1 ? '' : 's'}</div>
+                          <div><span className="muted">Repeats</span> {t.recurring ? <>{t.bill?.name}, {t.bill?.schedule} · <a href="#/bills">Bills</a></> : <RepeatPick t={t} onDone={load} />}</div>
                           {!t.to_account && (splitting === t.id
                             ? <SplitEditor t={t} cats={cats} reload={load} onClose={() => setSplitting(null)} />
                             : <div><button className="linkbtn" onClick={() => setSplitting(t.id)}>{t.is_split ? 'Edit split' : 'Split into categories…'}</button></div>)}

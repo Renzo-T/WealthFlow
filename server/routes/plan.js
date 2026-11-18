@@ -4,7 +4,7 @@ import { iso, accountHistory } from '../summary.js';
 import { CATEGORIES, GROUPS, groupOf } from '../categories.js';
 import { budgetMonth, budgetGroups } from '../budget.js';
 import { ACCT, cashFlow } from '../insights.js';
-import { reachedOn } from '../goals.js';
+import { reachedOn, isEverydayAccount } from '../goals.js';
 import { KINDS, manualAssets, linkCandidates, setValue, entriesOf, syncCurrent, linkTransfer } from '../assets.js';
 
 const router = Router();
@@ -146,11 +146,12 @@ router.delete('/budgets/:category', (req, res) => {
 // Goals with progress. A goal linked to an account follows its balance, and also gets that account's recent
 // pace (average change per month over the last 90 days) and a small history for a sparkline.
 router.get('/goals', (_req, res) => {
-  const goals = db.prepare(`SELECT g.id, g.name, g.target, g.target_date, g.reached_at, g.account_id, ${ACCT} AS account, a.balance,
+  const goals = db.prepare(`SELECT g.id, g.name, g.target, g.target_date, g.reached_at, g.account_id, ${ACCT} AS account, a.balance, a.type AS acct_type, a.subtype AS acct_subtype,
     COALESCE(a.balance, g.saved) AS saved FROM goals g LEFT JOIN accounts a ON a.id = g.account_id ORDER BY g.id`).all();
   const ids = goals.filter((g) => g.account_id && g.balance != null).map((g) => g.account_id);
   const hist = ids.length ? accountHistory(db.prepare(`SELECT * FROM accounts WHERE id IN (${ids.map(() => '?').join(',')})`).all(...ids), 180) : {};
-  res.json(goals.map(({ balance, reached_at, ...g }) => {
+  res.json(goals.map(({ balance, reached_at, acct_type, acct_subtype, ...g }) => {
+    if (g.account_id) g.everyday = isEverydayAccount(acct_type, acct_subtype);
     const h = hist[g.account_id] ?? [];
     // When it was reached, only for a goal that is over its target now: from the balance history for one that follows
     // an account, from the day it was entered over the target otherwise. null = can't be known.

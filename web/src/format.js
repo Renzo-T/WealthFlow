@@ -6,6 +6,20 @@ export const usd2 = (n) => minus(n.toLocaleString('en-US', { style: 'currency', 
 export const usd = (n) => minus(n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }));
 const compactFmt = [0, 1].map((d) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: d }));
 export const usdCompact = (n, digits = 1) => minus(compactFmt[digits].format(n));
+// Round axis ticks: steps of 1, 2, 2.5, 5 or 10 times a power of ten, about `count` of them. By default the domain
+// grows to the outer ticks (lo/hi), so the first and last gridlines frame the data; { expand: false } keeps only the
+// ticks inside [min, max] (for a chart whose scale is fixed elsewhere). Returns { ticks, lo, hi }.
+export function niceTicks(min, max, count = 5, { expand = true } = {}) {
+  if (!(max > min)) { const m = Number.isFinite(min) ? min : 0; min = m; max = m + 1; }
+  const raw = (max - min) / Math.max(1, count - 1);
+  const p = 10 ** Math.floor(Math.log10(raw)), f = raw / p;
+  const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
+  let a = Math.ceil(min / step - 1e-9), b = Math.floor(max / step + 1e-9);
+  if (expand) { a = Math.floor(min / step + 1e-9); b = Math.ceil(max / step - 1e-9); }
+  const ticks = [];
+  for (let k = a; k <= b; k++) ticks.push(+(k * step).toPrecision(12));
+  return { ticks, lo: expand ? ticks[0] : min, hi: expand ? ticks.at(-1) : max };
+}
 export const signed = (n, fmt = usd2) => `${n < 0 ? '−' : '+'}${fmt(Math.abs(n))}`;
 // Chart colours. SERIES is four hues that stay distinct in every pairing, including for colour-blind readers
 // (checked with the dataviz validator, each theme against its own surface); anything beyond four is grey or folded into

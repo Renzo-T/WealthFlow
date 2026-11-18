@@ -31,7 +31,7 @@ was categorized) rather than presenting a polished black box.
 - Light and dark themes, following the system unless chosen.
 
 ## Capabilities and Constraints
-- Pages: Dashboard, Transactions, Budget, Bills, Money flow, Trips, Reports, Net worth (accounts and connections are
+- Pages: Dashboard, Transactions, Budget, Bills, Money flow, Reports (month by month, subscriptions, year in review, trips), Net worth (accounts and connections are
   on it), Investments, Plan (goals, then the forecast), Settings. Functionality and data behaviour stay as they are; visual work must not change numbers.
 - React + Vite UI (`web/`), Express + node:sqlite API; desktop-first, no phone layout (narrow windows collapse the
   sidebar to icons).

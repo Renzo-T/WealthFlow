@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from './api.js';
-import { Panel, PageHeader } from './ui.jsx';
+import { Panel, PageHeader, confirmDialog } from './ui.jsx';
 import { PlaidKeys } from './PlaidSetup.jsx';
 
 // Where charts and reports start: 3 months before the first bank connection (default), or all history.
@@ -67,7 +67,7 @@ function AppSetting() {
     if (r.error_message) setErr(r.error_message); else setA(r);
   };
   const quit = async () => {
-    if (!window.confirm('Stop Mizo Money?\n\nIt stops updating until it starts again (when you next sign in, or with npm run app). This window will show that it isn\'t running.')) return;
+    if (!await confirmDialog({ title: 'Stop Mizo Money?', body: "It stops updating until it starts again (when you next sign in, or with npm run app). This window will show that it isn't running.", confirm: 'Stop Mizo Money', danger: true })) return;
     await api('/app/quit', { method: 'POST' });
     setTimeout(() => window.location.reload(), 800);
   };
@@ -160,7 +160,7 @@ export default function Settings({ onChange }) {
       <div className="ledger mt">
       <Panel className="mt" title={<>Banks <span className="badge">{sys?.plaidEnv ?? '…'}</span></>} actions={<a className="btn" href="#/networth">Open Net worth</a>}>
         <p className="small muted">{meta ? `${meta.items.length} of ${meta.max} Plaid connections used. ` : ''}Connecting, reconnecting and removing banks, and renaming or hiding
-          accounts, are on the Net worth page (Accounts & net worth).</p>
+          accounts, are on the Net worth page.</p>
       </Panel>
       <PlaidKeys banks={meta?.items.length ?? 0} onChange={() => api('/system').then(setSys)} />
       <AppSetting />

@@ -20,7 +20,7 @@ const perMonth = (b) => (b.rule?.kind === 'semi' ? b.amount * 2 : b.rule?.kind =
 function fixedBills(today) {
   const out = {};
   for (const b of bills(today)) {
-    if (b.hidden || b.ended || b.direction !== 'out' || !b.category || b.can_card) continue;
+    if (b.hidden || b.ended || b.same_as || b.direction !== 'out' || !b.category || b.can_card) continue;
     (out[b.category] ??= []).push({ name: b.name, monthly: perMonth(b), nonMonthly: b.rule?.kind === 'months' && b.rule.n > 1 });
   }
   return out;
@@ -133,6 +133,11 @@ export function budgetMonth(month, today = new Date().toLocaleDateString('en-CA'
   const sg = expenses.find((g) => g.saving);
   const savedExtra = !sg ? 0 : sg.whole ? Math.max(0, sg.actual - (sg.groupBudget ?? 0))
     : sg.categories.reduce((s, c) => s + Math.max(0, c.actual - (c.budget ?? 0)), 0);
+  // The same totals split: spending groups, and saving (savings & investments + debt repayment, where more than planned is fine).
+  const part = (gs) => ({ budget: gs.reduce((s, g) => s + g.budget, 0), actual: gs.reduce((s, g) => s + Math.max(0, g.actual), 0) });
+  const isSaving = (g) => g.saving || g.group === 'Debt repayment';
+  const spendingTotals = part(expenses.filter((g) => !isSaving(g)));
+  const savingTotals = { ...part(expenses.filter(isSaving)), extra: savedExtra };
   // How far through the month we are (for the "on pace" marker): 1 for past months, 0 for future ones.
   const start = Date.parse(`${month}-01T00:00Z`), end = Date.parse(`${monthEnd(month)}T00:00Z`) + 864e5, now = Date.parse(`${today}T12:00Z`);
   return {
@@ -141,7 +146,7 @@ export function budgetMonth(month, today = new Date().toLocaleDateString('en-CA'
     totals: { income: income.budget, incomeActual: income.actual, expenses: expenses.reduce((s, g) => s + g.budget, 0),
       // A group's refunds reduce only that group (never below zero), as everywhere "spent" is shown; what's left out is
       // named under the total.
-      expensesActual: expenses.reduce((s, g) => s + Math.max(0, g.actual), 0), refundsLeftOut: expenses.reduce((s, g) => s + Math.max(0, -g.actual), 0), savedExtra, fixed: kindTotals('fixed'), flexible: kindTotals('flexible'),
+      expensesActual: expenses.reduce((s, g) => s + Math.max(0, g.actual), 0), refundsLeftOut: expenses.reduce((s, g) => s + Math.max(0, -g.actual), 0), savedExtra, spending: spendingTotals, saving: savingTotals, fixed: kindTotals('fixed'), flexible: kindTotals('flexible'),
       nonmonthly: kindTotals('nonmonthly') },
     leftToBudget: income.budget - expenses.reduce((s, g) => s + g.budget, 0),
     trips: { counted: tripsInBudget(), left_out: tripsInBudget() ? 0 : db.prepare(`SELECT COALESCE(SUM(t.amount), 0) v FROM transactions t
@@ -153,5 +158,5 @@ export function budgetMonth(month, today = new Date().toLocaleDateString('en-CA'
 // Dashboard panel: budgeted groups this month, with spending.
 export function budgetGroups(today = new Date().toLocaleDateString('en-CA')) {
   const b = budgetMonth(today.slice(0, 7), today);
-  return b.expenses.filter((g) => g.budget > 0).map((g) => ({ category: g.group, amount: g.budget, spent: Math.max(0, g.actual) }));
+  return b.expenses.filter((g) => g.budget > 0).map((g) => ({ category: g.group, amount: g.budget, spent: Math.max(0, g.actual), kind: g.kind, pace: b.progress }));
 }

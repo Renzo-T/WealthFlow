@@ -83,4 +83,10 @@ test('saving more than planned is "met", not over: a one-off move to an account 
   assert.equal(b.totals.expensesActual, 28150); // still shown in full
   assert.equal(b.totals.savedExtra, 28000); // but not counted as over
   assert.ok(b.totals.expenses - (b.totals.expensesActual - b.totals.savedExtra) >= 0);
+  // Spending and saving are totalled apart: the transfer is saving, groceries are spending.
+  assert.equal(b.totals.spending.actual, 150);
+  assert.equal(b.totals.spending.budget, 200);
+  assert.equal(b.totals.saving.actual, 28000);
+  assert.equal(b.totals.saving.extra, 28000);
+  assert.equal(b.totals.spending.actual + b.totals.saving.actual, b.totals.expensesActual);
 });

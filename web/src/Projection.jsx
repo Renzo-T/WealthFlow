@@ -1,33 +1,33 @@
-import { usdCompact } from './format.js';
+import { usdCompact, niceTicks } from './format.js';
 import { useState } from 'react';
 import { usd } from './Cards.jsx';
-import { useAssumptions, buildSeries } from './projection.js';
-import { Panel } from './ui.jsx';
 import useWidth from './useWidth.js';
 
 // Drawn at its real width (useWidth), like the other charts, so text stays the same size.
-const H = 270, L = 62, R = 14, T = 12, B = 26;
+const H = 270, L = 62, T = 12, B = 26;
 const compact = { format: (n) => usdCompact(n, 1) };
-
-export function Legend({ series }) {
-  return <div className="legend">{[...series].reverse().map((s) => <span key={s.key}><i className="dot" style={{ background: s.color }} />{s.label} ({s.rate}%)</span>)}</div>;
-}
+// One range, one hue: the expected line is solid indigo; optimistic and conservative are the band's dashed edges,
+// each named at its right end, so there is no legend.
 
 export function ProjectionChart({ series, years, target = null, real = true }) {
   const [hover, setHover] = useState(null);
   const [ref, W] = useWidth(720);
+  const R = W >= 560 ? 150 : 14, labelled = R > 14;
   const all = series.flatMap((s) => s.values);
-  const lo = Math.min(0, ...all);
-  let hi = Math.max(...all);
-  hi = hi === lo ? lo + 1 : hi + (hi - lo) * 0.05;
+  let top = Math.max(...all);
   // The target rule is drawn only when it is within reach of the lines (up to a quarter above the top one);
   // a target far out of range would flatten the scenarios, and the table says "not within N years" for it.
-  const showTarget = target > lo && target <= Math.max(...all) * 1.25;
-  if (showTarget && target > hi) hi = target + (target - lo) * 0.05;
+  const showTarget = target > Math.min(0, ...all) && target <= top * 1.25;
+  if (showTarget) top = Math.max(top, target);
+  const { ticks, lo, hi } = niceTicks(Math.min(0, ...all), top, 5);
   const x = (i) => L + (i * (W - L - R)) / years;
   const y = (v) => T + ((hi - v) * (H - T - B)) / (hi - lo);
   const path = (vals) => vals.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-  const [cons, , opt] = series;
+  const [cons, mid, opt] = series;
+  // End-of-line labels, nudged apart so they never overlap.
+  const ends = [...series].reverse().map((s) => ({ s, y: y(s.values.at(-1)) }));
+  for (let k = 1; k < ends.length; k++) ends[k].y = Math.max(ends[k].y, ends[k - 1].y + 14);
+  const lastLow = ends.at(-1).y - (H - B - 4); if (lastLow > 0) ends.forEach((e) => { e.y -= lastLow; });
   const band = `${path(opt.values)} ${cons.values.map((v, i) => `L${x(i).toFixed(1)},${y(v).toFixed(1)}`).reverse().join(' ')} Z`;
   const step = years <= 10 ? 2 : years <= 30 ? 5 : 10;
   const labels = []; for (let i = 0; i <= years; i += step) labels.push(i);
@@ -41,7 +41,7 @@ export function ProjectionChart({ series, years, target = null, real = true }) {
     <>
     <div ref={ref} />
     <svg className="chart" width={W} height={H} viewBox={`0 0 ${W} ${H}`} onMouseMove={move} onMouseLeave={() => setHover(null)} role="img" aria-label={`Net worth projection in ${real ? "today's" : 'future'} dollars`}>
-      {[0, 1, 2, 3, 4].map((k) => { const v = lo + ((hi - lo) * k) / 4; return <g key={k}><line className="grid" x1={L} x2={W - R} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{compact.format(v)}</text></g>; })}
+      {ticks.map((v) => { return <g key={v}><line className="grid" x1={L} x2={W - R} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{compact.format(v)}</text></g>; })}
       {labels.map((i) => <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? 'start' : i === years ? 'end' : 'middle'}>{i === 0 ? 'Now' : `${i}y`}</text>)}
       {showTarget && <g className="tgt">
         <line x1={L} x2={W - R} y1={y(target)} y2={y(target)} />
@@ -49,35 +49,23 @@ export function ProjectionChart({ series, years, target = null, real = true }) {
       </g>}
       <g className="draw">
         <path className="band" d={band} />
-        {series.map((s) => <path key={s.key} d={path(s.values)} fill="none" stroke={s.color} strokeWidth="2.5" strokeLinejoin="round" />)}
+        {[cons, opt].map((s) => <path key={s.key} className="edge" d={path(s.values)} />)}
+        <path className="mid" d={path(mid.values)} />
+        {labelled && ends.map(({ s, y: ly }) => <text key={s.key} className={`endlab${s.key === 'expected' ? ' mid' : ''}`} x={W - R + 8} y={ly + 4}>{s.label} {s.rate}% · {compact.format(s.values.at(-1))}</text>)}
       </g>
       {hover != null && <g>
         <line className="grid" x1={x(hover)} x2={x(hover)} y1={T} y2={H - B} />
-        {series.map((s) => <circle key={s.key} cx={x(hover)} cy={y(s.values[hover])} r="4.5" fill={s.color} style={{ stroke: 'var(--card)' }} strokeWidth="2" />)}
+        {series.map((s) => <circle key={s.key} cx={x(hover)} cy={y(s.values[hover])} r={s.key === 'expected' ? 4.5 : 3.5} style={{ fill: s.key === 'expected' ? 'var(--blue)' : 'var(--card)', stroke: 'var(--blue)' }} strokeWidth="2" />)}
         <g transform={`translate(${bx},${T})`}>
           <rect width="190" height="76" rx="7" style={{ fill: 'var(--card)', stroke: 'var(--line)' }} />
           <text x="10" y="16">{hover === 0 ? 'Today' : `In ${hover} years`}</text>
           {[...series].reverse().map((s, k) => (
-            <g key={s.key}><circle cx="14" cy={33 + k * 15} r="4" fill={s.color} /><text x="24" y={37 + k * 15}>{s.label}</text>
+            <g key={s.key}><circle cx="14" cy={33 + k * 15} r="3.5" style={{ fill: s.key === 'expected' ? 'var(--blue)' : 'var(--card)', stroke: 'var(--blue)' }} strokeWidth="2" /><text x="24" y={37 + k * 15}>{s.label}</text>
               <text x="180" y={37 + k * 15} textAnchor="end" style={{ fill: 'var(--ink)', fontWeight: 600 }}>{usd(s.values[hover])}</text></g>
           ))}
         </g>
       </g>}
     </svg>
     </>
-  );
-}
-
-export function ProjectionPanel({ s, cashflow, wide }) {
-  const [a] = useAssumptions();
-  const { series, monthly, avg, years, inflation, real, target } = buildSeries(a, s.netWorth.value, cashflow);
-  return (
-    <Panel className={wide ? 'wide' : ''} title="Net worth projection" actions={<><Legend series={series} /><a href="#/plan">Adjust</a></>}>
-      <ProjectionChart series={series} years={years} target={target} real={real} />
-      <p className="small muted foot amt">
-        Adds {usd(monthly)} a month{a.monthly !== '' ? '' : avg == null ? ' (no full month of data from every bank yet)' : ` (your recent average is ${usd(avg)})`}.
-        {' '}{real ? `In today's dollars, at ${inflation}% inflation.` : 'In future dollars, with no allowance for inflation.'} A projection, not a prediction.
-      </p>
-    </Panel>
   );
 }

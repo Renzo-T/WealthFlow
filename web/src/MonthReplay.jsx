@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from './api.js';
-import { usd, usd2, usdCompact, signed } from './format.js';
+import { usd, usd2, usdCompact, niceTicks, signed } from './format.js';
 import useWidth from './useWidth.js';
 import { Panel, Skeleton, EmptyState, Chevron, Est, Hover, tipText } from './ui.jsx';
 import { Stamp, StampArt, markIcon } from './Stamp.jsx';
 
 // The month, replayed: the cash in your everyday accounts at the end of each day, as one stepped line across the
 // month's days (planner columns, weekends tinted, today washed). Paydays step it up and bills step it down; they're
-// stamped on their day in ink like the month spread (Stamp.jsx), and the biggest are named on the line. Replay draws
-// the month through once, day by day, with the readout counting along; hovering a day reads it out. Days ahead are
+// stamped on their day in ink like the month spread (Stamp.jsx), and the biggest are named on the line. The month
+// arrives drawn, so the readout shows today at once; Replay draws it through day by day on demand, with the readout
+// counting along. Hovering a day reads it out. Days ahead are
 // dashed: only scheduled paydays and bills, never guessed day-to-day spending.
 const H = 300, L = 58, R = 16, T = 30, B = 30, PB = H - B;
 const DUR = 3200; // ms for a whole month
@@ -111,7 +112,7 @@ function Chart({ r, p, hover, setHover, playing }) {
     lowAt = { ...lowAt, y: ly };
   }
   const head = Math.min(W - R, L + p * colw);
-  const ticks = [0, 1, 2, 3].map((k) => lo + ((hi - lo) * k) / 3);
+  const ticks = niceTicks(lo, hi, 4, { expand: false }).ticks;
   const move = (e) => {
     if (playing) return;
     const b = e.currentTarget.getBoundingClientRect();
@@ -195,8 +196,11 @@ export default function MonthReplay({ month: wanted }) {
     };
     raf.current = requestAnimationFrame(step);
   };
-  // Plays once when a month arrives; Replay plays it again.
-  useEffect(() => { if (r?.days.length) play(r.days.length); return () => cancelAnimationFrame(raf.current); }, [r]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A month arrives already drawn (an animation on every visit would hold back today's figure); Replay plays it.
+  useEffect(() => {
+    cancelAnimationFrame(raf.current); setPlaying(false); if (r?.days.length) setP(r.days.length);
+    return () => cancelAnimationFrame(raf.current);
+  }, [r]);
 
   const nav = (
     <span className="spreadnav">

@@ -3,6 +3,7 @@ import { api } from './api.js';
 import { usd, usd2, shortDate, SERIES, NEUTRAL } from './format.js';
 import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, Trend, Est } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
+import Trips from './Trips.jsx';
 import { SIZES } from './MonthSpread.jsx';
 
 const mon = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'short' });
@@ -216,18 +217,31 @@ function YearInReview({ onOpen }) {
   );
 }
 
-const TABS = [['months', 'Month by month'], ['subscriptions', 'Subscriptions'], ['year', 'Year in review']];
+const TABS = [['months', 'Month by month'], ['subscriptions', 'Subscriptions'], ['year', 'Year in review'], ['trips', 'Trips']];
+// #/reports?tab=trips (what the old #/trips address becomes) picks the tab; otherwise the one you last used.
+const hashTab = () => {
+  const h = window.location.hash;
+  const t = /^#\/trips/.test(h) ? 'trips' : new URLSearchParams(h.split('?')[1] ?? '').get('tab');
+  return TABS.some(([k]) => k === t) ? t : null;
+};
 export default function Reports() {
-  const [tab, setTab] = useState(() => recall('tab', 'months'));
+  const [tab, setTab] = useState(() => hashTab() ?? recall('tab', 'months'));
+  useEffect(() => {
+    const f = () => { const t = hashTab(); if (t) setTab(t); };
+    window.addEventListener('hashchange', f); return () => window.removeEventListener('hashchange', f);
+  }, []);
   const [focus, setFocus] = useState(null); // a month opened from the year at a glance
-  const pick = useCallback((t) => { setTab(t); setFocus(null); remember('tab', t); }, []);
+  const pick = useCallback((t) => {
+    setTab(t); setFocus(null); remember('tab', t);
+    if (window.location.hash.includes('?')) window.history.replaceState(null, '', '#/reports'); // drop a stale ?tab=
+  }, []);
   const openMonth = useCallback((m) => { setTab('months'); setFocus(m); remember('tab', 'months'); window.scrollTo({ top: 0 }); }, []);
   return (
     <>
-      <PageHeader title="Reports" sub="Spending month by month, what you pay on repeat, and how the year went.">
+      <PageHeader title="Reports" sub="Spending month by month, what you pay on repeat, how the year went, and your trips.">
         <div className="ranges">{TABS.map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => pick(k)}>{l}</button>)}</div>
       </PageHeader>
-      <div className="mt">{tab === 'months' ? <MonthTable key={focus ?? ''} focus={focus} /> : tab === 'subscriptions' ? <Subscriptions /> : <YearInReview onOpen={openMonth} />}</div>
+      <div className="mt">{tab === 'months' ? <MonthTable key={focus ?? ''} focus={focus} /> : tab === 'subscriptions' ? <Subscriptions /> : tab === 'trips' ? <Trips embedded /> : <YearInReview onOpen={openMonth} />}</div>
     </>
   );
 }

@@ -228,3 +228,63 @@ test('a monthly bill paid a few days late isn\'t due again the same month', () =
   classify();
   assert.equal(bills('2026-11-05').find((x) => x.name === 'Acme Gym').next_date, '2026-12-01');
 });
+
+// An extra deposit a few days after payday (an expense refund) used to break the every-2-weeks pattern, so the paycheck
+// wasn't detected at all.
+test('an extra deposit between paydays doesn\'t hide the paycheck schedule', () => {
+  const pay = { primary: 'INCOME', detailed: 'INCOME_SALARY' };
+  for (const [d, a] of [['2026-09-17', 3510.35], ['2026-10-01', 2541.08], ['2026-10-15', 5196.53], ['2026-10-29', 2541.08], ['2026-11-12', 3420.05], ['2026-11-16', 508.46]])
+    tx('chk', d, -a, 'DIRECT DEPOSIT ACME CORP, INCDIR DEP (Cash)', pay);
+  classify();
+  const b = bills('2026-11-17').find((x) => x.direction === 'in' && x.source === 'detected');
+  assert.ok(b, 'paycheck detected');
+  assert.equal(b.frequency, 'Every 2 weeks');
+  assert.equal(b.next_date, '2026-11-26');
+  assert.equal(b.last_date, '2026-11-12', 'the extra deposit is left out of the series');
+});
+
+// Plaid keeps predicting a cancelled subscription; its predicted date stays in the past.
+test('a Plaid stream whose predicted date passed weeks ago has ended, and isn\'t due today', () => {
+  db.prepare(`INSERT INTO recurring (id, item_id, account_id, name, amount, direction, frequency, next_date, category)
+    VALUES ('s1', 'b1', 'chk', 'Acme Fitness', 12.33, 'out', 'MONTHLY', '2026-10-25', 'Fitness')`).run();
+  const b = bills('2026-11-17').find((x) => x.key === 'plaid:s1');
+  assert.equal(b.ended, true);
+  assert.equal(bills('2026-10-27').find((x) => x.key === 'plaid:s1').ended, false, 'two days late is still due');
+});
+
+test('a paycheck you added that detection later finds: detection takes over under your name, counted once', async () => {
+  const { freeToSpend, markDistinct } = await import('../server/recurring.js');
+  const pay = { primary: 'INCOME', detailed: 'INCOME_SALARY' };
+  for (const d of ['2026-09-17', '2026-10-01', '2026-10-15', '2026-10-29', '2026-11-12']) tx('chk', d, -3000, 'DIRECT DEPOSIT ACME CORP', pay);
+  classify();
+  db.prepare(`INSERT INTO bill_settings (key, manual, name, direction, account_id, rule, amount_mode, amount, category)
+    VALUES ('man:1', 1, 'Acme paycheck', 'in', 'chk', '{"kind":"weeks","n":2,"anchor":"2026-09-17"}', 'fixed', 3000, 'Salary')`).run();
+  const list = bills('2026-11-17');
+  const det = list.find((x) => x.source === 'detected' && x.direction === 'in');
+  assert.equal(det.name, 'Acme paycheck', 'keeps the name you gave it');
+  assert.equal(det.same_as, undefined);
+  assert.equal(list.find((x) => x.key === 'man:1').same_as?.key, det.key, 'yours is the one set aside');
+  assert.equal(freeToSpend('2026-11-17').incomeTotal, 3000, 'Nov 26 counted once');
+  markDistinct('man:1', det.key);
+  assert.equal(bills('2026-11-17').find((x) => x.key === 'man:1').same_as, undefined);
+  assert.equal(freeToSpend('2026-11-17').incomeTotal, 6000);
+  db.prepare("DELETE FROM meta WHERE key = 'bill_distinct'").run();
+});
+
+test('a bill scheduled from one payment: a yearly charge with no pattern yet; a refund is refused', async () => {
+  const { scheduleFromPayment, occurrences } = await import('../server/recurring.js');
+  tx('chk', '2025-12-03', 480, 'ACME INSURANCE', { primary: 'GENERAL_SERVICES', detailed: 'GENERAL_SERVICES_INSURANCE' });
+  tx('chk', '2026-11-11', -20, 'ACME SHOP REFUND', { primary: 'GENERAL_MERCHANDISE', detailed: 'GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE' });
+  classify();
+  assert.equal(bills('2026-11-17').length, 0, 'one charge is no pattern');
+  const t = db.prepare("SELECT * FROM transactions WHERE name = 'ACME INSURANCE'").get();
+  const b = scheduleFromPayment(t, 'yearly', 'Car insurance', '2026-11-17');
+  assert.equal(b.name, 'Car insurance');
+  assert.equal(b.frequency, 'Yearly');
+  assert.equal(b.next_date, '2026-12-03');
+  assert.equal(b.ended, false);
+  assert.equal(occurrences('2026-12-01', '2026-12-31', '2026-11-17').length, 1);
+  const r = db.prepare("SELECT * FROM transactions WHERE name = 'ACME SHOP REFUND'").get();
+  assert.equal(scheduleFromPayment(r, 'monthly', '', '2026-11-17'), null, 'a refund is not a bill');
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM bill_settings').get().n, 1, 'and leaves nothing behind');
+});

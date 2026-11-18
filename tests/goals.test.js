@@ -16,3 +16,12 @@ test('reachedOn: unknown when not over the target now or when the history starts
   assert.equal(reachedOn(hist(1500, 1600), 1000), null);
   assert.equal(reachedOn([], 1000), null);
 });
+
+test('isEverydayAccount: checking and cash management, not savings', async () => {
+  const { isEverydayAccount } = await import('../server/goals.js');
+  assert.equal(isEverydayAccount('depository', 'checking'), true);
+  assert.equal(isEverydayAccount('depository', 'Cash Management'), true);
+  assert.equal(isEverydayAccount('depository', 'savings'), false);
+  assert.equal(isEverydayAccount('investment', 'checking'), false);
+  assert.equal(isEverydayAccount('depository', null), false);
+});

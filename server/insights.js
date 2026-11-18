@@ -80,7 +80,8 @@ export function flow(from, to) {
   const net = db.prepare(`SELECT COALESCE(grp,'Misc') name, SUM(amount) value, ${SPEND_SQL} spend FROM transactions
     WHERE COALESCE(grp,'Misc') NOT IN ('Income','Transfer','Split') AND date >= ? AND date < ? GROUP BY 1 ORDER BY spend DESC, value DESC`).all(from, to);
   const cats = net.filter((c) => c.value > 0.005);
-  const credits = net.filter((c) => c.value < -0.005).map((c) => ({ name: c.name, value: -c.value, credit: true }));
+  // A group whose refunds beat its spending this period (a trip refunded) is money in, but not income: named as refunds.
+  const credits = net.filter((c) => c.value < -0.005).map((c) => ({ name: `${c.name} refunds`, value: -c.value, credit: true }));
   const income = sources.reduce((s, x) => s + x.value, 0);
   const spending = net.filter((c) => c.spend).reduce((s, x) => s + x.value, 0); // net, same as the dashboard
   const allocated = net.reduce((s, x) => s + x.value, 0); // spending + savings + debt repayment
@@ -92,7 +93,9 @@ export function flow(from, to) {
   for (const c of cats) c.subs = subs.filter((x) => x.g === c.name).slice(0, 3).map((x) => ({ name: x.c, value: x.v }));
   const left = [...top(sources, 5, 'Other income'), ...credits], right = [...cats];
   if (income > allocated) right.push({ name: 'Left over', value: income - allocated, saved: true });
-  if (allocated > income) left.push({ name: 'From savings', value: allocated - income, saved: true });
+  // More went out (spending plus money put into savings and investments) than came in: the rest came from balances you
+  // already had, usually cash moved into investments.
+  if (allocated > income) left.push({ name: 'From account balances', value: allocated - income, saved: true });
   return { from, to, income, spending, moved, sources: left, categories: right };
 }
 
@@ -258,7 +261,7 @@ export function allocation() {
 // Bills and recurring income due in the next `days` days (see recurring.js), skipping hidden and ended ones.
 export function upcoming(days = 30, limit = 12) {
   const end = new Date(); end.setDate(end.getDate() + days);
-  return bills().filter((b) => !b.hidden && !b.ended && !b.unscheduled && b.next_date && b.next_date <= iso(end) && b.amount >= 0.5).slice(0, limit);
+  return bills().filter((b) => !b.hidden && !b.ended && !b.unscheduled && !b.same_as && b.next_date && b.next_date <= iso(end) && b.amount >= 0.5).slice(0, limit);
 }
 
 // For tests only.
