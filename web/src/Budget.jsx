@@ -261,9 +261,11 @@ function Split({ title, t, income, pace, sub, verb }) {
   if (!t.budget) return <div className="bsplit"><div className="row"><span>{title}</span><span className="small muted">no budget yet</span></div>{sub && <div className="small muted">{sub}</div>}
     {t.actual > 0.5 && <div className="small muted"><span className="amt">{usd(t.actual)}</span> {verb ?? (income ? 'received' : 'spent')}</div>}</div>;
   const extra = t.extra ?? 0, left = t.budget - (t.actual - extra); // saved beyond plan isn't "over"
+  // The budgets themselves lead the page (Income budgeted, Assigned), so this says how far along each one is instead.
+  const pct = Math.round(((t.actual - extra) / t.budget) * 100);
   return (
     <div className="bsplit">
-      <div className="row"><span>{title}</span><span className="small muted amt">{usd(t.budget)} budget</span></div>
+      <div className="row"><span>{title}</span><span className="small muted">{pct}% {verb ?? (income ? 'received' : 'spent')}</span></div>
       <Meter actual={t.actual - extra} budget={t.budget} income={income} pace={pace} />
       <div className="row small"><b className="amt">{usd(t.actual - extra)} {verb ?? (income ? 'received' : 'spent')}</b>
         <span className={`amt ${-left > 0.5 && !income && bigOver(-left, t.budget) ? 'bad' : -left > 0.5 && !income ? 'warn' : left > 0.5 && !income && pace != null && (t.actual - extra) / t.budget > pace + 0.1 ? 'warn' : 'good'}`}>

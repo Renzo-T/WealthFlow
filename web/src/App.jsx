@@ -156,6 +156,8 @@ export default function App() {
         {attention} bank{attention > 1 ? 's' : ''} need{attention > 1 ? '' : 's'} attention</a>}
       {/* What the last Refresh found shows here for a few seconds; the sync time itself lives at the rail's foot. */}
       {synced && <span className="small muted" role="status">{synced}</span>}
+      {/* While amounts are hidden, every page says so (screen sharing is when you need to be sure), and one click undoes it. */}
+      {hide && <button type="button" className="chip-link info" onClick={() => setHide(false)} title="Every dollar figure is blurred for screen sharing. Click to show them.">Amounts hidden</button>}
     </span>
   );
 
@@ -204,6 +206,8 @@ export default function App() {
           </Fragment>
         ))}
       </aside>
+      {/* Says it out loud when Hide amounts changes, however it was changed (the rail, the chip or Ctrl+K). */}
+      <span className="sr-only" role="status">{hide ? 'Amounts hidden' : ''}</span>
       <main className="main" ref={mainRef} data-quiet={visit.quiet ? '' : undefined}>
         {/* Signing in again is urgent (that bank's data has stopped), so it stays a banner on every page. Other failures
             aren't yours to fix: say why, and that it's tried again (at the next sync, or now with Try again). */}

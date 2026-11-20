@@ -121,7 +121,8 @@ export default function MonthSpread({ month: fixed, onMonth, selected, onPick, d
         <div className="msec mcal"><div className="mcal-in">
           <div className="head">
             <h2><span className="mlabel">{monthName(month)}</span>{month !== thisMonth && <span className="asof">{month < thisMonth ? 'past' : 'ahead'}</span>}
-              {due > 0 && <span className="asof">Bills still due <b className="amt">{usd(due)}</b></span>}</h2>
+              {/* This month on the dashboard, its standing line already says what's still due. */}
+              {due > 0 && (list || month !== thisMonth) && <span className="asof">Bills still due <b className="amt">{usd(due)}</b></span>}</h2>
             {/* The key, on the dashboard: there the days carry only a figure and a stamp, so what the marks mean is written
                 once in the head (Bills writes each bill out in its day and needs none). */}
             {!list && <span className="legend ckey" aria-hidden="true">

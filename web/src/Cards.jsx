@@ -117,6 +117,14 @@ export default function Cards({ s, safe, budgets }) {
       </>}>
         <Hover className="quiet" tip={monthTip(s, s.spending, 'Spending')}><Counter value={s.spending.value} from={was('spent')} /></Hover>
       </Stand>
+      {/* What's still to pay this month: the same bills Free to spend takes off (card statements are in Card balances
+          there), so the two figures always agree. The calendar under it no longer repeats it for this month. */}
+      {safe && Array.isArray(safe.due) && <Stand label="Bills still due" note={safe.due.length ? <span className="small muted">
+        {safe.due.length} bill{safe.due.length > 1 ? 's' : ''}, next {shortDate(safe.due.reduce((a, b) => (b.date < a.date ? b : a)).date)}</span>
+        : <span className="small muted">Nothing left to pay this month</span>}>
+        {safe.due.length ? <Hover className="quiet" tip={<TipList title="Bills still due" rows={safe.due.map((b) => [`${b.name}, ${shortDate(b.date)}`, usd(b.amount)])}
+          note="Through the end of the month. Card statements count in Free to spend as card balances." />}>{usd(safe.dueTotal)}</Hover> : usd(0)}
+      </Stand>}
     </Standing>
   );
 }
