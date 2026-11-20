@@ -417,7 +417,7 @@ export default function NetWorth({ onChange }) {
   useEffect(() => { load(); }, [load]);
   // Connecting, approving or removing a bank also changes the top bar's "needs attention" chip.
   const saved = () => { load(); onChange?.(); };
-  if (!d || !history || !meta || !nw) return <PageSkeleton />;
+  if (!d || !history || !meta || !nw) return <PageSkeleton title="Net worth" />;
   const parts = ownOwe(d.accounts, d.manual);
 
   return (

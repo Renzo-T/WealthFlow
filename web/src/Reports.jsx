@@ -97,7 +97,7 @@ function MonthTable({ focus }) {
   const [open, setOpen] = useState(() => recall('open', {}));
   useEffect(() => { setD(null); api(`/reports/months?months=${n}`).then(setD); }, [n]);
   useEffect(() => { if (d && focus) document.querySelector('.rtable .rfocus')?.scrollIntoView({ block: 'nearest', inline: 'center' }); }, [d, focus]);
-  if (!d) return <PageSkeleton panels={1} />;
+  if (!d) return <PageSkeleton panels={1} header={false} />;
   // A month with nothing in any row (before any history) is left out rather than shown as a column of dashes.
   const used = d.months.map((_, i) => i).filter((i) => d.groups.some((g) => Math.abs(g.values[i]) >= 0.5) || Math.abs(d.totals.spending.values[i]) >= 0.5);
   const cols = used.length ? used : d.months.map((_, i) => i);
@@ -149,7 +149,7 @@ function MonthTable({ focus }) {
 function Subscriptions() {
   const [d, setD] = useState(null);
   useEffect(() => { api('/reports/subscriptions').then(setD); }, []);
-  if (!d) return <PageSkeleton panels={1} />;
+  if (!d) return <PageSkeleton panels={1} header={false} />;
   if (!d.items.length) return <Panel><EmptyState title="No subscriptions found">Streaming, apps and memberships show up here once they've charged a couple of times.</EmptyState></Panel>;
   const changed = d.items.filter((s) => s.change);
   return (
@@ -219,7 +219,7 @@ function YearInReview({ onOpen }) {
   const [year, setYear] = useState(new Date().getFullYear());
   const [d, setD] = useState(null);
   useEffect(() => { setD(null); api(`/reports/year?year=${year}`).then(setD); }, [year]);
-  if (!d) return <PageSkeleton panels={1} />;
+  if (!d) return <PageSkeleton panels={1} header={false} />;
   const parts = d.groups.slice(0, 4).map((g, i) => ({ ...g, color: SERIES[i] }));
   const rest = d.groups.slice(4).reduce((s, g) => s + g.v, 0);
   if (rest > 0) parts.push({ name: 'Everything else', v: rest, share: (rest / d.spending) * 100, color: NEUTRAL });

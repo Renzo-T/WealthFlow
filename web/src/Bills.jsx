@@ -221,7 +221,7 @@ export default function Bills() {
   const [month, setMonthState] = useState(thisMonth);
   const [day, setDay] = useState(null); // a day picked on the calendar: its bills are listed under it
   const setMonth = (m) => { setMonthState(m); setDay(null); };
-  if (!list) return <PageSkeleton />;
+  if (!list) return <PageSkeleton title="Bills" />;
 
   const put = async (key, body) => {
     const r = await api(`/bills/${encodeURIComponent(key)}`, { method: 'PUT', body: JSON.stringify(body) }).catch((e) => ({ error_message: e.message }));

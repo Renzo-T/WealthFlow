@@ -119,12 +119,15 @@ export function DashboardSkeleton() {
 
 const SkeletonTools = () => useContext(HeaderTools);
 
-export function PageSkeleton({ panels = 2 }) {
+// A page while its data loads. The title is the page's real one, so the header is already right and nothing at the top
+// of the page changes when the data arrives; only the panels below are placeholders. `header={false}` for a part of a
+// page that already has its header (a Reports tab).
+export function PageSkeleton({ panels = 2, title, header = true }) {
   return (
-    <div aria-label="Loading">
-      <div className="top"><div><Skeleton w={220} h={30} /><Skeleton w={360} className="skel-line" /></div><div className="topact"><SkeletonTools /></div></div>
+    <>
+      {header && <div className="top"><div><h1>{title}</h1></div><div className="topact"><SkeletonTools /></div></div>}
       {Array.from({ length: panels }, (_, i) => <div className="mt" key={i}><PanelSkeleton lines={i ? 6 : 2} chart={i ? 0 : 180} /></div>)}
-    </div>
+    </>
   );
 }
 

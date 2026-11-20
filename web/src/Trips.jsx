@@ -179,7 +179,7 @@ export default function Trips({ embedded = false }) {
   const [err, setErr] = useState('');
   const load = useCallback(async () => setD(await api('/trips')), []);
   useEffect(() => { load(); }, [load]);
-  if (!d) return <PageSkeleton />;
+  if (!d) return <PageSkeleton title="Trips" header={!embedded} />;
   const suggested = d.trips.filter((t) => t.status === 'suggested');
   const trips = d.trips.filter((t) => t.status === 'confirmed');
   const add = async (e) => {

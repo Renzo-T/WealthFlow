@@ -316,7 +316,7 @@ export default function Budget() {
   const load = useCallback(async () => setB(await api(`/budget?month=${month}`)), [month]);
   useEffect(() => { load(); }, [load]);
   useEffect(() => setClosing(false), [month]);
-  if (!b) return <PageSkeleton />;
+  if (!b) return <PageSkeleton title="Budget" />;
 
   // Edits go to every month, or (scope "month") only the month on screen.
   const put = (c, amount, onlyMonth = scope === 'month') => {

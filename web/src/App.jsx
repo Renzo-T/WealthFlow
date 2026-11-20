@@ -16,7 +16,7 @@ import NavIcon from './NavIcon.jsx';
 import Jump from './Jump.jsx';
 import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
 import { FirstRun } from './PlaidSetup.jsx';
-import { api } from './api.js';
+import { api, apiRefresh, whenSettled } from './api.js';
 import { syncLine } from './syncStatus.js';
 import { syncThemeColor } from './journal.js';
 import { startGrid } from './grid.js';
@@ -77,6 +77,18 @@ export default function App() {
   const [visit, setVisit] = useState({ page, quiet: false });
   if (visit.page !== page) setVisit({ page, quiet: seenPages.current.has(page) });
   useEffect(() => { seenPages.current.add(page); }, [page]);
+  // A page's body waits for its data (at most 0.7s; whenSettled in api.js), then shows whole, so sections that load one
+  // after another never push each other down while you watch. The header shows at once (data-settling; styles.css).
+  const pageNow = useRef(page); pageNow.current = page; // which data load() fetches
+  const haveDash = useRef(false);
+  const [settling, setSettling] = useState(true);
+  // Marked in the same render that switches the page (as `visit` above), so the new page never shows for a frame first.
+  if (visit.page !== page && !settling) setSettling(true);
+  useEffect(() => {
+    const w = whenSettled(700);
+    w.then(() => setSettling(false));
+    return w.cancel;
+  }, [page]); // not on the query: Transactions keeps its filters there, and typing a search must not blank the list
   const [meta, setMeta] = useState({ items: [], max: 10 });
   const [s, setS] = useState(null);
   const [extra, setExtra] = useState(null);
@@ -120,13 +132,19 @@ export default function App() {
     setTheme(t);
   });
 
+  // Every page needs the banks (the rail's sync line, the banners); only the dashboard needs its own 13 requests. Fetching
+  // those on every page would queue them on the server ahead of that page's own data and slow it down.
   const load = useCallback(async () => {
+    if (pageNow.current !== 'dashboard') { setMeta(await api('/items')); return; }
+    // Back on the dashboard: let its panels get their own data first (the page shows meanwhile), then refresh the rest.
+    if (haveDash.current) await whenSettled(1500);
     const [items, sum, recent, cashflow, categories, allocation, upcoming, budgets, goals, insights, watchlist, todo, safe, invest] = await Promise.all(
       ['/items', '/summary', '/transactions?limit=5', '/cashflow', '/categories', '/allocation', '/upcoming', '/budgets', '/goals',
-        '/insights', '/watchlist', '/todo', '/safe-to-spend', '/investments/summary'].map((p) => api(p)));
+        '/insights', '/watchlist', '/todo', '/safe-to-spend', '/investments/summary'].map((p) => (haveDash.current ? apiRefresh : api)(p)));
     setMeta(items); setS(sum); setExtra({ recent, cashflow, categories, allocation, upcoming, budgets, goals, insights, watchlist, todo, safe, invest });
+    haveDash.current = true; // coming back shows these at once and updates them in place
   }, []);
-  useEffect(() => { if (!resume) load(); }, [page, resume, load]); // refresh when switching pages
+  useEffect(() => { if (!resume) load(); }, [page, resume, load]); // refresh when switching pages (the dashboard's data when it shows)
   // Hide amounts: blurs every dollar figure (for screen sharing). Remembered in this browser.
   useEffect(() => {
     document.body.classList.toggle('privacy', hide);
@@ -208,7 +226,7 @@ export default function App() {
       </aside>
       {/* Says it out loud when Hide amounts changes, however it was changed (the rail, the chip or Ctrl+K). */}
       <span className="sr-only" role="status">{hide ? 'Amounts hidden' : ''}</span>
-      <main className="main" ref={mainRef} data-quiet={visit.quiet ? '' : undefined}>
+      <main className="main" ref={mainRef} data-quiet={visit.quiet ? '' : undefined} data-settling={settling ? '' : undefined} aria-busy={settling || undefined}>
         {/* Signing in again is urgent (that bank's data has stopped), so it stays a banner on every page. Other failures
             aren't yours to fix: say why, and that it's tried again (at the next sync, or now with Try again). */}
         {broken.map((i) => (

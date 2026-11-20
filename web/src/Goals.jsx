@@ -246,7 +246,7 @@ export default function Goals() {
     setGoals(g); setAccounts(a); setIdeas(i);
   }, []);
   useEffect(() => { load(); }, [load]);
-  if (!goals) return <PageSkeleton panels={1} />;
+  if (!goals) return <PageSkeleton panels={1} title="Plan" />;
 
   const add = async (f) => {
     const r = await api('/goals', { method: 'POST', body: JSON.stringify(f) });

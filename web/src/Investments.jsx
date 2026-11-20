@@ -124,7 +124,7 @@ export default function Investments() {
     api('/investments/contributions').then(setPay).catch(() => setPay(null));
     api('/items').then((r) => setPending(r.items.filter((i) => i.holdings_pending).map((i) => i.institution)));
   }, []);
-  if (!rows) return <PageSkeleton />;
+  if (!rows) return <PageSkeleton title="Investments" />;
 
   const total = rows.reduce((s, h) => s + h.value, 0);
   const known = rows.filter((h) => h.cost_basis != null && kindOf(h) !== 'Cash');

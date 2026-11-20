@@ -1201,6 +1201,12 @@ h1 {
    changes while you're on it still moves (meters slide to the new width). */
 .main[data-quiet] :is(.bar i, .meter i, .bbar i, .wmbar i, .setupbar i, .sharebar i, .chart .draw, .chart .nw-halo, .chart .cf-bar,
   .donutsvg .seg, .yg-day i, .cstroke, .cstamps .stamp), .main[data-quiet] .head.needs h2::before { animation: none; }
+/* While a page's data loads (App.jsx sets data-settling on .main, for at most 0.7s), its body waits unseen with its arrival
+   paused at the start, then shows whole in one short fade, so sections that load one after another never push each other
+   down while you watch. The header (the page's real title, even while loading) and bank banners show at once. */
+.main > * { transition: opacity var(--t-base) var(--ease); }
+.main[data-settling] > :not(.top, .alert) { opacity: 0; transition: none; }
+.main[data-settling] *, .main[data-settling] *::before { animation-play-state: paused; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .donutsvg { filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .55)); } }
 :root[data-theme="dark"] .donutsvg { filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .55)); }
 /* Projection: the range between conservative and optimistic */
@@ -1702,6 +1708,9 @@ p.small.foot { margin-top: .9rem; }
 @media (min-width: 1920px) { :root { --u: 24px; } }
 @media (min-width: 2400px) { :root { --u: 26px; } }
 html { font-size: calc(var(--u) * 16 / 22); }
+/* The scrollbar's room is always kept, so a page shorter than the window (or one still loading) doesn't widen the page and
+   shift everything sideways for a moment. */
+html { scrollbar-gutter: stable; }
 .lgdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ink-dot); }
 .spread { padding: 0; }
 .spread .mgrid { display: grid; grid-template-columns: minmax(0, 1fr); }
