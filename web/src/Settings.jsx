@@ -2,6 +2,32 @@ import { useEffect, useState } from 'react';
 import { api } from './api.js';
 import { Panel, PageHeader, confirmDialog } from './ui.jsx';
 import { PlaidKeys } from './PlaidSetup.jsx';
+import { JOURNALS, RULING_NAME, tapeBackground } from './journals.js';
+import { currentJournal, setJournal, decorationOn, setDecoration } from './journal.js';
+
+// The journal: cover, paper, ink, highlighter and tapes (journals.js), and whether the tape and doodles show.
+// Remembered in this browser, like the light/dark choice.
+function JournalSetting() {
+  const [id, setId] = useState(currentJournal);
+  const [deco, setDeco] = useState(decorationOn);
+  const pick = (k) => { setJournal(k); setId(k); };
+  return (
+    <Panel className="mt" title="Journal">
+      <div className="jpicker" role="group" aria-label="Journal">
+        {Object.entries(JOURNALS).map(([k, j]) => (
+          <button key={k} type="button" aria-pressed={id === k} className={`jpick${id === k ? ' on' : ''}`} onClick={() => pick(k)}>
+            <span className="jbook" aria-hidden="true" style={{ '--c': j.light.rail, '--f': j.light.rail2, '--p': j.light.card, '--h': j.light.hi, '--t': tapeBackground(j.tapes[0]) }}>
+              <i className="jpg" /><i className="jtape" /><i className="jhi" /></span>
+            <span className="jname"><b>{j.name}</b><span className="small muted">{RULING_NAME[j.ruling]}</span></span>
+          </button>
+        ))}
+      </div>
+      <p className="small muted">{JOURNALS[id].desc} Green and red, the chart colours and the seal are the same in every journal.</p>
+      <label className="check"><input type="checkbox" checked={deco} onChange={(e) => { setDecoration(e.target.checked); setDeco(e.target.checked); }} />
+        Show washi tape and margin doodles</label>
+    </Panel>
+  );
+}
 
 // Where charts and reports start: 3 months before the first bank connection (default), or all history.
 function HistorySetting() {
@@ -155,7 +181,7 @@ export default function Settings({ onChange }) {
 
   return (
     <>
-      <PageHeader title="Settings" sub="Connections and backups for this copy of Mizo Money." />
+      <PageHeader title="Settings" sub="Connections, backups and the look of this copy of Mizo Money." />
       {/* One ruled sheet, a section per setting. */}
       <div className="ledger mt">
       <Panel className="mt" title={<>Banks <span className="badge">{sys?.plaidEnv ?? '…'}</span></>} actions={<a className="btn" href="#/networth">Open Net worth</a>}>
@@ -164,6 +190,7 @@ export default function Settings({ onChange }) {
       </Panel>
       <PlaidKeys banks={meta?.items.length ?? 0} onChange={() => api('/system').then(setSys)} />
       <AppSetting />
+      <JournalSetting />
       <UpdateSetting />
       <HistorySetting />
       <Panel className="mt" title="Category rules">

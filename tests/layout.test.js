@@ -61,3 +61,32 @@ test('a saved layout that still names removed dashboard panels drops them', () =
   const l = mergeLayout({ order: ['cards', 'upcoming', 'safe', 'projection', 'recent'], hidden: ['upcoming', 'safe', 'projection'], rail: ['upcoming', 'safe'] }, now);
   assert.deepEqual(l, { order: ['cards', 'recent'], hidden: [], rail: [] });
 });
+
+// Two panels merged into one: the dashboard's month spread and glance sheet became "This month" (id month, was glance).
+const MERGED = [{ id: 'cards' }, { id: 'month', was: ['glance'] }, { id: 'insight' }, { id: 'recent' }];
+
+test('a merged panel takes the earlier of the two positions, once', () => {
+  const l = mergeLayout({ order: ['recent', 'glance', 'cards', 'month', 'insight'], hidden: [], rail: [] }, MERGED);
+  assert.deepEqual(l.order, ['recent', 'month', 'cards', 'insight']);
+  assert.deepEqual(l.hidden, []);
+});
+
+test('a merged panel is hidden only if both panels it replaced were hidden', () => {
+  const keptMonth = mergeLayout({ order: ['cards', 'month', 'glance', 'insight', 'recent'], hidden: ['glance'], rail: [] }, MERGED);
+  assert.ok(!keptMonth.hidden.includes('month'), 'you kept the month spread, so the merged panel shows');
+  const keptGlance = mergeLayout({ order: ['cards', 'month', 'glance', 'insight', 'recent'], hidden: ['month'], rail: [] }, MERGED);
+  assert.ok(!keptGlance.hidden.includes('month'), 'you kept the glance sheet, so the merged panel shows');
+  const both = mergeLayout({ order: ['cards', 'month', 'glance', 'insight', 'recent'], hidden: ['month', 'glance', 'recent'], rail: [] }, MERGED);
+  assert.deepEqual(both.hidden, ['recent', 'month']);
+  assert.deepEqual(both.order, ['cards', 'month', 'insight', 'recent']);
+});
+
+test('a saved layout that only had the old id gets the new one in its place', () => {
+  const l = mergeLayout({ order: ['glance', 'cards', 'insight', 'recent'], hidden: ['glance'], rail: ['glance'] }, MERGED);
+  assert.deepEqual(l, { order: ['month', 'cards', 'insight', 'recent'], hidden: ['month'], rail: ['month'] });
+});
+
+test('a layout saved after the merge is left as it is', () => {
+  const saved = { order: ['cards', 'month', 'insight', 'recent'], hidden: ['insight'], rail: [] };
+  assert.deepEqual(mergeLayout(saved, MERGED), saved);
+});

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { api } from './api.js';
 import Progress from './Progress.jsx';
 import { usd, label, usd2 } from './format.js';
-import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, amountsHidden, Chevron, Repeat, Close, confirmDialog } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, amountsHidden, Chevron, Migrate, Close, confirmDialog } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 import CloseMonth from './CloseMonth.jsx';
 
@@ -83,7 +83,7 @@ function Row({ c, income, progress, save, tags = true, inGroup = false, month, r
         {c.rollover && <Hover tip={<TipList title="Rolls over" rows={c.carryHistory.map((h) => [monthShort(h.month), signedUsd(h.left)])}
           note={c.carryHistory.length ? 'Unspent money carries into the next month; overspending takes from it.' : 'Starts building up from this month.'} />}>
           <button className="ftag rtag" onClick={async () => { if (await confirmDialog({ title: `Stop rolling over ${c.category}?`, body: `What's carried over (${usd(c.carry)}) won't count any more.`, confirm: 'Stop rolling over' })) setRollover(c, false); }}>
-            <Repeat /> {c.carry ? signedUsd(c.carry) : 'rolls over'}</button></Hover>}
+            <Migrate /> {c.carry ? signedUsd(c.carry) : 'rolls over'}</button></Hover>}
         {!c.rollover && !income && !inGroup && c.kind === 'nonmonthly' && <button className="linkbtn small" onClick={() => setRollover(c, true)}
           title="Let unspent money build up month to month until the bill comes">Roll over</button>}</span>
       <span className="r">{inGroup ? null : <BudgetInput c={c} save={save} />}</span>

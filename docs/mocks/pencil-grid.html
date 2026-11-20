@@ -1,0 +1,340 @@
+<title>Sheets or Borders</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: the Mizo Money dashboard (Indigo journal) laid out on its own dot grid. One unit = the 22px dot spacing: every
+   box edge, section rule, list row and calendar line falls on a row or column of dots. Rules are drawn as inset shadows
+   so they never add a pixel to a height. */
+:root {
+  --u: 22px;
+  --bg: #f2f0e9; --card: #fffefc; --dot: #cfcfc5; --line: #e1e3df; --line-strong: #c8ccd2; --ink: #1b2030; --muted: #4c5365;
+  --blue: #2d4a93; --soft: #e8ecf5; --green: #24724f; --red: #b4382a; --ink-dot: #26355c; --hi: #ffe27a; --hi-blend: multiply;
+  --rail: #1e2a47; --rail-2: #2b3b63; --rail-ink: #c5ccdd; --rail-ink-2: #a9b2c8; --white: #fffdf7;
+  --tape-a: #b9c8ec; --tape-b: #e2e8f6;
+  --font: 'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11141c; --card: #181c27; --dot: #242a35; --line: #282e3d; --line-strong: #3a4255; --ink: #e7e9ef; --muted: #adb3c3;
+  --blue: #9db2ea; --soft: #222a40; --green: #5cc193; --red: #ee806e; --ink-dot: #a9b9e6; --hi: #5a4c12; --hi-blend: normal;
+  --rail: #1a2440; --rail-2: #283a66; --rail-ink: #aab4cc; --rail-ink-2: #8f9bbb; --tape-a: #56638a; --tape-b: #3a4361; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #11141c; --card: #181c27; --dot: #242a35; --line: #282e3d; --line-strong: #3a4255; --ink: #e7e9ef; --muted: #adb3c3;
+  --blue: #9db2ea; --soft: #222a40; --green: #5cc193; --red: #ee806e; --ink-dot: #a9b9e6; --hi: #5a4c12; --hi-blend: normal;
+  --rail: #1a2440; --rail-2: #283a66; --rail-ink: #aab4cc; --rail-ink-2: #8f9bbb; --tape-a: #56638a; --tape-b: #3a4361; color-scheme: dark }
+
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: var(--u); font-variant-numeric: tabular-nums;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 14px 32px; }
+p, ul, h1, h2 { margin: 0; }
+
+.controls { max-width: 1320px; margin: 0 auto 12px; display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; font-size: 13px; color: var(--muted); line-height: 1.3; }
+.controls .grp { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.controls b { color: var(--ink); font-weight: 700; margin-right: 2px; }
+.controls button { font: inherit; color: var(--ink); background: transparent; border: 1.5px solid var(--line-strong); border-radius: 999px; padding: 3px 11px; cursor: pointer; }
+.controls button[aria-pressed="true"] { border-color: var(--ink); font-weight: 700; }
+.controls button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.app { max-width: 1320px; margin: 0 auto; display: grid; grid-template-columns: 200px minmax(0, 1fr); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+.rail { background: var(--rail); color: var(--rail-ink); padding: 18px 12px; display: flex; flex-direction: column; gap: 2px; font-size: 14px; line-height: 1.45; }
+.logo { display: flex; align-items: center; gap: 10px; color: var(--white); font-weight: 800; font-size: 16px; padding: 0 6px 18px; }
+.seal { width: 26px; height: 26px; border-radius: 50%; background: #d8452b; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 13px; rotate: -7deg; }
+.rail .h { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--rail-ink-2); padding: 12px 8px 4px; border-top: 1px dashed rgba(255,255,255,.17); margin-top: 6px; }
+.rail a { color: inherit; text-decoration: none; padding: 7px 10px; border-radius: 6px; }
+.rail a.on { background: var(--rail-2); color: var(--white); font-weight: 700; }
+
+/* The page: dots at every multiple of the unit, counted from the page's corner */
+.page { --pad: calc(var(--u) * 2); min-width: 0; padding: var(--pad);
+  background: radial-gradient(circle, var(--dot) 1.1px, transparent 1.5px) calc(var(--u) / -2) calc(var(--u) / -2) / var(--u) var(--u), var(--bg); }
+.sheetgrid { display: grid; grid-auto-rows: var(--u); align-items: start; }
+.sheetgrid > * { min-width: 0; }
+
+.ph { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding-bottom: var(--u); box-shadow: inset 0 -1.5px 0 var(--ink); }
+.ph h1 { font-size: clamp(26px, 3.4vw, 38px); font-weight: 800; letter-spacing: -.02em; line-height: calc(var(--u) * 2); }
+.ph p { font-size: 14px; color: var(--muted); }
+.ph a { font-size: 13px; color: var(--ink); white-space: nowrap; }
+
+.standing { display: grid; }
+.stand { display: flex; flex-direction: column; padding-right: var(--u); }
+.stand + .stand + .stand { padding-left: var(--u); box-shadow: inset 1px 0 0 var(--line-strong); }
+.slabel { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.lead .slabel { position: relative; isolation: isolate; align-self: flex-start; color: var(--ink); padding: 0 .3em; margin-left: -.3em; }
+.lead .slabel::before { content: ''; position: absolute; z-index: -1; inset: 22% -.3em 10% -.1em; background: var(--hi); mix-blend-mode: var(--hi-blend); rotate: -1.5deg; border-radius: 2px 6px 3px 5px; }
+.fig { font-size: 30px; font-weight: 800; line-height: calc(var(--u) * 2); }
+.lead .fig { font-size: clamp(40px, 5vw, 60px); letter-spacing: -.035em; line-height: calc(var(--u) * 3); }
+.note { font-size: 13px; color: var(--muted); }
+.up { color: var(--green); font-weight: 700; }
+.standing.narrow .lead { grid-column: 1 / -1; padding-bottom: var(--u); }
+.standing.narrow .stand + .stand { padding-left: 0; box-shadow: none; }
+
+/* Panels: pencil border over a faint wash of the sheet colour */
+.panel { background: color-mix(in srgb, var(--card) 35%, transparent); box-shadow: inset 0 0 0 1px var(--line-strong); border-radius: 3px; overflow: hidden; }
+.sec { padding: var(--u); }
+.panel > .sec + .sec, .panel > .monthgrid + .sec { box-shadow: inset 0 1px 0 var(--line-strong); }
+.head { display: flex; justify-content: space-between; align-items: center; gap: 10px; height: var(--u); margin-bottom: var(--u); }
+h2 { font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.head a { font-size: 13px; color: var(--blue); }
+.tape { position: relative; isolation: isolate; padding: 2px 8px; }
+.tape::before { content: ''; position: absolute; inset: 0; z-index: -1; rotate: -.8deg; background: repeating-linear-gradient(45deg, var(--tape-a) 0 4px, var(--tape-b) 4px 8px); opacity: .85;
+  clip-path: polygon(0 8%, 3px 30%, 0 55%, 3px 80%, 0 100%, 100% 96%, calc(100% - 3px) 70%, 100% 45%, calc(100% - 3px) 20%, 100% 0); }
+.chip { font-size: 12px; line-height: 18px; box-shadow: inset 0 0 0 1px var(--line-strong); border-radius: 999px; padding: 0 9px; color: var(--muted); white-space: nowrap; }
+
+/* The month: a wall calendar whose lines are rows and columns of dots */
+.monthgrid { display: grid; }
+.monthgrid:not(.stack) > .sec + .sec { box-shadow: inset 1px 0 0 var(--line-strong); }
+.monthgrid.stack > .sec + .sec { box-shadow: inset 0 1px 0 var(--line-strong); }
+.cal { display: grid; box-shadow: inset 0 1.5px 0 var(--ink); }
+.dow { height: var(--u); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-left: 5px; overflow: hidden; }
+.day { position: relative; height: var(--ch, 66px); padding: 2px 5px; font-size: 12px; line-height: 18px; color: var(--muted); box-shadow: inset 0 1px 0 var(--line-strong); }
+.day:not(:nth-child(7n + 1)) { box-shadow: inset 0 1px 0 var(--line-strong), inset 1px 0 0 var(--line-strong); }
+.day.last-row { box-shadow: inset 0 1px 0 var(--line-strong), inset 0 -1px 0 var(--line-strong); }
+.day.last-row:not(:nth-child(7n + 1)) { box-shadow: inset 0 1px 0 var(--line-strong), inset 1px 0 0 var(--line-strong), inset 0 -1px 0 var(--line-strong); }
+.day.blank { background: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--line-strong) 40%, transparent) 5px 6px); }
+.day.fut { color: color-mix(in srgb, var(--muted) 70%, transparent); }
+.day.today { background: var(--soft); color: var(--blue); font-weight: 800; }
+.day.today::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--blue); }
+.day i { position: absolute; left: 50%; top: 58%; translate: -50% -50%; border-radius: 50%; background: var(--ink-dot); }
+.day .marks { position: absolute; right: 4px; top: 5px; display: flex; gap: 3px; }
+/* Figure + highlighter: the day's spending in small figures, a highlighter stroke under it on one fixed scale */
+.day .spent { position: absolute; left: 5px; bottom: 10px; z-index: 1; font-size: 11.5px; font-weight: 700; line-height: 14px; color: var(--ink); }
+.day .stroke { position: absolute; left: 4px; bottom: 4px; height: 6px; max-width: calc(100% - 8px); background: var(--hi);
+  mix-blend-mode: var(--hi-blend); border-radius: 2px 5px 3px 4px; rotate: -1.2deg; }
+[data-spent="dot"] .day :is(.spent, .stroke), [data-spent="figure"] .day i { display: none; }
+.hidden-amts .day .spent { filter: blur(4px); }
+.calkey .k-stroke { width: 22px; height: 7px; border-radius: 2px 5px 3px 4px; background: var(--hi); mix-blend-mode: var(--hi-blend); rotate: -1.2deg; }
+[data-spent="dot"] .calkey .k-stroke, [data-spent="figure"] .calkey .k-dot { display: none; }
+.day b { width: 10px; height: 10px; border: 1.5px dashed var(--ink); border-radius: 2px; }
+.day b.paid { border-style: solid; background: var(--blue); border-color: var(--blue); }
+.day b.in { border: 1.5px solid var(--green); border-radius: 50%; }
+.day b.in.got { background: var(--green); }
+.calkey { display: flex; flex-wrap: wrap; gap: 0 16px; margin-top: var(--u); font-size: 12.5px; color: var(--muted); }
+.calkey span { display: inline-flex; align-items: center; gap: 6px; }
+.calkey i { width: 9px; height: 9px; border-radius: 50%; background: var(--ink-dot); }
+.calkey b { width: 10px; height: 10px; border: 1.5px dashed var(--ink); border-radius: 2px; }
+.calkey b.paid { border-style: solid; background: var(--blue); border-color: var(--blue); }
+.calkey b.in { border: 1.5px solid var(--green); border-radius: 50%; }
+
+/* Lists: two units a row, so every hairline sits on a row of dots */
+.rows li, .tx li { height: calc(var(--u) * 2); box-shadow: inset 0 1px 0 var(--line-strong); }
+.rows li { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; font-size: 14.5px; }
+.rows, .tx { list-style: none; padding: 0; box-shadow: inset 0 -1px 0 var(--line-strong); }
+.rows .bx { width: 13px; height: 13px; border: 1.5px dashed var(--ink); border-radius: 2px; }
+.rows .bx.in { border-color: var(--green); border-radius: 50%; }
+.rows .d { font-size: 13px; color: var(--muted); }
+.rows .a { font-weight: 700; text-align: right; }
+.rows .a.pos, .tx .a.pos { color: var(--green); }
+.nothing { display: block; height: calc(var(--u) * 2); line-height: calc(var(--u) * 2); font-size: 13px; color: var(--muted); }
+.nothing::before { content: '\2713'; color: var(--green); margin-right: 8px; font-weight: 800; }
+.tx li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: center; line-height: 18px; }
+.tx .n { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tx .c, .tx .dt { font-size: 12.5px; color: var(--muted); }
+.tx .a { font-weight: 700; text-align: right; }
+.tx .dt { text-align: right; }
+
+.over { color: var(--red); font-size: 13px; }
+.bud { display: grid; column-gap: calc(var(--u) * 2); }
+.bud > div { height: calc(var(--u) * 2); }
+.bud .t { display: flex; justify-content: space-between; font-size: 14.5px; }
+.bud .t span:last-child { font-size: 13px; color: var(--muted); }
+.bar { height: 5px; border-radius: 3px; background: var(--line-strong); margin-top: 8px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--blue); border-radius: 3px; }
+.bar i.bad { background: var(--red); }
+.line { font-size: 14px; }
+.line .g { color: var(--green); font-weight: 700; }
+
+.chart { display: block; width: 100%; height: calc(var(--u) * 7); overflow: visible; }
+.chart .grid { stroke: var(--line-strong); }
+.chart text { fill: var(--muted); font-size: 11px; font-family: var(--font); }
+.aside { max-width: 1320px; margin: 12px auto 0; font-size: 13px; color: var(--muted); line-height: 1.45; }
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .rail { display: none; }
+}
+</style>
+
+<div class="controls">
+  <div class="grp" id="theme" role="group" aria-label="Theme"><b>Theme</b>
+    <button type="button" data-v="">Follow system</button>
+    <button type="button" data-v="light">Light</button>
+    <button type="button" data-v="dark">Dark</button>
+  </div>
+  <div class="grp" id="spentPick" role="group" aria-label="Spent that day"><b>Spent that day</b>
+    <button type="button" data-v="figure">Figure + highlighter</button>
+    <button type="button" data-v="dot">Dot (today)</button>
+  </div>
+  <div class="grp" id="hideAmts" role="group" aria-label="Hide amounts"><b>Hide amounts</b>
+    <button type="button" data-v="">Off</button>
+    <button type="button" data-v="on">On</button>
+  </div>
+  <div class="grp" id="dots" role="group" aria-label="Dots"><b>Dots</b>
+    <button type="button" data-v="">As in the app</button>
+    <button type="button" data-v="strong">Darker, to check the alignment</button>
+  </div>
+</div>
+
+<div class="app">
+  <nav class="rail" aria-label="Pages">
+    <div class="logo"><span class="seal">M</span>Mizo Money</div>
+    <a href="#" class="on">Dashboard</a>
+    <div class="h">Spending</div><a href="#">Transactions</a><a href="#">Budget</a><a href="#">Bills</a>
+    <div class="h">Looking back</div><a href="#">Money flow</a><a href="#">Reports</a>
+    <div class="h">What you own</div><a href="#">Net worth</a><a href="#">Investments</a>
+    <div class="h"></div><a href="#">Plan</a>
+  </nav>
+
+  <main class="page" id="page">
+    <div class="sheetgrid" id="sheet">
+      <header class="ph">
+        <div><h1>Wednesday, November 18</h1><p>Since Sun: 6 new transactions, 1 bill paid. Acme Corp pays Thu.</p></div>
+        <a href="#">Customize dashboard</a>
+      </header>
+
+      <section class="standing" id="standing" aria-label="Where you stand">
+        <div class="stand lead"><span class="slabel">Net worth</span><span class="fig">$284,310</span><span class="note"><span class="up">&#9650; 2.1%</span> vs. 30 days ago</span></div>
+        <div class="stand"><span class="slabel">Free to spend</span><span class="fig">$1,240</span><span class="note">$95 a day for the next 13 days</span></div>
+        <div class="stand"><span class="slabel">Spent this month</span><span class="fig">$1,862</span><span class="note"><span class="up">$410</span> under an even pace</span></div>
+      </section>
+
+      <section class="panel" id="monthpanel" aria-label="This month">
+        <div class="monthgrid" id="monthgrid">
+          <div class="sec">
+            <div class="head"><h2><span class="tape">November 2026</span></h2><span class="chip">Bills still due $2,596</span></div>
+            <div class="cal" id="cal"></div>
+            <div class="calkey"><span><i class="k-dot"></i><b class="k-stroke" style="border:0"></b>Spent that day</span><span><b class="paid"></b>Bill paid</span><span><b></b>Bill due</span><span><b class="in"></b>Money in</span></div>
+          </div>
+          <div class="sec">
+            <div class="head"><h2>Coming up</h2><a href="#">Bills</a></div>
+            <ul class="rows">
+              <li><span class="bx"></span><span>Electric</span><span class="d">Nov 24</span><span class="a">&minus;$88.40</span></li>
+              <li><span class="bx in"></span><span>Acme Corp paycheck</span><span class="d">Nov 26</span><span class="a pos">+$2,640.00</span></li>
+              <li><span class="bx"></span><span>Phone</span><span class="d">Nov 27</span><span class="a">&minus;$45.00</span></li>
+              <li><span class="bx"></span><span>Rent</span><span class="d">Nov 30</span><span class="a">&minus;$1,850.00</span></li>
+              <li><span class="bx"></span><span>Card payment</span><span class="d">Dec 2</span><span class="a">&minus;$612.37</span></li>
+            </ul>
+            <p class="nothing">Nothing to sort.</p>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="head"><h2>Budget</h2><a href="#">Budget</a></div>
+          <p class="over">Dining out is over</p>
+          <div class="bud" id="bud">
+            <div><div class="t"><span>Dining out</span><span>$212 of $180</span></div><div class="bar"><i class="bad" style="width:100%"></i></div></div>
+            <div><div class="t"><span>Groceries</span><span>$344 of $500</span></div><div class="bar"><i style="width:69%"></i></div></div>
+            <div><div class="t"><span>Transportation</span><span>$96 of $150</span></div><div class="bar"><i style="width:64%"></i></div></div>
+            <div><div class="t"><span>Fun</span><span>$138 of $200</span></div><div class="bar"><i style="width:69%"></i></div></div>
+          </div>
+        </div>
+        <div class="sec line">You've spent <span class="g">$318 less</span> than this time last month, mostly Dining out (&minus;$142) and Shopping (&minus;$96).</div>
+      </section>
+
+      <section class="panel" id="chartpanel"><div class="sec">
+        <div class="head"><h2>Net worth overview</h2></div>
+        <svg class="chart" id="chart" viewBox="0 0 600 154" preserveAspectRatio="none" aria-label="Net worth over 3 months, rising from $271K to $284K"></svg>
+      </div></section>
+      <section class="panel" id="txpanel"><div class="sec">
+        <div class="head"><h2>Recent transactions</h2><a href="#">View all</a></div>
+        <ul class="tx">
+          <li><span class="n">Trader Joe's</span><span class="a">&minus;$64.18</span><span class="c">Groceries</span><span class="dt">Nov 17</span></li>
+          <li><span class="n">Shell</span><span class="a">&minus;$41.02</span><span class="c">Gas</span><span class="dt">Nov 17</span></li>
+          <li><span class="n">Sam Lee "Pizza"</span><span class="a pos">+$18.00</span><span class="c">Paid you back</span><span class="dt">Nov 16</span></li>
+          <li><span class="n">Spotify</span><span class="a">&minus;$11.99</span><span class="c">Subscriptions</span><span class="dt">Nov 13</span></li>
+        </ul>
+      </div></section>
+    </div>
+  </main>
+</div>
+<p class="aside">A mock with invented figures, in the Indigo journal. Every box, rule and calendar line sits on the dot grid; boxes grow by whole dots to fit what's in them, with one empty row of dots between them.</p>
+
+<script>
+(() => {
+  const U = 22;
+  // The month as a calendar: November 2026 starts on a Sunday; today is the 18th
+  // Dollars spent each day so far (invented). One fixed scale for every month: a $250 day fills the stroke.
+  const cal = document.getElementById('cal'), spend = [0, 42, 0, 0, 96, 31, 64, 0, 18, 212, 0, 27, 88, 15, 0, 0, 47, 140];
+  const CAP = 250, strokeW = (v) => Math.max(10, Math.min(1, v / CAP) * 58), dotD = (v) => 5 + Math.min(1, v / CAP) * 17;
+  const bills = { 3: 1, 9: 1, 24: 1, 27: 1, 30: 1 }, inc = { 12: 1, 26: 1 }, today = 18, first = 0, n = 30;
+  for (const d of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']) { const h = document.createElement('div'); h.className = 'dow'; h.textContent = d; cal.append(h); }
+  const cells = Math.ceil((first + n) / 7) * 7;
+  for (let c = 0; c < cells; c++) {
+    const d = c - first + 1, el = document.createElement('div'), last = c >= cells - 7 ? ' last-row' : '';
+    if (d < 1 || d > n) { el.className = 'day blank' + last; cal.append(el); continue; }
+    el.className = 'day' + (d === today ? ' today' : d > today ? ' fut' : '') + last;
+    const v = spend[d - 1], past = d <= today, sz = dotD(v || 0);
+    el.innerHTML = `<span>${d}</span>` + (past && v ? `<i style="width:${sz}px;height:${sz}px"></i>`
+        + `<b class="stroke" style="width:${strokeW(v)}px;border:0"></b><span class="spent">$${v}</span>` : '')
+      + `<span class="marks">${bills[d] ? `<b class="${past ? 'paid' : ''}"></b>` : ''}${inc[d] ? `<b class="in${past ? ' got' : ''}"></b>` : ''}</span>`;
+    cal.append(el);
+  }
+  // Net worth line; its gridlines fall on rows of dots (every 2 units of the 7-unit chart)
+  const svg = document.getElementById('chart'), NS = 'http://www.w3.org/2000/svg';
+  let v = 271; const pts = []; for (let i = 0; i <= 60; i++) { v += Math.sin(i * 1.7) * .9 + .22; pts.push([62 + i * 8.9, v]); }
+  const y = (k) => 154 - (k - 266) * (44 / 5);
+  for (const k of [270, 275, 280, 285]) {
+    const l = document.createElementNS(NS, 'line'); l.setAttribute('class', 'grid'); l.setAttribute('x1', 48); l.setAttribute('x2', 600); l.setAttribute('y1', y(k)); l.setAttribute('y2', y(k)); svg.append(l);
+    const t = document.createElementNS(NS, 'text'); t.setAttribute('x', 0); t.setAttribute('y', y(k) + 4); t.textContent = `$${k}K`; svg.append(t);
+  }
+  const p = document.createElementNS(NS, 'path'); p.setAttribute('d', pts.map(([x, k], i) => `${i ? 'L' : 'M'}${x} ${y(k).toFixed(1)}`).join(' '));
+  p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'var(--blue)'); p.setAttribute('stroke-width', 2.5); p.setAttribute('stroke-linejoin', 'round'); p.setAttribute('vector-effect', 'non-scaling-stroke'); svg.append(p);
+
+  // Layout on the dots: widths in whole units, heights rounded up to whole units, one empty unit between boxes.
+  const page = document.getElementById('page'), sheet = document.getElementById('sheet');
+  const up = (h) => Math.ceil((h - 0.5) / U);
+  function snapSecs(el) {
+    const secs = el.querySelectorAll('.sec');
+    secs.forEach((s) => { s.style.minHeight = ''; });
+    secs.forEach((s) => { s.style.minHeight = up(s.offsetHeight) * U + 'px'; });
+  }
+  function layout() {
+    const pad = page.clientWidth < 640 ? U : 2 * U;
+    page.style.setProperty('--pad', pad + 'px');
+    const n = Math.floor((page.clientWidth - 2 * pad) / U);
+    sheet.style.gridTemplateColumns = `repeat(${n}, ${U}px)`;
+    // Where you stand: columns in whole units
+    const st = document.getElementById('standing'), wide = n >= 34;
+    st.classList.toggle('narrow', !wide);
+    st.style.gridTemplateColumns = wide ? `${Math.round(n * .45) * U}px ${Math.round(n * .28) * U}px minmax(0, 1fr)` : `${Math.floor(n / 2) * U}px minmax(0, 1fr)`;
+    // The calendar: 3-unit square days when there's room beside Coming up; stacked above it otherwise
+    const mg = document.getElementById('monthgrid');
+    const cu = Math.min(3, Math.floor((n - 2) / 7)), side = cu === 3 && n - (7 * cu + 2) >= 20;
+    mg.classList.toggle('stack', !side);
+    mg.style.gridTemplateColumns = side ? `${(7 * cu + 2) * U}px minmax(0, 1fr)` : 'minmax(0, 1fr)';
+    cal.style.gridTemplateColumns = cu >= 1 ? `repeat(7, ${cu * U}px)` : 'repeat(7, minmax(0, 1fr))';
+    cal.style.setProperty('--ch', 2 * U + 'px'); // days are 3 units wide, 2 tall
+    const bud = document.getElementById('bud'), half = Math.floor((n - 4) / 2);
+    bud.style.gridTemplateColumns = n >= 30 ? `repeat(2, ${half * U}px)` : 'minmax(0, 1fr)';
+    // Place the boxes row by row
+    const board = n >= 38, c1 = Math.round(n * .6);
+    const rows = [
+      [['.ph', 0, n]], [['#standing', 0, n]], [['#monthpanel', 0, n]],
+      ...(board ? [[['#chartpanel', 0, c1], ['#txpanel', c1 + 1, n - c1 - 1]]] : [[['#chartpanel', 0, n]], [['#txpanel', 0, n]]]),
+    ];
+    let r = 0;
+    for (const row of rows) {
+      let end = r;
+      for (const [sel, c, w] of row) {
+        const el = sheet.querySelector(sel);
+        el.style.gridColumn = `${c + 1} / span ${w}`; el.style.gridRow = `${r + 1} / span 1`; el.style.height = 'auto';
+        snapSecs(el);
+        const h = up(el.offsetHeight);
+        el.style.gridRow = `${r + 1} / span ${h}`; el.style.height = h * U + 'px';
+        end = Math.max(end, r + h);
+      }
+      r = end + 1;
+    }
+  }
+  let queued = false;
+  const relayout = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; layout(); }); };
+  new ResizeObserver(relayout).observe(page);
+  document.fonts?.ready.then(relayout);
+  layout();
+
+  const root = document.documentElement;
+  const wire = (id, set) => { const btns = [...document.querySelectorAll(`#${id} button`)];
+    const pick = (b) => { btns.forEach((x) => x.setAttribute('aria-pressed', String(x === b))); set(b.dataset.v); };
+    btns.forEach((b) => (b.onclick = () => pick(b))); pick(btns[0]); };
+  wire('theme', (v) => { if (v) root.dataset.theme = v; else delete root.dataset.theme; });
+  wire('spentPick', (v) => { document.getElementById('monthpanel').dataset.spent = v; });
+  wire('hideAmts', (v) => { document.getElementById('monthpanel').classList.toggle('hidden-amts', !!v); });
+  wire('dots', (v) => { if (v) page.style.setProperty('--dot', 'color-mix(in srgb, var(--ink) 50%, transparent)'); else page.style.removeProperty('--dot'); });
+})();
+</script>

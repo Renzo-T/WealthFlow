@@ -17,7 +17,7 @@ start; `.env`/environment variables override it). See README.md for setup.
 - Releases: `npm run release` (`scripts/release.mjs`) bumps the version, tags `vX.Y.Z` and pushes;
   `.github/workflows/release.yml` checks, builds the zip on Windows and publishes a GitHub Release. The update notice
   (`server/updates.js`, `/api/update`) asks GitHub for the latest release of package.json's `repository` at most daily
-  (off in Settings › Updates; `WEALTHFLOW_UPDATE_CHECKS=0` in tests) and shows it in the top bar and Settings.
+  (off in Settings › Updates; `WEALTHFLOW_UPDATE_CHECKS=0` in tests) and shows it in the page header and Settings.
 - `npm run demo -- <folder>` (`scripts/demo.mjs`): a seeded, invented household in a new data folder, used for the README
   screenshots (`docs/screenshots/`); never put real data in screenshots.
 - `npm run package` builds the Windows download (`release/`, gitignored): official Node from nodejs.org
@@ -27,6 +27,7 @@ start; `.env`/environment variables override it). See README.md for setup.
 ## Run
 - `npm start`: API (`node --watch`, port 4000) and Vite 8 (port 3000, proxies `/api`) together. Node 22.13+ (`node:sqlite`
   without a flag; `server/env-check.js` refuses older).
+- The rail is icons only (`.shell.slim`, App.jsx) and opens over the page while hovered or focused (`.shell.railopen`); the page never moves.
 - `npm run app`: everyday use. `scripts/app.mjs` builds `web/dist` when sources are newer, then runs the server with
   `WEALTHFLOW_APP=1`: page + API together on 3000 (https with `certs/`). Installable (manifest, icons, `web/public/sw.js`,
   which only shows a built-in "isn't running" page when the server is down; nothing is cached). Settings > App:
@@ -47,7 +48,8 @@ start; `.env`/environment variables override it). See README.md for setup.
 - Vite's file watcher on Windows sometimes misses edits made by scripts; `touch` the edited files if the browser
   serves stale code.
 - `npm run check:ui` (with the app running) loads every page in headless Chrome/Edge in light and dark mode and fails on
-  errors, failed API calls, empty or still-loading pages, or sideways scrolling; screenshots go to `ui-shots/`
+  errors, failed API calls, empty or still-loading pages, sideways scrolling, or a box off the dot grid (grid.js's
+  `offGrid`; `--width 1280`, `--pages dashboard,bills`, `--journal plum`); screenshots go to `ui-shots/`
   (gitignored). Run it after UI changes. A page that throws shows an error card (`PageBoundary`) instead of blanking the app.
 
 - `npm run verify`: secrets scan (with `--staged`), tests, a production build, and `check:ui` when the app is running.
@@ -142,10 +144,23 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
 - Building blocks in `web/src/ui.jsx`: `Panel` (card + header), `PageHeader`, `Amt` (amount that "Hide amounts"
   blurs), `Seal` (logo), drawn icons (`Trend`, `Chevron`, `Check`, `Close`, `Repeat`; never text glyphs as icons).
   Prefer classes over inline styles; inline styles are for data-driven colours only.
+- Journals (Settings › Journal): colour presets in `web/src/journals.js` (the only place cover/paper/ink/highlighter/tape
+  colours are defined, checked by `tests/journals.test.js`), applied as `data-journal` on <html> by `journal.js`;
+  decoration (tape, doodles, pen underlines) follows DESIGN.md's decoration budget and can be switched off
+  (`data-decoration="off"`).
 - Money flow: the Sankey (`Flow.jsx`) plus the month replay (`MonthReplay.jsx` + `monthReplay()` in `server/spread.js`): cash in
   everyday accounts day by day, paydays and bills that moved it, days ahead from scheduled items only.
-- Dashboard: `lead` panels (where you stand, the month spread `MonthSpread.jsx` + `server/spread.js`, the
-  Needs you / Coming up / Budget sheet `Glance.jsx`) run full width; the rest pack into grid rows (`usePacked`).
+- Panels are pencil lines on the paper (an outline over a 35% wash, `--sheet`), never white sheets with shadows; only
+  things that float (dialogs, tips, menus) are solid.
+- Grid unit: everything sits on the page's dot grid (`--u`; DESIGN.md › Grid Unit): 22px, stepped by window width (20px
+  below 1280, 24px from 1920, 26px from 2400; the root font size follows it), content capped at 64 units and centred. Widths are whole units in CSS
+  (`round(down, …, var(--u))`, gaps of U); `web/src/grid.js` (`startGrid`, from App.jsx) rounds the heights of panels,
+  ruled sections and top-level blocks up to whole units. List and table rows are 2U. Don't animate a panel's position.
+- Dashboard: `lead` panels (where you stand; "This month": the calendar `MonthSpread.jsx` + `server/spread.js` with
+  Needs you / Coming up beside it and Budget under it, `Glance.jsx`; it replaced the `month` and `glance` panels, folded
+  together for saved layouts by `was` in `PANELS`) run full width; where you stand (`LOOSE` in `Dashboard.jsx`) sits on
+  the paper with no panel, the rest share one ledger; the rest pack into unit rows (`usePacked`). Bills uses the same
+  calendar full width, stamps-only, with each day's bills and paydays written in the day (click a day to list it under the calendar).
   The header's sub-line is a since-last-visit digest (`Digest` in `Cards.jsx`, `GET /api/since?from=`). Free to spend
   is the only "how much can I spend" number; Budget's lead figure is "Not yet assigned", a planning number.
 - Money (`web/src/format.js`): cents (`usd2`) for individual transactions and bills, whole dollars (`usd`) for totals,

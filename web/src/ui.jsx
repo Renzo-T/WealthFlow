@@ -1,5 +1,5 @@
 // Shared building blocks, so every page's cards and headers look and space the same.
-import { useState, useRef, useEffect, Component } from 'react';
+import { useState, useRef, useEffect, useContext, createContext, Component } from 'react';
 import { createPortal } from 'react-dom';
 
 // The Mizo Money seal: a round ink stamp with an M, like a hanko pressed on a planner page. The logo only; vermillion
@@ -26,7 +26,10 @@ const ico = (d, size = 14) => (
   <svg width={size} height={size} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>
 );
 export const Chevron = ({ dir = 'right', size }) => ico(<path d={dir === 'left' ? 'M8.5 3L4.5 7l4 4' : 'M5.5 3l4 4-4 4'} />, size);
-export const Check = ({ size }) => ico(<path d="M3 7.5l2.6 2.6L11 4.5" />, size);
+// The check is drawn by hand: a short dip, then a long stroke that curves as it rises.
+export const Check = ({ size }) => ico(<path d="M2.8 7.6c.9.7 1.8 1.6 2.7 2.6C7 8 8.7 6 11.3 4.1" />, size);
+// Migrated (bullet-journal ">"): money carried forward into the next month.
+export const Migrate = ({ size = 12 }) => ico(<path d="M5 3.3c1.5 1.2 3 2.4 4.4 3.8C8 8.3 6.5 9.5 5.1 10.8" />, size);
 export const Close = ({ size = 12 }) => ico(<path d="M3.5 3.5l7 7M10.5 3.5l-7 7" />, size);
 export const Repeat = ({ size = 12 }) => ico(<><path d="M3 6.2A4 4 0 0110.4 4.6M11 3v2.2H8.8" /><path d="M11 7.8A4 4 0 013.6 9.4M3 11V8.8h2.2" /></>, size);
 
@@ -40,9 +43,17 @@ export function Panel({ title, actions, className = '', children, ...rest }) {
   );
 }
 
-// Page title and subtitle, with optional actions on the right.
+// The app's own tools (notice chips, the theme and Hide amounts buttons), set by App.jsx: every page header shows them at
+// the right of its title row, after the page's own actions, so no page needs a row above its title.
+export const HeaderTools = createContext(null);
+
+// Page title and subtitle, with the page's actions and the app's tools on the right.
 export function PageHeader({ title, sub, children }) {
-  return <div className="top"><div><h1>{title}</h1>{sub && <p className="sub">{sub}</p>}</div>{children}</div>;
+  const tools = useContext(HeaderTools);
+  return (
+    <div className="top"><div><h1>{title}</h1>{sub && <p className="sub">{sub}</p>}</div>
+      {(children || tools) && <div className="topact">{children}{tools}</div>}</div>
+  );
 }
 
 // A dollar figure that "Hide amounts" can blur. Use for amounts outside the usual amount classes.
@@ -90,10 +101,12 @@ export function DashboardSkeleton() {
   );
 }
 
+const SkeletonTools = () => useContext(HeaderTools);
+
 export function PageSkeleton({ panels = 2 }) {
   return (
     <div aria-label="Loading">
-      <div className="top"><div><Skeleton w={220} h={30} /><Skeleton w={360} className="skel-line" /></div></div>
+      <div className="top"><div><Skeleton w={220} h={30} /><Skeleton w={360} className="skel-line" /></div><div className="topact"><SkeletonTools /></div></div>
       {Array.from({ length: panels }, (_, i) => <div className="mt" key={i}><PanelSkeleton lines={i ? 6 : 2} chart={i ? 0 : 180} /></div>)}
     </div>
   );

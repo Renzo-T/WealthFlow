@@ -3,9 +3,9 @@ import { api } from './api.js';
 import { usd2, shortDate } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
-import MonthSpread from './MonthSpread.jsx';
+import MonthSpread, { dayName } from './MonthSpread.jsx';
 import { Stamp, markIcon } from './Stamp.jsx';
-import { Panel, PageHeader, PageSkeleton, Skeleton, Hover, TipList, notice, toast } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, Skeleton, Hover, TipList, Est, notice, toast } from './ui.jsx';
 
 const SOURCE = { detected: 'Detected', plaid: 'From Plaid', card: 'Card statement', manual: 'Added by you' };
 const MODE = { last: 'Last amount', average: 'Average of recent', fixed: 'Fixed amount', statement: 'Statement balance', minimum: 'Minimum payment', current: 'Current balance' };
@@ -183,6 +183,26 @@ export function PaycheckPrompt({ compact, onDone }) {
   ));
 }
 
+// Under the Bills calendar once you click a day: that day's bills and paydays in full, with the way back to the whole
+// month (clicking the day again does the same). Each row has the same stamp as on the calendar.
+function DayList({ days, day, onClear }) {
+  const items = (days ?? []).filter((d) => d.date === day).flatMap((d) => d.marks.map((m, i) => ({ ...m, date: d.date, key: `${d.date}-${i}` })));
+  return (
+    <div className="msec daylist">
+      <div className="head"><h2>{dayName(day)}</h2><button className="linkbtn small" onClick={onClear}>Whole month</button></div>
+      {days && items.length === 0 ? <p className="gquiet small">Nothing due that day.</p> : <div className="glist">
+        {items.map((m, i) => (
+          <div className="grow gbill" key={m.key}>
+            <Stamp kind={m.direction === 'in' ? 'in' : 'out'} done={m.done} icon={m.done ? markIcon(m) : undefined} ink={i} />
+            <span className="gname" title={m.name}>{m.name}</span>
+            <span className="small muted gwhen">{m.done ? (m.direction === 'in' ? 'Received' : 'Paid') : 'Due'}</span>
+            <span className={`tamt${m.direction === 'in' ? ' good' : ''}`}>{m.estimate ? <Est why="Estimate: the amount varies">{`${m.direction === 'in' ? '+' : '−'}${usd2(m.amount)}`}</Est> : `${m.direction === 'in' ? '+' : '−'}${usd2(m.amount)}`}</span>
+          </div>))}
+      </div>}
+    </div>
+  );
+}
+
 export default function Bills() {
   const [list, setList] = useState(null);
   const [editing, setEditing] = useState(null);
@@ -190,9 +210,11 @@ export default function Bills() {
   const [showHidden, setShowHidden] = useState(false);
   const load = useCallback(async () => setList(await api('/bills')), []);
   useEffect(() => { load(); }, [load]);
-  // The month shown in the spread; each day's bills and paydays are in its hover.
+  // The month shown on the calendar, with each day's bills and paydays written in; a picked day lists them in full under it.
   const thisMonth = new Date().toLocaleDateString('en-CA').slice(0, 7);
-  const [month, setMonth] = useState(thisMonth);
+  const [month, setMonthState] = useState(thisMonth);
+  const [day, setDay] = useState(null); // a day picked on the calendar: its bills are listed under it
+  const setMonth = (m) => { setMonthState(m); setDay(null); };
   if (!list) return <PageSkeleton />;
 
   const put = async (key, body) => {
@@ -261,7 +283,8 @@ export default function Bills() {
     <>
       <PageHeader title="Bills" sub="From your transactions, statements, Plaid or your own entries; your edits always win.">
         <button className="btn primary" onClick={() => setAdding(!adding)}>Add a bill</button></PageHeader>
-      <div className="mt"><MonthSpread month={month} onMonth={setMonth} dots={false} /></div>
+      <div className="mt"><MonthSpread month={month} onMonth={setMonth} dots={false} list label="Bills this month" selected={day}
+        onPick={(d) => setDay(day === d ? null : d)} below={day ? (days) => <DayList days={days} day={day} onClear={() => setDay(null)} /> : null} /></div>
       {adding && <Panel className="mt" title="Add a bill or recurring income">
         <AddBill addManual={add} onAdded={() => { setAdding(false); load(); }} onCancel={() => setAdding(false)} /></Panel>}
       <PaycheckPrompt onDone={load} />

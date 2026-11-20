@@ -7,6 +7,10 @@ import '@fontsource/atkinson-hyperlegible-next/latin-700.css';
 import '@fontsource/atkinson-hyperlegible-next/latin-800.css';
 import './styles.css';
 import App from './App.jsx';
+import { startJournal } from './journal.js';
+
+// The journal's colours (Settings › Journal) go on before the first render.
+startJournal();
 
 // Chrome and Edge offer installing the page as an app; keep the offer so Settings can show an Install button.
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.installPrompt = e; window.dispatchEvent(new Event('installable')); });

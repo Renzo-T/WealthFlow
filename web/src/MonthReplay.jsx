@@ -111,6 +111,14 @@ function Chart({ r, p, hover, setHover, playing }) {
     lowAt = opts.find((o) => !stamps.some((s) => hits({ x0: o.x0, x1: o.x0 + wd, y0: ly - 11, y1: ly + 3 }, s))) ?? opts[0];
     lowAt = { ...lowAt, y: ly };
   }
+  // "Cushion" sits over its line at the right end, or wherever along it (left end, or under the line) no stamp is.
+  let cushAt = null;
+  if (r.cushion > 0) {
+    const cy = y(r.cushion) - 5, wd = 52;
+    const opts = [{ a: 'end', x: W - R, x0: W - R - wd, y: cy }, { a: 'start', x: L + 4, x0: L + 4, y: cy },
+      { a: 'end', x: W - R, x0: W - R - wd, y: cy + 17 }, { a: 'start', x: L + 4, x0: L + 4, y: cy + 17 }];
+    cushAt = opts.find((o) => !stamps.some((s) => hits({ x0: o.x0, x1: o.x0 + wd, y0: o.y - 11, y1: o.y + 3 }, s))) ?? opts[0];
+  }
   const head = Math.min(W - R, L + p * colw);
   const ticks = niceTicks(lo, hi, 4, { expand: false }).ticks;
   const move = (e) => {
@@ -130,7 +138,7 @@ function Chart({ r, p, hover, setHover, playing }) {
         {ticks.map((v) => <g key={v}><line className="grid" x1={L} x2={W - R} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{usdCompact(v, 1)}</text></g>)}
         {lo < 0 && <line className="rp-zero" x1={L} x2={W - R} y1={y(0)} y2={y(0)} />}
         {r.cushion > 0 && <g><line className="rp-cushion" x1={L} x2={W - R} y1={y(r.cushion)} y2={y(r.cushion)} />
-          <text x={W - R} y={y(r.cushion) - 5} textAnchor="end">Cushion</text></g>}
+          <text x={cushAt.x} y={cushAt.y} textAnchor={cushAt.a}>Cushion</text></g>}
         {hover != null && <rect className="rp-hover" x={L + hover * colw} y={T - 14} width={colw} height={PB - T + 14} />}
         <g clipPath="url(#replay-head)">
           {past && <path className="rp-line" d={past} />}

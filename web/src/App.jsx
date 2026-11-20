@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState, useCallback } from 'react';
+import { Fragment, useEffect, useRef, useState, useCallback } from 'react';
 import Dashboard, { SetupChecklist } from './Dashboard.jsx';
 import { Digest } from './Cards.jsx';
 import { InkDefs } from './Stamp.jsx';
@@ -18,7 +18,9 @@ import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
 import { FirstRun } from './PlaidSetup.jsx';
 import { api } from './api.js';
 import { syncLine } from './syncStatus.js';
-import { PageHeader, DashboardSkeleton, PageBoundary, Seal, DialogHost } from './ui.jsx';
+import { syncThemeColor } from './journal.js';
+import { startGrid } from './grid.js';
+import { PageHeader, HeaderTools, DashboardSkeleton, PageBoundary, Seal, DialogHost } from './ui.jsx';
 
 const HIDE_KEY = 'wealthflow.hideAmounts', THEME_KEY = 'wealthflow.theme';
 const systemDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
@@ -87,7 +89,23 @@ export default function App() {
   useEffect(() => {
     if (theme) document.documentElement.dataset.theme = theme; else delete document.documentElement.dataset.theme;
     store.set(THEME_KEY, theme);
+    syncThemeColor();
   }, [theme]);
+  // The rail: full, or icons only (your choice, remembered here like the theme). Narrow windows always get icons.
+  // The rail is icons only and opens over the page while the pointer (or keyboard focus) is on it, so the page never
+  // reflows. A short delay on the way in keeps a pointer passing over it from flashing it open.
+  const [railOpen, setRailOpen] = useState(false);
+  const railTimer = useRef(0);
+  const railTo = (open, ms) => { clearTimeout(railTimer.current); railTimer.current = setTimeout(() => setRailOpen(open), ms); };
+  // The page snaps its boxes to the dot grid (grid.js), whatever page is showing.
+  const mainRef = useRef(null), shown = !resume && !(setup && !setup.configured);
+  useEffect(() => (shown && mainRef.current ? startGrid(mainRef.current) : undefined), [shown]);
+  // A sticky table head turns opaque only while it's stuck to the top of the window (.stuck; styles.css).
+  useEffect(() => {
+    const f = () => { for (const el of document.querySelectorAll('.sticky-head')) { const r = el.getBoundingClientRect(); el.classList.toggle('stuck', r.top < 0 && r.bottom > 44); } };
+    window.addEventListener('scroll', f, { passive: true });
+    return () => window.removeEventListener('scroll', f);
+  }, []);
   const toggleTheme = () => { const next = dark ? 'light' : 'dark'; setTheme((next === 'dark') === systemDark() ? null : next); };
 
   const load = useCallback(async () => {
@@ -118,14 +136,35 @@ export default function App() {
   const failing = meta.items.filter((i) => i.state === 'error'); // the bank, Plaid or the connection: tried again automatically
   const attention = meta.items.filter((i) => i.status !== 'ok' || missing(i).products).length;
 
+  // The app's tools sit at the right of every page header's title row (HeaderTools in ui.jsx), not on a row of their own.
+  const tools = (
+    <span className="hdtools">
+      {update?.available && <a className="chip-link info" href="#/settings" title={`You have version ${update.version}. See Settings › Updates.`}>Version {update.latest} is available</a>}
+      {attention > 0 && <a className="chip-link" href="#/networth" title="See your banks on Net worth">
+        {attention} bank{attention > 1 ? 's' : ''} need{attention > 1 ? '' : 's'} attention</a>}
+      {/* What the last Refresh found shows here for a few seconds; the sync time itself lives at the rail's foot. */}
+      {synced && <span className="small muted" role="status">{synced}</span>}
+      <button className="iconbtn" onClick={toggleTheme} title={`Switch to ${dark ? 'light' : 'dark'} mode${theme ? '' : ' (now following your system setting)'}`} aria-label="Toggle dark mode">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+          {dark ? <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>
+            : <path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" />}</svg>
+      </button>
+      <button className={`iconbtn${hide ? ' on' : ''}`} onClick={() => setHide(!hide)} title={hide ? 'Show amounts' : 'Hide amounts (for screen sharing)'} aria-label={hide ? 'Show amounts' : 'Hide amounts'} aria-pressed={hide}>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />{hide && <path d="M4 4l16 16" />}</svg>
+      </button>
+    </span>
+  );
+
   if (resume) return <main className="main"><ConnectBank resume /></main>;
   if (setup && !setup.configured) return <FirstRun onDone={() => window.location.reload()} />;
   return (
-    <div className="shell">
+    <div className={`shell${railOpen ? ' railopen' : ' slim'}`}>
       <InkDefs />
       <DialogHost />
       <Jump pages={NAV} />
-      <aside className="side">
+      <aside className="side" onMouseEnter={() => railTo(true, 120)} onMouseLeave={() => railTo(false, 200)}
+        onFocus={() => railTo(true, 0)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) railTo(false, 0); }}>
         <div className="logo"><Seal size={30} /><span className="wordmark">Mizo Money</span></div>
         {RAIL.map((g) => (
           <Fragment key={g.ids[0]}>
@@ -143,23 +182,7 @@ export default function App() {
           </Fragment>
         ))}
       </aside>
-      <main className="main">
-        <div className="topbar">
-          {update?.available && <a className="chip-link info" href="#/settings" title={`You have version ${update.version}. See Settings › Updates.`}>Version {update.latest} is available</a>}
-          {attention > 0 && <a className="chip-link" href="#/networth" title="See your banks on Net worth">
-            {attention} bank{attention > 1 ? 's' : ''} need{attention > 1 ? '' : 's'} attention</a>}
-          {/* What the last Refresh found shows here for a few seconds; the sync time itself lives at the rail's foot. */}
-          {synced && <span className="small muted" role="status">{synced}</span>}
-          <button className="iconbtn" onClick={toggleTheme} title={`Switch to ${dark ? 'light' : 'dark'} mode${theme ? '' : ' (now following your system setting)'}`} aria-label="Toggle dark mode">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-              {dark ? <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>
-                : <path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" />}</svg>
-          </button>
-          <button className={`iconbtn${hide ? ' on' : ''}`} onClick={() => setHide(!hide)} title={hide ? 'Show amounts' : 'Hide amounts (for screen sharing)'} aria-label={hide ? 'Show amounts' : 'Hide amounts'} aria-pressed={hide}>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />{hide && <path d="M4 4l16 16" />}</svg>
-          </button>
-        </div>
+      <main className="main" ref={mainRef}>
         {/* Signing in again is urgent (that bank's data has stopped), so it stays a banner on every page. Other failures
             aren't yours to fix: say why, and that it's tried again (at the next sync, or now with Try again). */}
         {broken.map((i) => (
@@ -170,6 +193,7 @@ export default function App() {
             <button className="btn" onClick={refresh} disabled={busy}>{busy ? 'Trying…' : 'Try again'}</button></div>
         ))}
         {/* Transactions reads its filters from the address once, when it mounts: a new search must remount it. */}
+        <HeaderTools.Provider value={tools}>
         <PageBoundary key={page === 'transactions' ? `${page}?${pageQs}` : page}>
         {page === 'transactions' ? <Transactions /> : page === 'budget' ? <Budget /> : page === 'plan' ? <><Goals /><Forecast /></> : page === 'reports' ? <Reports />
           : page === 'investments' ? <Investments /> : page === 'networth' ? <NetWorth onChange={load} />
@@ -180,6 +204,7 @@ export default function App() {
                 : <div className="card empty mt"><p>No accounts yet. Connect a bank to see your dashboard.</p><ConnectBank /></div>}
             </>}
         </PageBoundary>
+        </HeaderTools.Provider>
       </main>
     </div>
   );

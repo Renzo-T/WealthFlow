@@ -49,7 +49,7 @@ body { margin: 0; background: var(--bg); }
   padding: .55rem .7rem; border-radius: 8px; color: var(--ink); }
 .nav.on { background: var(--soft); color: var(--blue); font-weight: 600; }
 .nav:disabled { color: var(--disabled); cursor: default; }
-.main { padding: 1.5rem 2rem 3rem; min-width: 0; }
+.main { min-width: 0; }
 .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
 h1 { margin: 0; font-size: 1.9rem; letter-spacing: -.02em; }
 .sub { margin: .2rem 0 0; color: var(--muted); }
@@ -60,7 +60,7 @@ h1 { margin: 0; font-size: 1.9rem; letter-spacing: -.02em; }
 .btn.primary { background: var(--blue); border-color: var(--blue); color: var(--paper-white); }
 .btn:disabled { opacity: .55; cursor: default; }
 .btn:focus-visible, .nav:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1rem 1.15rem; }
+.card { min-width: 0; }
 .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1.25rem 0 1rem; }
 .card h3 { margin: 0; font-size: .85rem; font-weight: 500; color: var(--muted); }
 .big { font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; margin: .25rem 0; }
@@ -69,7 +69,7 @@ h1 { margin: 0; font-size: 1.9rem; letter-spacing: -.02em; }
 .small { font-size: .8rem; } .muted { color: var(--muted); } .good { color: var(--green); } .bad { color: var(--red); }
 .spark { width: 110px; height: 40px; flex: none; }
 .ring { width: 64px; height: 64px; flex: none; }
-.ring b { font-size: 13px; }
+.ring b { font-size: .8125rem; }
 .panel h2 { margin: 0; font-size: 1rem; }
 .panel .head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; margin-bottom: .5rem; }
 .ranges { display: flex; gap: .15rem; }
@@ -77,13 +77,12 @@ h1 { margin: 0; font-size: 1.9rem; letter-spacing: -.02em; }
   padding: .25rem .55rem; border-radius: 7px; cursor: pointer; }
 .ranges button.on { background: var(--soft); color: var(--blue); font-weight: 600; }
 .chart { width: 100%; height: auto; display: block; }
-.chart text { font-size: 11px; fill: var(--muted); }
+.chart text { font-size: .6875rem; fill: var(--muted); }
 .chart .grid { stroke: var(--line); }
 .empty { text-align: center; padding: 2.5rem 1rem; color: var(--muted); }
 .alert { background: var(--alert-bg); color: var(--red); border-radius: 10px; padding: .6rem .9rem; margin-top: 1rem; }
 .alert.warn { background: var(--warn-bg); color: var(--warn-ink); } /* a problem that fixes itself, not one for you */
 @media (max-width: 1100px) { .cards { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 860px) { .main { padding: 1rem; } }
 @media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }
 
 /* transactions, cash flow, categories */
@@ -136,7 +135,7 @@ input[type=search] { min-width: min(320px, 100%); }
 .catsel:hover, .catsel:focus { border-color: var(--line); background: var(--card); }
 .flowstats { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: .25rem 0 1rem; font-size: .9rem; color: var(--muted); }
 .flowstats b { margin-left: .35rem; }
-.chart text.fl { fill: var(--ink); font-size: 12px; font-weight: 600; }
+.chart text.fl { fill: var(--ink); font-size: .75rem; font-weight: 600; }
 .review { border-bottom: 1px solid var(--line); padding-bottom: .4rem; }
 .review:last-child { border: 0; }
 .review .trow { border: 0; }
@@ -173,7 +172,7 @@ input[type=search] { min-width: min(320px, 100%); }
 .t td.merch { max-width: 20rem; overflow: hidden; text-overflow: ellipsis; }
 .t td.acct { white-space: normal; min-width: 9rem; }
 .catsel { max-width: 10.5rem; text-overflow: ellipsis; }
-.chart text { font-size: 12px; }
+.chart text { font-size: .75rem; }
 .small a, .muted a { color: var(--blue); }
 .nav { display: flex; align-items: center; gap: .6rem; }
 .navicon { flex: none; color: var(--muted); }
@@ -231,19 +230,12 @@ tr.dim td { opacity: .6; }
 .caldots i { width: 4px; height: 4px; border-radius: 50%; }
 .calday.sel .caldots i { background: var(--paper-white) !important; }
 
-/* ---------- Sidebar: icons only on narrow windows (it no longer disappears) ---------- */
-@media (max-width: 1099px) {
-  .shell { grid-template-columns: 64px 1fr; }
-  .side { display: block; padding: 1rem .5rem; }
-  .side .logo { font-size: 0; padding: 0; text-align: center; }
-  .side .logo::before { content: 'M'; font-size: 1.2rem; }
-  .side .tag, .navlabel { display: none; }
-  .nav { justify-content: center; padding: .6rem 0; }
-  .main { padding: 1.25rem 1.25rem 2.5rem; }
-}
+/* ---------- Sidebar: icons only (.shell.slim); while you hover it (.shell.railopen) it opens over the page ---------- */
+.shell { grid-template-columns: 64px minmax(0, 1fr); } /* the page never moves: the open rail overlaps it */
 .more { display: block; margin-top: .5rem; color: var(--blue); text-decoration: none; }
 .lkey { display: inline-block; width: 16px; height: 0; border-top: 2.5px solid var(--blue); margin-right: .35rem; vertical-align: middle; }
-.lkey.dash { border-top: 2px dashed var(--blue); opacity: .6; }
+/* (.dash is also the dashboard skeleton's grid: undo its display, margin and arrival here.) */
+.lkey.dash { display: inline-block; margin-top: 0; border-top: 2px dashed var(--blue); opacity: .6; animation: none; }
 .lkey.cushion { border-top: 1.5px dotted var(--line-strong); }
 .lkey.zero { border-top: 1px solid var(--ink); opacity: .3; }
 .lkey.neg { border-top-color: var(--red); }
@@ -253,7 +245,7 @@ tr.dim td { opacity: .6; }
 .calgrid.compact .caldots { bottom: 2px; }
 .upnote { margin: .6rem 0 .1rem; padding-top: .5rem; border-top: 1px solid var(--line); }
 .upnote .linkbtn { font-size: inherit; }
-.explain { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: .6rem .8rem; margin: .25rem 0 1rem; }
+.explain { padding: .6rem .8rem; margin: .25rem 0 1rem; }
 .explain .muted { margin-top: .2rem; }
 /* Chart tooltip (Tip.jsx) */
 .flowchart { position: relative; }
@@ -267,14 +259,13 @@ tr.dim td { opacity: .6; }
 .hint { color: var(--note-ink); margin-top: .15rem; }
 
 /* ---------- Consistency pass: spacing utilities (replace one-off inline styles) ---------- */
-.mt { margin-top: 1rem; } .mt-sm { margin-top: .75rem; } .mt-lg { margin-top: 1.5rem; } .mt-0 { margin-top: 0; }
+.mt { margin-top: var(--u); } .mt-sm { margin-top: var(--u); } .mt-lg { margin-top: calc(2 * var(--u)); } .mt-0 { margin-top: 0; }
 .foot { margin: .75rem 0 0; }
 .base { align-items: baseline; }
 .scroll { overflow-x: auto; }
 .tamt, .big, td.r, .legend2 b { font-variant-numeric: tabular-nums; }
 
 /* ---------- Top bar ---------- */
-.topbar { display: flex; justify-content: flex-end; align-items: center; gap: .5rem; min-height: 38px; }
 .iconbtn { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line);
   background: var(--card); color: var(--muted); cursor: pointer; }
 .iconbtn:hover { color: var(--ink); border-color: var(--line-strong); }
@@ -410,11 +401,11 @@ img, svg { color-scheme: inherit; }
 .a-insight { grid-area: insight; } .a-watch { grid-area: watch; } .a-freq { grid-area: freq; }
 .a-insight:empty { display: none; }
 .insight { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
-  background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: .75rem 1.1rem; }
+  padding: .75rem 1.1rem; }
 .insight-ic { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--soft); margin-right: .55rem; font-weight: 700; }
 .insight .chip-link { margin-right: 0; }
 .watchgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .75rem; }
-.watch { border: 1px solid var(--line); border-radius: 12px; padding: .75rem .85rem; }
+.watch { padding: .75rem .85rem; }
 .watchstats, .watchnow { display: grid; grid-template-columns: repeat(2, 1fr); gap: .25rem .75rem; margin-top: .6rem; }
 .watchnow { grid-template-columns: repeat(3, 1fr); background: var(--surface-2); border-radius: 8px; padding: .5rem .6rem; }
 .watchstats div, .watchnow div { display: flex; flex-direction: column; }
@@ -445,10 +436,6 @@ img, svg { color-scheme: inherit; }
 @media (max-width: 1099px) {
   .dmain, .drail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dcell.span3, .dcell.span2 { grid-column: span 2; }
-}
-@media (max-width: 700px) {
-  .dmain, .drail { grid-template-columns: 1fr; }
-  .dcell.span3, .dcell.span2, .dcell.span1 { grid-column: auto; }
 }
 .dboard.editing .dcell { outline: 2px dashed var(--line-strong); outline-offset: 4px; border-radius: 14px; }
 .pctl { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
@@ -763,14 +750,17 @@ p.btrips { display: block; text-align: center; margin-top: .25rem; }
 /* ---------- Reports ---------- */
 .rtable th, .rtable td { padding-left: .5rem; padding-right: .5rem; }
 .rtable th.partial { color: var(--muted-2); }
-.rtable .rcell { background: color-mix(in srgb, var(--blue) calc(var(--share) * 14%), transparent); }
+/* Each month's share of the row's largest month as a short ink bar under the figure, not a filled cell (the highlighter
+   is kept for what needs you). */
+.rtable .rcell { --bar: color-mix(in srgb, var(--ink-dot) 28%, transparent);
+  background: linear-gradient(var(--bar), var(--bar)) no-repeat right .5rem bottom 8px / calc(var(--share) * (100% - 1rem)) 3px; }
 .rtable .ravg { color: var(--muted); border-left: 1px solid var(--line); }
 .rtable tr.rgroup td { font-weight: 600; }
 .rtable td:first-child, .rtable tr.rgroup td:first-child, .rtable tr.rtotal td:first-child, .rtable td:first-child b { font-weight: 500; }
 .rtable tr.rcat td { font-size: .85rem; color: var(--muted); }
 .rtable tr.rcat td:first-child { padding-left: 3.2rem; }
 .rtable tr.rtotal td { font-weight: 700; border-top: 2px solid var(--line); }
-.rtable tr.rsep td { background: var(--surface-2); font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding-top: .35rem; padding-bottom: .35rem; }
+.rtable tr.rsep td { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--ink); }
 .rtable tr.rincome td:first-child, .rtoggle { display: flex; align-items: center; gap: .45rem; }
 .rtoggle { border: 0; background: none; font: inherit; color: inherit; cursor: pointer; padding: 0; }
 .rtoggle .chev { width: 14px; height: 14px; fill: none; stroke: var(--muted); stroke-width: 2.2; transition: transform .15s; }
@@ -854,8 +844,7 @@ a { color: var(--blue); text-underline-offset: 3px; }
 .side .nav:focus-visible { outline-color: var(--paper-white); }
 
 /* The page: quiet paper with a faint dot grid; content sits on white sheets with hairline rules, no shadows. */
-.main { background: radial-gradient(var(--dot) 1px, transparent 1.3px) 0 0 / 22px 22px, var(--bg); padding: 1.5rem 2.5rem 3.5rem; }
-.card { border-radius: 6px; border: 1px solid var(--line); box-shadow: none; padding: 1.15rem 1.3rem; }
+.card { padding: var(--u); }
 .panel .head { margin-bottom: .75rem; }
 .panel h2, .card h3, .split h3, .subhead { font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ink); }
 .card h3 { color: var(--muted); }
@@ -903,7 +892,6 @@ input:hover, select:hover { border-color: var(--hub); }
 .setup, .paycheck { border-left: 1px solid var(--line); }
 .paycheck.compact { border-left: 1px solid var(--line); }
 .alert, .note, .gapnote { border-radius: 6px; }
-.insight { border-radius: 6px; }
 .insight-ic { background: var(--soft); color: var(--blue); }
 .trend { display: inline-block; vertical-align: 0; margin-right: .1rem; }
 
@@ -917,25 +905,6 @@ input:hover, select:hover { border-color: var(--hub); }
 .delta .good, .delta .bad { font-weight: 700; }
 @media (max-width: 1099px) { .stand.lead .sfig.big { font-size: 2.6rem; } }
 
-/* The month spread: the signature. One column per day; ink dots on a fixed scale; stamps for bills and paydays. */
-.spread .head { margin-bottom: .5rem; }
-.spreadnav { display: flex; align-items: center; gap: .4rem; }
-.spreadnav .legend { margin-right: .75rem; align-items: center; }
-.spreadnav .legend span { display: inline-flex; align-items: center; gap: .35rem; }
-.lgdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ink-dot); }
-.sdays { display: grid; grid-template-columns: repeat(var(--n, 31), minmax(0, 1fr)); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
-.sdays > .hov { display: block; text-decoration: none; }
-.sday { display: grid; grid-template-rows: auto 38px 18px; justify-items: center; align-items: center; gap: .3rem; padding: .5rem 0 .55rem;
-  border-left: 1px solid var(--line); height: 100%; }
-.sdays > :first-child .sday { border-left: 0; }
-.sday.weekend { background: var(--surface-2); }
-.snum { font-size: .72rem; color: var(--muted); font-weight: 500; }
-.sday.today { background: var(--soft); box-shadow: inset 0 2px 0 var(--blue); }
-.sday.today .snum { color: var(--blue); font-weight: 800; }
-.sday.future .snum { color: var(--muted); }
-.sink { display: grid; place-items: center; width: 100%; height: 38px; }
-.sink i { display: block; border-radius: 50%; background: var(--ink-dot); animation: ink .6s cubic-bezier(.16, 1, .3, 1) both; animation-delay: calc(var(--i) * 18ms); }
-.sstamps { display: flex; gap: 2px; }
 /* Stamps (Stamp.jsx): an inked impression once it has happened (indigo for bills, green for money in; round for money
    in, square for bills) with the category's icon knocked out in sheet colour; a dashed pencil box while still due. */
 .stamp { display: inline-block; flex: none; width: 17px; height: 17px; overflow: visible; color: var(--hub); }
@@ -943,7 +912,7 @@ input:hover, select:hover { border-color: var(--hub); }
 .stamp.done { color: var(--blue); }
 .stamp.in.done { color: var(--green); }
 .st-ink :is(rect, circle) { fill: currentColor; }
-.st-due :is(rect, circle) { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 2.6 2; }
+.st-due :is(rect, circle, path) { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 2.6 2; stroke-linecap: round; }
 .st-mark { fill: none; stroke: var(--card); stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
 :is(.st-ink, .st-due) text { font-weight: 800; font-variant-numeric: tabular-nums; }
 .st-ink text { fill: var(--card); }
@@ -959,17 +928,6 @@ input:hover, select:hover { border-color: var(--hub); }
 .legend .stamp { width: 14px; height: 14px; }
 .stamp.mini { width: 13px; height: 13px; padding: 0; vertical-align: -2px; margin-right: .4rem; }
 .tipstamp { display: inline-flex; align-items: center; }
-.sink i.fut { width: 8px; height: 8px; background: none; border: 1.5px dashed var(--line-strong); animation: none; }
-.sday .stamp { animation: stamp .5s cubic-bezier(.16, 1, .3, 1) both; animation-delay: calc(var(--i) * 18ms + 120ms); }
-.sday:hover { background: color-mix(in srgb, var(--soft) 70%, transparent); }
-/* Clickable days (Bills page): a plain column as a button; the picked day takes the indigo wash with its number in
-   indigo ink and a 2px indigo foot (today keeps its top edge, so both read when they differ). */
-button.sday { width: 100%; background: none; font: inherit; color: inherit; border-top: 0; border-right: 0; border-bottom: 0; border-radius: 0; margin: 0; cursor: pointer; }
-.sday.sel { background: var(--soft); box-shadow: inset 0 -2px 0 var(--blue); }
-.sday.sel.today { box-shadow: inset 0 2px 0 var(--blue), inset 0 -2px 0 var(--blue); }
-.sday.sel .snum { color: var(--blue); font-weight: 800; }
-button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
-.skelrow { height: 112px; }
 @keyframes ink { from { transform: scale(.35); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes stamp { from { transform: scale(1.5); opacity: 0; } to { transform: none; opacity: 1; } }
 /* A sorted row (Needs you, the sorting panels on Transactions) holds its place while a stamp is pressed on it, then goes.
@@ -984,24 +942,14 @@ button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 /* One authored moment (the spread inking in); everything else simply appears. */
 .dash > div, .main > section, .main > .card, .flowchart, .chart { animation: none; }
 .hovtip { border-radius: 6px; }
-@media (max-width: 1099px) {
-  .side .logo { font-size: inherit; justify-content: center; padding: 0 0 1.2rem; }
-  .side .logo::before { content: none; }
-  .wordmark { display: none; }
-}
+.side .wordmark { white-space: nowrap; }
+.side .logo .seal { flex: none; }
 /* Dashboard: lead panels (where you stand, the month spread) run full width above the board. */
 .dlead { display: grid; gap: 1rem; margin: .5rem 0 1rem; }
 .dlead .dcell { display: block; }
 .dlead.editing .dcell { outline: 2px dashed var(--line-strong); outline-offset: 4px; border-radius: 6px; }
 
-/* Under the spread: needs you, coming up, budget, as ruled sections of one sheet. */
-.glance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0; }
-.gsec { padding: 1.05rem 1.3rem 1.1rem; border-left: 1px solid var(--line); min-width: 0; }
-.gsec:first-child { border-left: 0; }
-.ghead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .45rem; }
-.ghead h2 { margin: 0; font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .grow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .75rem; align-items: baseline; padding: .42rem 0; border-top: 1px solid var(--line); }
-.grow:first-of-type { border-top: 0; }
 .glink { grid-template-columns: minmax(0, 1fr) auto; color: var(--ink); text-decoration: none; }
 .glink:hover span:first-child { color: var(--blue); }
 .gmore { color: var(--muted); }
@@ -1018,7 +966,6 @@ button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 .gbud .meter { grid-column: 1 / -1; border-radius: 2px; }
 .gbud .meter i { border-radius: 2px; background: var(--blue); }
 .gbud .meter i.over { background: var(--red); }
-@media (max-width: 1099px) { .glance { grid-template-columns: 1fr; } .gsec { border-left: 0; border-top: 1px solid var(--line); } .gsec:first-child { border-top: 0; } }
 
 /* Board panels keep their natural height (no half-empty cards stretched to their neighbours). */
 .dmain { align-items: start; }
@@ -1043,7 +990,7 @@ button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 .bname1 > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* One corner language: 6px sheets and controls (round only for tags, dots and the seal). */
-.watch, .estate-ic, .bstrip, .billform, .explain, .tip, .paycheck.compact, .spliteditor, .aedit, .watchnow, .hovtip, .insight,
+.estate-ic, .billform, .tip, .paycheck.compact, .spliteditor, .aedit, .watchnow, .hovtip,
 .dboard.editing .dcell, .arow, .gapnote, .note, .alert, .mlogo { border-radius: 6px; }
 .mlogo { border-radius: 50%; }
 /* Investments: the holdings table fits its sheet at 1440 (tighter cells and header tracking for nine columns). */
@@ -1053,15 +1000,14 @@ button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 
 /* Readability (Atkinson Hyperlegible Next): small text a little larger, labels a little less tracked. */
 .small { font-size: .84rem; }
-.slabel, .panel h2, .card h3, .ghead h2, .t th { letter-spacing: .08em; }
-.snum { font-size: .76rem; }
+.slabel, .panel h2, .card h3, .t th { letter-spacing: .08em; }
 
 /* Money flow: hairline gaps between streams, smooth focus on hover, and the streams drawing in once, left to right. */
 .sankey .ribbon { stroke: var(--card); stroke-width: 1.25; transition: opacity .22s cubic-bezier(.16, 1, .3, 1); }
 .sankey.moving .ribbon { transition: none; } /* the period morph sets opacity every frame; a transition would lag it */
 .flowchart.stale { opacity: .55; transition: opacity .2s; }
-.chart text.hubname { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted); }
-.chart text.amtsvg { font-size: 13px; font-weight: 700; fill: var(--ink); }
+.chart text.hubname { font-size: .6875rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted); }
+.chart text.amtsvg { font-size: .8125rem; font-weight: 700; fill: var(--ink); }
 .flowstats b { font-weight: 800; }
 
 /* Changed since your last visit (Cards.jsx): a quiet note under the figure. */
@@ -1090,7 +1036,7 @@ button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 .replay .rp-cushion { stroke: var(--line-strong); stroke-dasharray: 3 3; }
 .replay .rp-low circle { fill: var(--card); stroke: var(--ink); stroke-width: 2; }
 .replay .rp-low text { fill: var(--ink); font-weight: 700; }
-.replay text.rp-label { fill: var(--ink); font-size: 11.5px; font-weight: 600; opacity: 0; transition: opacity .3s var(--ease); }
+.replay text.rp-label { fill: var(--ink); font-size: .72rem; font-weight: 600; opacity: 0; transition: opacity .3s var(--ease); }
 .replay text.rp-label.on { opacity: 1; }
 .replay text.rp-label tspan { font-weight: 800; }
 .replay text.rp-label tspan.in { fill: var(--green); }
@@ -1106,6 +1052,10 @@ button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 :root {
   --bg: #f2f0e9; --card: #fffefc; --dot: #d9d9d0; --surface-2: #f8f6f0;
   --hi: #ffe27a;
+  /* Journal tokens (journals.js sets them per journal; these are Indigo's, for the moment before it loads). */
+  --ruling: radial-gradient(circle, var(--dot) 1px, transparent 1.3px) calc(var(--u) / -2) calc(var(--u) / -2) / var(--u) var(--u); --doodle: none;
+  --tape1: #c9d5f0; --tape2: #f6df98; --tape3: #ece7da;
+  --tape-blend: multiply; --tape-opacity: .85; --tape-filter: none; --hi-blend: multiply;
   --paper-shadow: 0 1px 0 rgba(27,32,48,.03), 0 1px 2px rgba(27,32,48,.06), 0 12px 28px -16px rgba(27,32,48,.28);
   --paper-shadow-up: 0 1px 0 rgba(27,32,48,.03), 0 2px 4px rgba(27,32,48,.07), 0 20px 36px -16px rgba(27,32,48,.34);
   --cloth: repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(0,0,0,.1) 0 1px, transparent 1px 3px);
@@ -1116,6 +1066,7 @@ button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
   :root:not([data-theme="light"]) {
     --bg: #11141c; --card: #181c27; --dot: #191e23; --surface-2: #1d2230;
     --hi: #5a4c12;
+    --tape-blend: normal; --tape-opacity: .55; --tape-filter: brightness(.62) saturate(1.05); --hi-blend: normal;
     --paper-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 1px 2px rgba(0,0,0,.4), 0 14px 30px -16px rgba(0,0,0,.75);
     --paper-shadow-up: 0 1px 0 rgba(255,255,255,.04) inset, 0 2px 4px rgba(0,0,0,.45), 0 22px 38px -16px rgba(0,0,0,.85);
     --cloth: repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(0,0,0,.1) 0 1px, transparent 1px 3px);
@@ -1126,6 +1077,7 @@ button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 :root[data-theme="dark"] {
   --bg: #11141c; --card: #181c27; --dot: #191e23; --surface-2: #1d2230;
   --hi: #5a4c12;
+  --tape-blend: normal; --tape-opacity: .55; --tape-filter: brightness(.62) saturate(1.05); --hi-blend: normal;
   --paper-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 1px 2px rgba(0,0,0,.4), 0 14px 30px -16px rgba(0,0,0,.75);
   --paper-shadow-up: 0 1px 0 rgba(255,255,255,.04) inset, 0 2px 4px rgba(0,0,0,.45), 0 22px 38px -16px rgba(0,0,0,.85);
   --cloth: repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(0,0,0,.1) 0 1px, transparent 1px 3px);
@@ -1148,16 +1100,7 @@ button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 .seal { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35)); rotate: -7deg; }
 
 /* ---------- Richer planner: paper and sheets ---------- */
-.main { background: var(--grain), radial-gradient(var(--dot) 1px, transparent 1.3px) 0 0 / 22px 22px, var(--bg); }
-.card, .standing, .insight, .bstrip, .explain { box-shadow: var(--paper-shadow); }
-.card .card, .card .explain { box-shadow: none; }
-/* Inner cards are not whole sheets: no resting shadow, no lift; hover only darkens the border. */
-.goalgrid > .card, .tripgrid > .card, .watch {
-  box-shadow: none;
-  transition: background-color .15s, border-color .15s, color .15s;
-}
-.watch { background: var(--card); }
-.goalgrid > .card:hover, .tripgrid > .card:hover, .watch:hover { border-color: var(--line-strong); }
+.main { background: var(--grain), var(--ruling), var(--bg); }
 .hovtip, .tip { box-shadow: var(--shadow); }
 .btn, .iconbtn { box-shadow: 0 1px 1px rgba(27, 32, 48, .05); }
 .btn.primary {
@@ -1179,10 +1122,14 @@ button.sday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 
 /* ---------- Richer planner: page header ---------- */
 @keyframes swipe { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
-.top { position: relative; border-bottom: 2px solid var(--ink); margin-bottom: 1.5rem; }
+/* The double rule is drawn by pen: two lines that wander slightly (a mask, so it takes the ink colour in both themes). */
+.top { position: relative; border-bottom: 0; padding-bottom: 2px; margin-bottom: 1.5rem; }
 .top::after {
-  content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 0;
-  border-bottom: 1px solid var(--ink); opacity: .3; pointer-events: none;
+  content: ""; position: absolute; left: 0; right: 0; bottom: -9px; height: 11px; pointer-events: none; background: var(--ink);
+  -webkit-mask: var(--hand-rule) 0 0 / 100% 100% no-repeat; mask: var(--hand-rule) 0 0 / 100% 100% no-repeat;
+}
+:root {
+  --hand-rule: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 11' preserveAspectRatio='none' fill='none' stroke='black' stroke-linecap='round'%3E%3Cpath d='M1 1.5C130 .9 260 2.2 420 1.4S760 .8 999 1.9' stroke-width='2.2' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M1 9.3C180 9.9 340 8.7 520 9.4S820 9.9 999 8.8' stroke-width='1' stroke-opacity='.3' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
 }
 h1 {
   display: inline; padding: 0 .12em; margin-left: -.12em; font-size: 2.6rem; letter-spacing: -.028em;
@@ -1190,44 +1137,31 @@ h1 {
 .sub { margin-top: .5rem; }
 .firstrun h1, .pageerror h1 { display: block; background: none; animation: none; padding: 0; margin-left: 0; }
 
-/* ---------- Richer planner: the standing strip ---------- */
-.standing { overflow: hidden; }
-.stand { padding: 1.35rem 1.5rem 1.4rem; }
-.stand .sfig.big { font-size: 2.2rem; }
+/* ---------- Where you stand: figures written on the paper ---------- */
+/* No sheet, rule or fill: the one thing on the page without a box, so the eye lands there first. Net worth is largest,
+   its label marked with the highlighter; the other two sit beside it, smaller, separated only by space. */
+.standing { background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; align-items: start; }
+.stand { padding: .2rem 2rem .35rem 0; border-left: 0; gap: .25rem; }
+.stand + .stand { padding-left: 2rem; border-left: 1px solid var(--line); }
+.stand.lead { position: relative; }
 .stand.lead + .stand { border-left: 0; }
-.stand.lead {
-  position: relative; color: var(--paper-white);
-  --muted: var(--rail-ink); --green: #8fe0b8; --red: #ffa896;
-  background: var(--cloth), linear-gradient(135deg, var(--rail-2) 0%, var(--rail) 62%, color-mix(in srgb, var(--rail) 86%, black) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
+.stand .sfig.big { font-size: 2.1rem; }
+.stand.lead .slabel { position: relative; isolation: isolate; align-self: flex-start; padding: 0 .3em; margin-left: -.3em; color: var(--ink); font-size: .8rem; }
+.stand.lead .slabel::before {
+  content: ""; position: absolute; z-index: -1; left: -.1em; right: -.3em; top: 18%; bottom: -14%; pointer-events: none;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--hi), var(--ink) 9%) 0 3%, var(--hi) 12% 90%, color-mix(in srgb, var(--hi), var(--ink) 7%) 99%);
+  -webkit-mask: var(--hi-swipe) 0 0 / 100% 100% no-repeat; mask: var(--hi-swipe) 0 0 / 100% 100% no-repeat;
+  mix-blend-mode: var(--hi-blend); rotate: -1.5deg;
 }
-/* At night the cloth is nearly the page's own colour: a lighter fold at the top and a faint lighter edge keep it a cover. */
-:root[data-theme="dark"] .stand.lead {
-  background: var(--cloth), linear-gradient(160deg, color-mix(in srgb, var(--rail-2) 58%, #a9bbf2) 0%, color-mix(in srgb, var(--rail-2) 88%, #a9bbf2) 46%, var(--rail) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), inset 0 0 0 1px rgba(255, 255, 255, .18);
+.stand.lead .sfig.big { color: var(--ink); font-size: 3.6rem; letter-spacing: -.035em; line-height: 1; }
+@media (max-width: 1099px) { .stand.lead .sfig.big { font-size: 3.1rem; } }
+@media (max-width: 700px) {
+  .standing { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); row-gap: 1rem; }
+  .stand.lead { grid-column: 1 / -1; }
+  .stand + .stand { padding-left: 0; border-left: 0; }
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .stand.lead {
-    background: var(--cloth), linear-gradient(160deg, color-mix(in srgb, var(--rail-2) 58%, #a9bbf2) 0%, color-mix(in srgb, var(--rail-2) 88%, #a9bbf2) 46%, var(--rail) 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), inset 0 0 0 1px rgba(255, 255, 255, .18);
-  }
-}
-.stand.lead > * { position: relative; z-index: 1; }
-.stand.lead .slabel { color: var(--rail-ink); }
-.stand.lead .sfig.big { color: var(--paper-white); font-size: 3.7rem; letter-spacing: -.035em; text-shadow: none; }
-.stand.lead :focus-visible { outline-color: var(--paper-white); }
-@media (max-width: 1099px) { .stand.lead .sfig.big { font-size: 2.9rem; } }
 
 /* ---------- Richer planner: Month spread ink and stamps ---------- */
-.sink i:not(.fut) {
-  background: radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--ink-dot) 72%, white) 0%, var(--ink-dot) 58%);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--ink-dot) 35%, transparent);
-}
-.sdays > :nth-child(3n) { --tilt: 4deg; }
-.sdays > :nth-child(4n + 1) { --tilt: -2deg; }
-.sday .stamp { rotate: var(--tilt, -5deg); }
-/* A box still waiting for its stamp is drawn square to the page; only the pressed stamps rest askew. */
-.sday .stamp:not(.done) { rotate: none; }
 
 /* ---------- Richer planner: Category colour and meters ---------- */
 .caticon { box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 16%, transparent); }
@@ -1238,16 +1172,6 @@ h1 {
 @keyframes settle { from { opacity: 0; transform: translateY(8px); } }
 @keyframes fill { from { transform: scaleX(0); } }
 .main > .top { animation: settle .5s var(--ease) backwards; }
-.card, .standing, .insight, .bstrip { animation: settle .55s var(--ease) backwards; }
-.card .card, .card .standing, .card .insight, .card .bstrip, .standing .card, .insight .card, .bstrip .card { animation: none; }
-/* Dashboard: stagger by cell order (the sheet inside each cell settles) */
-.dlead .dcell:nth-child(2) > *, .dmain .dcell:nth-child(1) > * { animation-delay: 60ms; }
-.dlead .dcell:nth-child(3) > *, .dmain .dcell:nth-child(2) > * { animation-delay: 120ms; }
-.dmain .dcell:nth-child(3) > *, .drail .dcell:nth-child(1) > * { animation-delay: 170ms; }
-.dlead .dcell:nth-child(n + 4) > *, .dmain .dcell:nth-child(n + 4) > *, .drail .dcell:nth-child(n + 2) > * { animation-delay: 220ms; }
-.goalgrid > :nth-child(2), .tripgrid > :nth-child(2), .cards > :nth-child(2), .budgetgrid > :nth-child(2) { animation-delay: 60ms; }
-.goalgrid > :nth-child(3), .tripgrid > :nth-child(3), .cards > :nth-child(3) { animation-delay: 120ms; }
-.goalgrid > :nth-child(n + 4), .tripgrid > :nth-child(n + 4), .cards > :nth-child(n + 4) { animation-delay: 170ms; }
 /* Bars fill once from the left */
 .bar i, .meter i, .bbar i, .wmbar i, .setupbar i, .sharebar i { transform-origin: left center; animation: fill .9s var(--ease) both; }
 /* Small transitions */
@@ -1280,13 +1204,6 @@ h1 {
 .txtable td:has(.catpick) { white-space: normal; min-width: 15rem; }
 .txtable td > .grp { display: inline-block; white-space: nowrap; }
 .txtable .catsel { max-width: 8.5rem; }
-
-/* ---------- Feature check: Needs you stops holding an empty third ---------- */
-.glance.caught { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.gcaught { grid-column: 1 / -1; display: flex; gap: .45rem; align-items: center; margin: 0; padding: .55rem 1.3rem; color: var(--muted); border-bottom: 1px solid var(--line); }
-.gcaught svg { color: var(--green); flex: none; }
-.gcaught + .gsec { border-left: 0; }
-@media (max-width: 1099px) { .glance.caught { grid-template-columns: 1fr; } .gcaught + .gsec { border-top: 0; } }
 
 /* ---------- Feature check: Accounts joins Net worth ---------- */
 /* An open account row: this month's activity on its own line above the settings. */
@@ -1340,10 +1257,19 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 
 /* ---------- Feature check: the highlighter marks what needs you ---------- */
 /* The highlighter is for attention only: the "Needs you" heading while something waits, and the top bar's banks chip. */
-.ghead.needs h2 {
-  padding: 0 .3em; margin-left: -.3em;
-  background: linear-gradient(transparent 60%, var(--hi) 60%, var(--hi) 90%, transparent 90%) no-repeat left top / 100% 100%;
-  animation: swipe .9s var(--ease) both;
+/* A marker swipe: uneven ends (an SVG mask), a touch darker where the marker pooled at each end, tilted a little,
+   multiplied into the paper in daylight. Its colour is the journal's highlighter. */
+.head.needs h2 { position: relative; isolation: isolate; padding: 0 .3em; margin-left: -.3em; }
+.head.needs h2::before {
+  content: ""; position: absolute; z-index: -1; left: -.1em; right: -.25em; top: 38%; bottom: -12%; pointer-events: none;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--hi), var(--ink) 9%) 0 3%, var(--hi) 12% 90%, color-mix(in srgb, var(--hi), var(--ink) 7%) 99%);
+  -webkit-mask: var(--hi-swipe) 0 0 / 100% 100% no-repeat; mask: var(--hi-swipe) 0 0 / 100% 100% no-repeat;
+  mix-blend-mode: var(--hi-blend); rotate: -1.2deg; animation: hiswipe .9s var(--ease) .2s both;
+}
+@keyframes hiswipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) { .head.needs h2::before { animation: none; } }
+:root {
+  --hi-swipe: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M7 9C40 5 110 4 193 7L197 11 193 15 199 20 194 25 198 30 192 34C130 36 60 37 9 34L4 30 8 25 2 20 7 15 3 11Z'/%3E%3C/svg%3E");
 }
 .chip-link[href="#/networth"] {
   background: linear-gradient(transparent 55%, var(--hi) 55%, var(--hi) 92%, transparent 92%), var(--warn-bg);
@@ -1359,9 +1285,6 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 .side { display: flex; flex-direction: column; } /* overrides the icons-only block layout too, so Settings stays at the foot */
 .side > * { flex-shrink: 0; }
 .side .navrule.foot { margin-top: auto; }
-@media (max-width: 1099px) {
-  .side .navgroup { font-size: 0; line-height: 0; height: 0; padding: 0; border-top: 1px dashed rgba(255, 255, 255, .17); margin: .6rem .4rem; }
-}
 
 /* ---------- Drawings: empty states and the first-run welcome ---------- */
 /* Each drawing is ink on its own paper, so it sits on the page as a small sheet (never inverted for dark mode). */
@@ -1409,19 +1332,10 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 .rl-meter .tick { position: absolute; top: -3px; width: 2px; height: 12px; background: var(--ink); opacity: .45; border-radius: 1px; transform: translateX(-1px); }
 .rl-item.done .bar i { background: var(--green) !important; }
 
-/* ---------- Ruled sheets: one sheet divided by hairlines instead of neighbouring cards ----------
-   Only a top-level sheet rests on the page with the paper shadow; anything that is a sheet elsewhere becomes a flat
-   section when it sits inside one. The dot grid shows only where the page is empty: margins and below short pages. */
-:is(.card, .standing, .insight, .bstrip, .explain, .ledger, .cards.ruled) :is(.card, .standing, .insight, .bstrip, .explain, .cards.ruled) {
-  box-shadow: none; animation: none;
-}
+/* ---------- Ruled sheets: one panel divided by rules instead of neighbouring boxes ---------- */
 
-/* A strip of figures (Plan's totals, Reports' subscriptions and year): one sheet, sections side by side. */
-.cards.ruled {
-  gap: 0; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
-  background: var(--card); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--paper-shadow);
-  animation: settle .55s var(--ease) backwards;
-}
+/* A strip of figures (Plan's totals, Reports' subscriptions and year): one panel, sections side by side. */
+.cards.ruled { gap: 0; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
 .cards.ruled > .card { border: 0; border-radius: 0; background: transparent; box-shadow: none; animation: none; }
 .cards.ruled > .card + .card { border-left: 1px solid var(--line); }
 @media (max-width: 1100px) {
@@ -1431,10 +1345,7 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 }
 
 /* A ledger: sheets that belong together stacked into one, ruled across between sections. */
-.ledger {
-  background: var(--card); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--paper-shadow);
-  overflow: clip; /* clip, not hidden: a sticky table head inside still sticks to the window */ animation: settle .55s var(--ease) backwards;
-}
+.ledger { overflow: clip; } /* clip, not hidden: a sticky table head inside still sticks to the window */
 /* :where keeps this rule weak, so the section rule below still draws between two flattened sheets. */
 .ledger > :where(.card, .standing, .insight, .cards, .grid2), .ledger > .dcell > * { border: 0; border-radius: 0; margin: 0; background-color: transparent; }
 .ledger > .cards.ruled { border: 0; border-radius: 0; margin: 0; box-shadow: none; animation: none; background: transparent; }
@@ -1493,16 +1404,6 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 .rtable td.rfocus { box-shadow: inset 1px 0 0 var(--blue), inset -1px 0 0 var(--blue); } /* keeps the cell's own shading */
 .rtable th.rfocus { color: var(--blue); background-color: var(--soft); box-shadow: inset 0 2px 0 var(--blue), inset 1px 0 0 var(--blue), inset -1px 0 0 var(--blue); }
 
-/* ---------- Ribbon bookmark: today's column in the month spread ----------
-   A thin indigo ribbon hangs from the spread's top rule on today's column (in place of a "this month" pill), with a
-   notched tail. It unrolls once on arrival. */
-.spread .sday.today { position: relative; box-shadow: none; }
-.spread .sday.today.sel { box-shadow: inset 0 -2px 0 var(--blue); }
-.ribbon { position: absolute; top: -5px; right: 1px; width: 5px; height: 30px; background: var(--blue);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 4px), 0 100%);
-  transform-origin: top; animation: ribbon .7s var(--ease) .35s both; pointer-events: none; }
-.ribbon::before { content: ''; position: absolute; inset: 0 0 auto; height: 5px; background: rgba(0, 0, 0, .28); } /* the fold over the rule */
-@keyframes ribbon { from { transform: scaleY(0); } to { transform: none; } }
 
 /* ---------- Margin notes ----------
    Explanations under figures ("Dots use one size scale…", "45% of November has passed…") are set like printed
@@ -1541,7 +1442,6 @@ p.small.foot { margin-top: .9rem; }
   background: var(--cloth), var(--rail-2); border-radius: 0 6px 6px 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .3); /* same drop as the item; the stitch is covered where the tab passes */
 }
-@media (max-width: 1099px) { .side .nav.on::after { width: calc(.5rem + 5px); } }
 
 /* ---------- Round 2: Saved beyond plan ---------- */
 .btot .btotnote { grid-column: 1 / -1; font-weight: 400; font-size: .85rem; margin-top: .2rem; }
@@ -1560,10 +1460,6 @@ p.small.foot { margin-top: .9rem; }
 .side .syncfoot svg { flex: none; opacity: .85; }
 .side .syncfoot.spin svg { animation: spin 1s linear infinite; }
 .side .navrule.foot { margin-top: .4rem; }
-@media (max-width: 1099px) {
-  .side .syncfoot { justify-content: center; padding: .5rem 0; }
-  .side .syncfoot .synclabel { display: none; }
-}
 @media (prefers-reduced-motion: reduce) { .side .syncfoot.spin svg { animation-duration: 3s; } }
 
 /* ---------- Round 2: Stitched dividers ---------- */
@@ -1572,9 +1468,6 @@ p.small.foot { margin-top: .9rem; }
    The collapsed rail already draws the heading as that stitch. */
 .side .navgroup {
   margin: .6rem .4rem 0; padding: .35rem .25rem .3rem; border-top: 1px dashed rgba(255, 255, 255, .17);
-}
-@media (max-width: 1099px) {
-  .side .navgroup { margin: .6rem .4rem; padding: 0; border-top: 1px dashed rgba(255, 255, 255, .17); }
 }
 
 /* ---------- In-app dialogs and the undo toast (ui.jsx: confirmDialog, notice, askText, toast) ---------- */
@@ -1626,8 +1519,6 @@ p.small.foot { margin-top: .9rem; }
 .assump .form { margin: .8rem 0 0; }
 .goalgrid.single { grid-template-columns: 1fr; }
 .goalgrid.single > .card { max-width: none; }
-.goalgrid.single > .card > * { max-width: 46rem; }
-.goalgrid.single > .card > .goalsparkslot { max-width: none; }
 .goalpen { margin: .4rem 0 0; font-size: .82rem; }
 
 /* ---------- Transactions: category as text until you reach for it; one compact filter bar ---------- */
@@ -1638,7 +1529,7 @@ p.small.foot { margin-top: .9rem; }
 .txrow:hover .catpick, .catpick:focus-within { border-color: var(--line); background: var(--card); }
 .txrow:hover .catpick .catchev, .catpick:focus-within .catchev { opacity: 1; }
 .catpick:has(.catsel:focus-visible) { outline: 2px solid var(--blue); outline-offset: 1px; }
-.filterbar { display: flex; align-items: center; gap: .4rem; margin: 1rem 0 0; padding: .45rem .6rem; background: var(--card); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--paper-shadow); }
+.filterbar { display: flex; align-items: center; gap: .4rem; margin: 1rem 0 0; padding: .45rem .6rem; }
 .filterbar input, .filterbar select { padding: .25rem .5rem; font-size: .86rem; border-radius: 6px; box-shadow: none; }
 .filterbar input[type=search] { flex: 1 1 14rem; min-width: 10rem; }
 .filterbar select { flex: 0 1 auto; max-width: 11rem; }
@@ -1653,7 +1544,7 @@ p.small.foot { margin-top: .9rem; }
 .standing.solo { grid-template-columns: minmax(0, 1fr); }
 .chart .edge { fill: none; stroke: var(--blue); stroke-width: 1.25; stroke-dasharray: 5 4; opacity: .75; }
 .chart .mid { fill: none; stroke: var(--blue); stroke-width: 2.75; stroke-linejoin: round; }
-.chart text.endlab { fill: var(--muted); font-size: 11px; }
+.chart text.endlab { fill: var(--muted); font-size: .6875rem; }
 .chart text.endlab.mid { fill: var(--ink); font-weight: 700; stroke: none; }
 :root[data-theme="dark"] .chart .cf-in, :root[data-theme="dark"] .chart .cf-out { opacity: .72; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chart .cf-in, :root:not([data-theme="light"]) .chart .cf-out { opacity: .72; } }
@@ -1669,11 +1560,390 @@ p.small.foot { margin-top: .9rem; }
 .reachedrow .amt { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* ---------- Review polish ---------- */
-/* Stamps-only spread (Bills): no ink row, so a day is the date and its stamps. */
-.sdays.nodots .sday { grid-template-rows: auto 18px; }
 /* One allocation split takes the full width. */
 .splits.one { grid-template-columns: minmax(0, 1fr); }
-/* Net worth page's lead band: what you own and owe sit at its right, in cover ink. */
-.stand.lead > .bandparts { position: absolute; right: 1.5rem; bottom: 1.4rem; display: flex; gap: 2.5rem; margin: 0; }
-.bandparts dt { font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--rail-ink); }
-.bandparts dd { margin: .2rem 0 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; color: var(--paper-white); }
+/* Net worth page's lead figure: what you own and owe sit at its right. */
+.stand.lead > .bandparts { position: absolute; right: 0; bottom: .35rem; display: flex; gap: 2.5rem; margin: 0; }
+.bandparts dt { font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.bandparts dd { margin: .2rem 0 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+
+/* ---------- Journals: decoration ---------- */
+
+/* Decoration (DESIGN.md › The Decoration Budget): washi tape on the page title, the month spread's label and the top of
+   goal and trip cards; one pencil doodle after each page title; a pen underline under dashboard board panel titles.
+   All pseudo-elements, so nothing moves the layout; Settings › Journal can switch them off (data-decoration="off"). */
+:root {
+  --tape-edge-1: polygon(0 6%, 3px 24%, 1px 43%, 4px 62%, 0 81%, 2px 100%, calc(100% - 3px) 100%, 100% 82%, calc(100% - 3px) 61%, 100% 40%, calc(100% - 4px) 20%, calc(100% - 1px) 0, 2px 0);
+  --tape-edge-2: polygon(2px 0, 0 19%, 4px 38%, 1px 57%, 3px 77%, 0 96%, calc(100% - 1px) 100%, calc(100% - 4px) 79%, 100% 60%, calc(100% - 2px) 41%, 100% 22%, calc(100% - 3px) 3%);
+  --tape-edge-3: polygon(1px 3%, 4px 20%, 0 40%, 3px 59%, 1px 78%, 4px 100%, calc(100% - 2px) 97%, 100% 77%, calc(100% - 4px) 56%, calc(100% - 1px) 37%, calc(100% - 3px) 17%, 100% 0);
+  --pen-line: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 6' preserveAspectRatio='none' fill='none' stroke='black' stroke-linecap='round'%3E%3Cpath d='M1 3.6C20 2.6 41 3.9 62 3C76 2.4 88 2.7 99 2.2' stroke-width='1.6' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+}
+.mcal-in > .head h2 .mlabel::before, .goalgrid > .card.goal.view::before, .tripgrid > .tripcard::before {
+  content: ""; position: absolute; pointer-events: none;
+  opacity: var(--tape-opacity); mix-blend-mode: var(--tape-blend); filter: var(--tape-filter);
+}
+/* The month's name written on a strip of tape, like a bullet journal's monthly header (the note beside it stays on paper). */
+.mcal-in > .head h2 .mlabel { position: relative; isolation: isolate; display: inline-block; padding: .12rem .55rem; margin-left: -.35rem; }
+.mcal-in > .head h2 .mlabel::before { z-index: -1; inset: 0; background: var(--tape1); clip-path: var(--tape-edge-2); rotate: -.8deg; }
+/* Goal and trip cards taped to the page, tapes taken in turn. */
+.goalgrid > .card.goal.view, .tripgrid > .tripcard { position: relative; }
+.goalgrid > .card.goal.view::before, .tripgrid > .tripcard::before {
+  z-index: 2; top: -10px; left: calc(50% - 38px); width: 76px; height: 20px;
+  background: var(--tape1); clip-path: var(--tape-edge-1); rotate: -3deg;
+}
+:is(.goalgrid > .card.goal.view, .tripgrid > .tripcard):nth-child(3n + 2)::before { background: var(--tape2); clip-path: var(--tape-edge-2); rotate: 2.5deg; left: calc(50% - 30px); }
+:is(.goalgrid > .card.goal.view, .tripgrid > .tripcard):nth-child(3n)::before { background: var(--tape3); clip-path: var(--tape-edge-3); rotate: -1.5deg; left: calc(50% - 44px); }
+/* One pencil doodle after the page title (the journal's own). */
+.main .top h1::after {
+  content: ""; display: inline-block; width: .82em; height: .82em; margin-left: .3em; vertical-align: -.02em; rotate: 8deg;
+  background: var(--pencil); opacity: .7; pointer-events: none;
+  -webkit-mask: var(--doodle) center / contain no-repeat; mask: var(--doodle) center / contain no-repeat;
+}
+:root:not([data-journal]) .main .top h1::after { display: none; } /* before journals.js has set a doodle */
+/* A pen underline under the dashboard board's panel titles. */
+:is(.dmain, .drail) .panel > .head > h2 { position: relative; }
+:is(.dmain, .drail) .panel > .head > h2::after {
+  content: ""; position: absolute; left: -1px; right: -4px; bottom: -6px; height: 5px; pointer-events: none;
+  background: var(--blue); opacity: .5; -webkit-mask: var(--pen-line) 0 0 / 100% 100% no-repeat; mask: var(--pen-line) 0 0 / 100% 100% no-repeat;
+}
+:root[data-decoration="off"] :is(.goalgrid > .card.goal.view, .tripgrid > .tripcard)::before,
+:root[data-decoration="off"] .mcal-in > .head h2 .mlabel::before,
+:root[data-decoration="off"] .main .top h1::after,
+:root[data-decoration="off"] :is(.dmain, .drail) .panel > .head > h2::after { display: none; }
+:root[data-decoration="off"] .mcal-in > .head h2 .mlabel { padding: 0; margin-left: 0; }
+
+/* Settings › Journal: each journal as a small book (cover, page edge, a strip of its tape, its highlighter). */
+.jpicker { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .6rem; margin: .2rem 0 .7rem; }
+.jpick { display: flex; align-items: center; gap: .6rem; padding: .45rem .55rem; border: 1px solid var(--line-strong); border-radius: 6px;
+  background: var(--card); color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: border-color .15s, box-shadow .15s; min-width: 0; }
+.jpick:hover { border-color: var(--pencil); }
+.jpick.on { border-color: var(--blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--blue) 30%, transparent); }
+.jname { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.jbook { position: relative; flex: none; width: 34px; height: 44px; border-radius: 2px 4px 4px 2px; overflow: hidden;
+  background: var(--cloth), linear-gradient(160deg, var(--f), var(--c)); box-shadow: 0 1px 3px rgba(0, 0, 0, .3); }
+.jbook::before { content: ""; position: absolute; inset: 0 auto 0 4px; border-left: 1px dashed rgba(255, 255, 255, .22); }
+.jbook i { position: absolute; display: block; }
+.jbook .jpg { right: 0; top: 3px; bottom: 3px; width: 4px; background: var(--p); border-radius: 0 2px 2px 0; }
+.jbook .jtape { left: 7px; right: -3px; top: 10px; height: 7px; background: var(--t); opacity: .9; rotate: -6deg; }
+.jbook .jhi { left: 9px; width: 16px; bottom: 9px; height: 5px; background: var(--h); border-radius: 2px; rotate: -2deg; }
+
+/* ---------- Pencil borders: panels drawn on the paper ----------
+   A panel is a pencil-grey border on the page with a faint wash of the sheet colour behind it, not a white sheet with a
+   shadow: the dot grid shows through, and the boxes line up with it (see "Dot grid" below). No shadow, no arrival motion,
+   no hover lift. Things that float above the page (dialogs, hover tips, menus, the toast, the first-run screen) stay solid. */
+:root {
+  --sheet: color-mix(in srgb, var(--card) 35%, transparent); /* derived from the journal's sheet colour in every theme */
+  --sheet-head: color-mix(in srgb, var(--card) 35%, var(--bg)); /* the same look, opaque: sticky table heads */
+  --sheet-radius: 3px;
+}
+/* On the paper every rule is the strong one: the faint rule disappears once the dots show through. */
+.main { --line: var(--line-strong); }
+:where(.card, .ledger, .cards.ruled, .insight, .bstrip, .explain, .watch, .filterbar) {
+  background: var(--sheet); border: 0; outline: 1px solid var(--line-strong); outline-offset: -1px; border-radius: var(--sheet-radius);
+  box-shadow: none; animation: none;
+}
+/* The pencil line is an outline drawn just inside the edge: it takes no room, so a panel's sections start on its edge and
+   its edges stay on the grid; and it's drawn over what's inside (a tinted row, a sticky table head). */
+.ledger > *, .ledger > .dcell > *, .ledger > .grid2 > *, .cards.ruled > * { outline: 0; }
+/* A panel inside a panel is drawn on the same wash, not a second layer of it. */
+:is(.card, .ledger, .cards.ruled, .insight, .bstrip, .explain, .watch) :is(.card, .insight, .bstrip, .explain, .cards.ruled, .watch) { background: transparent; }
+.goalgrid > .card, .tripgrid > .card, .watch { transition: outline-color .15s; }
+.goalgrid > .card:hover, .tripgrid > .card:hover, .watch:hover { outline-color: var(--pencil); }
+.sticky-head .t thead th { background: var(--sheet-head); }
+/* Solid: the first-run screen's panels sit on plain paper, outside the page. */
+.firstrun .card { background: var(--card); box-shadow: var(--paper-shadow); outline: 0; border: 1px solid var(--line); border-radius: 6px; }
+
+/* ---------- The month as a calendar (MonthSpread.jsx) ----------
+   Sunday to Saturday under a 1.5px ink rule; each day a 3 × 3 unit square (66px) whose lines fall on the dot grid. The
+   day number sits top-left, the day's ink dot in the middle, its stamps in the bottom-right corner. Rules are inset
+   shadows, so they never add a pixel to a row. On the dashboard it shares one panel with Needs you and Coming up
+   (beside it) and Budget (under both); on Bills, with the month's bills by date. */
+/* The unit steps with the window's width (whole pixels, so dots and 1px lines stay crisp), and text follows it: the root
+   font size is tied to the unit, and nearly every size is in rem or units. */
+:root { --u: 22px; }
+@media (max-width: 1279px) { :root { --u: 20px; } }
+@media (min-width: 1920px) { :root { --u: 24px; } }
+@media (min-width: 2400px) { :root { --u: 26px; } }
+html { font-size: calc(var(--u) * 16 / 22); }
+.lgdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ink-dot); }
+.spread { padding: 0; }
+.spread .mgrid { display: grid; grid-template-columns: minmax(0, 1fr); }
+.spread.has-aside .mgrid { grid-template-columns: calc(23 * var(--u)) minmax(0, 1fr); }
+.msec { padding: var(--u); min-width: 0; }
+.mgrid > .msec + .msec { box-shadow: inset 1px 0 0 var(--line-strong); }
+.spread > .msec { box-shadow: inset 0 1px 0 var(--line-strong); }
+/* The calendar sits beside its aside whenever the panel has room (at 1024px windows too); in a narrower panel it stacks,
+   and its days stretch to fill the panel in whole units. */
+.spread { container: month / inline-size; }
+@container month (max-width: 799px) {
+  .spread.has-aside .mgrid { grid-template-columns: minmax(0, 1fr); }
+  .mgrid > .msec + .msec { box-shadow: inset 0 1px 0 var(--line-strong); }
+  .spread .cal { --day: max(calc(2 * var(--u)), round(down, calc((100cqw - 2 * var(--u)) / 7), var(--u))); }
+}
+.msec > .head, .mcal-in > .head, .mside-in > .head, .gpart > .head { display: flex; justify-content: space-between; align-items: center; gap: .6rem; height: var(--u); margin: 0 0 var(--u); }
+.msec > .head h2, .mcal-in > .head h2, .mside-in > .head h2, .gpart > .head h2 { display: flex; align-items: center; gap: .4rem; margin: 0; white-space: nowrap; }
+.spreadnav { display: flex; gap: .3rem; }
+.spreadnav .iconbtn { width: var(--u); height: var(--u); }
+
+.cal { --day: calc(3 * var(--u)); display: grid; width: calc(7 * var(--day)); grid-template-columns: repeat(7, var(--day)); box-shadow: inset 0 1.5px 0 var(--ink); }
+.cdow { height: var(--u); line-height: var(--u); padding-left: 5px; font-size: .64rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.cal > .hov { display: block; text-decoration: none; }
+.cday { position: relative; display: block; width: 100%; height: calc(3 * var(--u)); padding: 2px 5px; font: inherit; font-size: .76rem; line-height: 18px;
+  color: var(--muted); text-align: left; box-shadow: inset 0 1px 0 var(--line-strong), inset 1px 0 0 var(--line-strong); }
+.cal > :nth-child(7n + 1) .cday, .cal > .cday:nth-child(7n + 1) { box-shadow: inset 0 1px 0 var(--line-strong); }
+.cal > :nth-last-child(-n + 7) .cday, .cal > .cday:nth-last-child(-n + 7) {
+  box-shadow: inset 0 1px 0 var(--line-strong), inset 1px 0 0 var(--line-strong), inset 0 -1px 0 var(--line-strong); }
+.cal > :nth-last-child(-n + 7):nth-child(7n + 1) .cday, .cal > .cday:nth-last-child(-n + 7):nth-child(7n + 1) {
+  box-shadow: inset 0 1px 0 var(--line-strong), inset 0 -1px 0 var(--line-strong); }
+.cday.blank { background: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--line-strong) 45%, transparent) 5px 6px); }
+.cnum { font-weight: 600; }
+.cday.future .cnum { color: color-mix(in srgb, var(--muted) 70%, transparent); font-weight: 500; }
+.cday.today { background: var(--soft); color: var(--blue); }
+.cday.today .cnum { font-weight: 800; }
+.cday.today::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--blue); }
+.cday:not(.blank):hover { background: color-mix(in srgb, var(--soft) 70%, transparent); }
+.cday.today:hover { background: var(--soft); }
+.cstamps { position: absolute; right: 4px; top: 3px; display: flex; gap: 2px; }
+.cstamps .stamp { width: 15px; height: 15px; animation: stamp .5s var(--ease) both; animation-delay: calc(var(--i) * 18ms + 120ms); }
+/* Pressed stamps rest a little askew (by column); a box still waiting for its stamp is square to the page. */
+.cal > :nth-child(3n) { --tilt: 4deg; }
+.cal > :nth-child(4n + 1) { --tilt: -2deg; }
+.cday .stamp.done { rotate: var(--tilt, -5deg); }
+.cday:hover .stamp { scale: 1.12; transition: scale .3s var(--ease); }
+.cday:hover .stamp.done { rotate: none; }
+/* Clickable days (Bills): the picked day takes the indigo wash and a 2px indigo foot. */
+button.cday { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; border: 0; margin: 0; border-radius: 0; background: none; cursor: pointer; }
+.cday.sel, .cday.sel:hover { background: var(--soft); color: var(--blue); }
+.cday.sel::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--blue); }
+button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; border-radius: 0; }
+.calkey { flex-wrap: wrap; gap: 0 1rem; margin-top: 0; line-height: var(--u); }
+.calkey span { display: inline-flex; align-items: center; gap: .35rem; }
+.spreadfail { margin: 0; }
+
+/* Beside the calendar: Needs you over Coming up; under both, Budget's groups in two columns. */
+.gpart + .gpart { margin-top: var(--u); }
+.gbuds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: calc(2 * var(--u)); }
+.gtotal { margin: 0; }
+.gnote { margin: 0; }
+
+/* ---------- Dot grid: every box on the page's 22px grid (DESIGN.md › Grid unit) ----------
+   U (--u) is the dot spacing. The ruling's marks sit at whole units from .main's padding-box corner; the page's content
+   box is a whole number of units wide (2U in from the left, the right padding takes the remainder), columns split it in
+   whole units with the last one taking the rest, and gaps are U. Heights are rounded up to whole units by grid.js. */
+.main {
+  /* The content is a whole number of units wide, at most 64, centred: the left margin is a whole number of units (so the
+     content starts on a column of dots) and the right takes the rest. The paper still fills the window. */
+  --avail: calc(100% - 4 * var(--u));
+  --content: min(calc(64 * var(--u)), round(down, var(--avail), var(--u)));
+  --side: round(down, calc((var(--avail) - var(--content)) / 2), var(--u));
+  padding: var(--u) calc(100% - 2 * var(--u) - var(--side) - var(--content)) calc(3 * var(--u)) calc(2 * var(--u) + var(--side));
+}
+/* The page's blocks follow one another one unit apart. */
+.main > * { margin-block: 0; }
+.main > * + * { margin-top: var(--u); }
+.top { margin-bottom: 0; }
+
+/* Panels: a unit of padding, a one-unit head with a unit under it. */
+.panel > .head { min-height: var(--u); margin-bottom: var(--u); align-items: center; }
+.panel > .head .ranges { padding: 1px; }
+.panel > .head .ranges button { padding-block: 0; line-height: 18px; }
+.panel > .head .iconbtn { width: var(--u); height: var(--u); }
+.insight { padding: var(--u); }
+.ledger > :where(.card, .insight), .dlead.ledger .insight { padding: var(--u); }
+.explain { padding: calc(var(--u) / 2) var(--u); margin: 0 0 var(--u); }
+
+/* Columns in whole units. */
+.dlead { gap: var(--u); }
+.dlead.ledger { gap: 0; }
+.dmain { grid-template-columns: repeat(2, round(down, calc((100% - 2 * var(--u)) / 3), var(--u))) minmax(0, 1fr);
+  grid-auto-rows: var(--u); row-gap: 0; column-gap: var(--u); }
+.drail { gap: var(--u); margin-top: 0; }
+@media (min-width: 1440px) {
+  .dboard.has-rail { grid-template-columns: minmax(0, 1fr) calc(15 * var(--u)); gap: var(--u); }
+  .dboard.has-rail .dmain { grid-template-columns: round(down, calc((100% - var(--u)) / 2), var(--u)) minmax(0, 1fr); }
+}
+@media (max-width: 1099px) {
+  .dmain { grid-template-columns: round(down, calc((100% - var(--u)) / 2), var(--u)) minmax(0, 1fr); }
+  .drail { margin-top: var(--u); }
+}
+.grid2 { grid-template-columns: minmax(0, 1fr) round(down, calc((100% - var(--u)) / 3), var(--u)); gap: var(--u); }
+.grid4 { grid-template-columns: round(down, calc((100% - var(--u)) / 2), var(--u)) minmax(0, 1fr); gap: var(--u); }
+.ledger > .grid2 { grid-template-columns: round(down, 50%, var(--u)) minmax(0, 1fr); }
+.nwtop, .budgetgrid, .goalsgrid { grid-template-columns: minmax(0, 1fr) calc(14 * var(--u)); gap: var(--u); }
+@media (max-width: 1099px) {
+  .grid2, .grid4, .ledger > .grid2, .nwtop, .budgetgrid, .goalsgrid { grid-template-columns: minmax(0, 1fr); }
+}
+/* A ruled strip of N figures: N - 1 equal whole-unit columns, the last takes the rest. */
+.cards.ruled { --n: 1; --col: round(down, calc(100% / var(--n)), var(--u)); grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: minmax(0, 1fr); }
+.cards.ruled:has(> :nth-child(2)) { --n: 2; grid-template-columns: var(--col) minmax(0, 1fr); }
+.cards.ruled:has(> :nth-child(3)) { --n: 3; grid-template-columns: repeat(2, var(--col)) minmax(0, 1fr); }
+.cards.ruled:has(> :nth-child(4)) { --n: 4; grid-template-columns: repeat(3, var(--col)) minmax(0, 1fr); }
+.cards.ruled:has(> :nth-child(5)) { --n: 5; grid-template-columns: repeat(4, var(--col)) minmax(0, 1fr); }
+.cards.ruled:has(> :nth-child(6)) { --n: 6; grid-template-columns: repeat(5, var(--col)) minmax(0, 1fr); }
+@media (max-width: 1100px) {
+  .cards.ruled:has(> :nth-child(3)) { --n: 2; grid-template-columns: var(--col) minmax(0, 1fr); }
+}
+.goalgrid, .tripgrid { grid-template-columns: repeat(2, round(down, calc((100% - 2 * var(--u)) / 3), var(--u))) minmax(0, 1fr); gap: var(--u); }
+@media (max-width: 1099px) { .goalgrid, .tripgrid { grid-template-columns: round(down, calc((100% - var(--u)) / 2), var(--u)) minmax(0, 1fr); } }
+.goalgrid.single { grid-template-columns: minmax(0, 1fr); }
+
+/* Rows: two units each, the rule on the row's top edge (an inset shadow, so it adds no height), the list closed by one. */
+.glist { box-shadow: inset 0 -1px 0 var(--line-strong); }
+.grow { height: calc(2 * var(--u)); padding: 0; border-top: 0; align-items: center; box-shadow: inset 0 1px 0 var(--line-strong); }
+.gquiet { min-height: calc(2 * var(--u)); margin: 0; }
+.gtotal, .gnote { line-height: var(--u); }
+.gbud { height: calc(2 * var(--u)); padding: 0; row-gap: 6px; align-content: center; line-height: var(--u); }
+.trow { min-height: calc(2 * var(--u)); padding-block: 0; border-bottom: 0; box-shadow: inset 0 1px 0 var(--line); line-height: 1.25; }
+.trow:last-child { box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line); }
+.rl-head { height: calc(2 * var(--u)); padding: 0 0 4px; border-bottom: 0; }
+.rl-item { height: calc(2 * var(--u)); padding: 0; display: grid; align-content: center; box-shadow: inset 0 1px 0 var(--line); }
+/* A watched item (figures, then the bar) and a goal (its name over its account, then the bar) are 3 units, their two
+   lines centred with room from the rules; a goal's figures sit on the name's line, and its column heads (one line
+   each) take one unit, not two. */
+.rl-goals .rl-item, .rl-watch .rl-item { height: calc(3 * var(--u)); align-content: center; }
+.rl-watch .rl-item { row-gap: 4px; }
+.rl-goals .rl-row { align-items: first baseline; line-height: 1.35; }
+.rl-goals .rl-head { height: var(--u); }
+.rl-item + .rl-item { border-top: 0; }
+.rl-item:last-child { padding-bottom: 0; box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line); }
+.rl-row { line-height: var(--u); }
+.rl-meter { height: var(--u); margin-top: 0; }
+/* Tables: two-unit rows, head row included; rules on each body row's top edge. */
+.t th, .t td { height: calc(2 * var(--u)); padding-block: 0; border-bottom: 0; line-height: 1.25; }
+/* A cell of two or three lines (an amount, when it was paid, what it's based on) keeps clear of the row's rules. */
+.t td { padding-block: 3px; }
+.t td { box-shadow: inset 0 1px 0 var(--line); }
+.t tbody:last-child tr:last-child td { box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line); }
+.t tr.txdetail td, .t tr.billedit td { height: auto; padding-block: .6rem; }
+.txtable td.datecell { padding-block: .5rem; }
+.txtable tr.monthrow td { padding: 0 .9rem 4px; vertical-align: bottom; border-bottom: 0; box-shadow: inset 0 -1px 0 var(--ink); }
+.txtable tr.txpart td { padding-block: 0; }
+.billtable tbody + thead th { padding-top: 0; }
+.sticky-head .t thead th { box-shadow: none; }
+/* Budget page rows. */
+.brow { min-height: calc(2 * var(--u)); padding-block: 4px; row-gap: 4px; align-content: center; border-bottom: 0; box-shadow: inset 0 1px 0 var(--line); }
+.binput { padding-block: .1rem; }
+/* Goal cards share their rows (a subgrid), so they grow to the grid through their bottom padding (grid.js). */
+.goal.view { padding-bottom: calc(var(--u) / 2 + var(--snap-pad, 0px)); }
+/* A ruled table (Transactions, Bills) runs edge to edge in its panel, its head row on the panel's top edge; the first and
+   last columns keep a unit from the edge, and anything under the table keeps the panel's padding. */
+.card.sticky-head { padding: 0; }
+.card.sticky-head .t:not(.txtable) :is(th, td):first-child, .txtable td.datecell, .txtable tr.monthrow td { padding-left: var(--u); }
+.card.sticky-head .t :is(th, td):last-child { padding-right: var(--u); }
+.card.sticky-head > :not(table) { padding-inline: var(--u); }
+.card.sticky-head > :last-child:not(table) { padding-bottom: var(--u); }
+.card.sticky-head > p.small.foot { margin-right: var(--u); padding-right: 0; }
+/* The dashboard's lead ledger: each cell holds a panel that is snapped itself, so the rule between cells is drawn over
+   the cell's top edge instead of adding a pixel to it (which would round the cell up a whole extra unit). */
+.ledger > .dcell + .dcell { position: relative; border-top: 0; }
+.ledger > .dcell + .dcell::before { content: ''; position: absolute; z-index: 3; left: 0; right: 0; top: 0; height: 1px; background: var(--line); pointer-events: none; }
+
+/* ---------- Sidebar opening on hover: one layout, so nothing moves ----------
+   The rail keeps the same padding and left-aligned rows whether it's icons only (.slim) or open (.railopen): every
+   icon, the seal and the stitches stay exactly where they are, and opening only widens the cloth (animated) and fades
+   the words in. Hidden words are visibility: hidden, so they can't catch clicks over the page. */
+.shell .side { width: 64px; padding: 1rem .5rem; transition: width .26s var(--ease), box-shadow .26s var(--ease); }
+.railopen .side { width: 220px; box-shadow: 12px 0 32px -14px rgba(12, 17, 34, .6); }
+.side .logo { flex-direction: row; justify-content: flex-start; gap: .7rem; padding: 0 0 1.2rem 9px; } /* the seal's centre on the icons' axis */
+.side .nav { justify-content: flex-start; gap: .75rem; padding: .55rem 0 .55rem 15px; } /* 8px rail padding + 15px: an 18px icon centred in 64px */
+.side .syncfoot { justify-content: flex-start; gap: .75rem; padding: .45rem 0 .45rem 15px; }
+.side .nav.on::after { width: calc(.5rem + 5px); }
+.side :is(.navlabel, .wordmark, .synclabel), .side .navgroup { white-space: nowrap; overflow: hidden; }
+.side :is(.navlabel, .wordmark, .synclabel) { display: inline; transition: opacity .18s var(--ease) .06s, visibility 0s; }
+.slim .side :is(.navlabel, .wordmark, .synclabel) { opacity: 0; visibility: hidden; transition: opacity .1s, visibility 0s linear .1s; }
+.side .navgroup { color: var(--rail-ink-2); transition: color .18s var(--ease) .06s; }
+.slim .side .navgroup { color: transparent; transition: color .1s; } /* the heading's stitch stays; only its words go */
+@media (prefers-reduced-motion: reduce) { .shell .side { transition: none; } }
+
+/* ---------- Page header: the app's tools on the title row ----------
+   The notice chips, the theme toggle and Hide amounts sit at the right of each page's title row, after the page's own
+   actions (HeaderTools in ui.jsx), so every page's title starts at the top of the page. */
+.topact { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; }
+.hdtools { display: inline-flex; align-items: center; gap: .5rem; }
+.hdtools .chip-link, .hdtools .chip-link:has(+ .chip-link) { margin-right: 0; }
+.topact > :not(.hdtools) + .hdtools { margin-left: .75rem; }
+
+/* ---------- Review: tighter boxes ----------
+   A snapped box ends with up to 21px of rounding, so panels keep only half a unit of padding at the foot (on average the
+   space under the content then matches the unit above it), and nothing inside adds a trailing margin. */
+.card { padding-bottom: calc(var(--u) / 2); }
+:is(.card, .msec) > :last-child { margin-bottom: 0; }
+.panel > .head .btn { padding: 0 .7rem; line-height: 20px; font-size: .85rem; }
+/* Budget's "Not yet assigned": one line, three units. */
+.card.bassign { padding: calc(var(--u) / 2) var(--u); }
+.bassign .big { line-height: calc(2 * var(--u)); margin: 0; }
+/* Ruled strips of figures: label, figure and note each on the unit. */
+.cards.ruled > .card { padding: calc(var(--u) / 2) var(--u); }
+.cards.ruled > .card h3 { line-height: var(--u); margin: 0; }
+.cards.ruled > .card .big { line-height: calc(2 * var(--u)); margin: 0; }
+.cards.ruled > .card .small { line-height: var(--u); }
+.txstrip > .card { padding: calc(var(--u) / 2) var(--u); }
+.txfig { line-height: calc(1.5 * var(--u)); margin: 0; }
+/* Plan › Ideas: two-unit ruled rows like every other list. */
+.idea { min-height: calc(2 * var(--u)); padding: 4px 0; border-top: 0; box-shadow: inset 0 1px 0 var(--line); }
+.idea:last-child { box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line); }
+/* Investments › Holdings: price, change and "as of" need three units. */
+.t.holdings td { height: calc(3 * var(--u)); padding-block: 6px; line-height: 1.3; }
+/* Allocation legends: a little closer. */
+.legend2 li { padding-block: 0; line-height: var(--u); }
+.split h3 { line-height: var(--u); margin-bottom: 0; }
+.split .legend2 { margin-top: calc(var(--u) / 2); }
+.splitbar { margin-top: calc(var(--u) / 4); }
+/* Transactions: the filter bar is exactly two units, its controls centred in it. */
+.filterbar { height: calc(2 * var(--u)); padding: 0 .6rem; align-items: center; }
+.filterbar input, .filterbar select { height: 30px; }
+/* A sticky table head is see-through like its panel; only while it is stuck to the top of the window (App.jsx sets
+   .stuck) does it take the panel's colour, opaque, so rows don't show through it. */
+.sticky-head .t thead th { background: transparent; }
+.sticky-head.stuck .t thead th { background: var(--sheet-head); box-shadow: inset 0 -1px 0 var(--line); }
+/* ---------- Review: a smaller dashboard ----------
+   Calendar days are 3 × 2 units (66 × 44; the dot ramp tops out at 24px so a dot fits between the number and the
+   stamps); the page header is three units (a two-unit title over a one-unit line); Budget's summary sits in its head. */
+.cday { height: calc(2 * var(--u)); }
+.top { padding-bottom: 0; }
+.top h1 { line-height: calc(2 * var(--u)); }
+.top .sub { margin: 0; line-height: var(--u); }
+.gbudget > .head .gtotal { margin: 0 auto 0 .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.top::after { bottom: -13px; } /* the double rule sits just under the one-unit line, inside the gap below the header */
+.stand { padding-block: 0; }
+.dlead.ledger .insight { padding: calc(var(--u) / 2) var(--u); line-height: var(--u); }
+.insight-ic { width: var(--u); height: var(--u); }
+.spread > .gbudget { padding-top: calc(var(--u) / 2); padding-bottom: calc(var(--u) / 2); }
+.card.spread { padding: 0; } /* its sections carry the padding */
+.forecast .explain { outline: 0; } /* a band of the forecast panel, ruled by its own top border */
+
+/* ---------- The calendar's spending: the amount, underlined with the highlighter ----------
+   Each past day with spending shows its total in ink at the bottom left, and under it a short highlighter stroke whose
+   length follows the fixed ramp (server/spread.js, steps 1-7): 10px at the bottom, the cell's width less 8px at the top,
+   the same in every month. The figure blurs with Hide amounts; the stroke stays. It draws in once, left to right. */
+.cspent { position: absolute; left: 5px; bottom: 10px; font-size: .72rem; font-weight: 700; line-height: 1; color: var(--ink); white-space: nowrap; }
+.cstroke { position: absolute; left: 4px; bottom: 4px; height: 6px; width: calc(10px + (var(--s) - 1) * (100% - 18px) / 6);
+  background: var(--hi); mix-blend-mode: var(--hi-blend); border-radius: 2px 5px 3px 4px; rotate: -1.2deg; pointer-events: none;
+  animation: hiswipe .6s var(--ease) both; animation-delay: calc(var(--i) * 18ms); }
+.lgstroke { display: inline-block; width: 18px; height: 6px; background: var(--hi); mix-blend-mode: var(--hi-blend); border-radius: 2px 5px 3px 4px; rotate: -1.2deg; }
+@media (prefers-reduced-motion: reduce) { .cstroke { animation: none; } }
+
+/* ---------- Bills: the bills written into the calendar ----------
+   On Bills the calendar runs the full width of its panel (days of whole units, at least 3 wide) and 4 units tall, and
+   each day lists its bills and paydays as short lines: a small stamp (inked once paid or received, a dashed box while
+   due), the payee cut to fit, the whole-dollar amount (green for money in). Paid ones are muted. A crowded day shows two
+   and "+N more"; clicking a day lists it in full under the calendar. */
+.spread.listdays .cal { --day: max(calc(3 * var(--u)), round(down, calc((100cqw - 2 * var(--u)) / 7), var(--u))); }
+.spread.listdays .cday { height: calc(4 * var(--u)); }
+.clist { position: absolute; left: 5px; right: 5px; top: 21px; display: flex; flex-direction: column; gap: 2px; }
+.cbill { display: flex; align-items: center; gap: 4px; min-width: 0; font-size: .7rem; line-height: 1.25; color: var(--ink); }
+.cbill .stamp.tiny { width: 11px; height: 11px; flex: none; rotate: none; }
+.cbname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cbamt { flex: none; font-weight: 700; }
+.cbill.in .cbamt { color: var(--green); }
+.cbill.done { color: var(--muted); }
+.cbill.done .cbamt { font-weight: 600; }
+.cmore { font-size: .68rem; color: var(--muted); padding-left: 15px; }
+.cday.today .cbill:not(.done) { color: var(--ink); }
+
+/* ---------- Legends: a stamp keeps the same small space before its label as a line key ---------- */
+.legend > span > .stamp { margin-right: .35rem; vertical-align: -2px; }
+.calkey span > .stamp { margin-right: 0; }
+
+/* ---------- Transactions: the first month's name sits right under the column heads (one unit, not two) ---------- */
+.txtable tbody tr.monthrow:first-child td { height: var(--u); }

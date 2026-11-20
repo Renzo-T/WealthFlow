@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-12T05:08:23.713Z",
+  "generatedAt": "2026-11-19T06:51:40.626Z",
   "title": "Design System: Mizo Money",
   "extensions": {
     "colorMeta": {
@@ -912,6 +912,11 @@
     },
     "shadows": [
       {
+        "name": "none-on-panels",
+        "value": "none",
+        "purpose": "Panels on the page have no shadow: a pencil outline over a faint wash. Only things that float (tips, dialogs, menus) and the first-run panels have one."
+      },
+      {
         "name": "floating",
         "value": "0 2px 6px rgba(27, 32, 48, .06), 0 14px 34px rgba(27, 32, 48, .12)",
         "valueDark": "0 2px 6px rgba(0, 0, 0, .3), 0 14px 34px rgba(0, 0, 0, .45)",
@@ -924,15 +929,15 @@
       },
       {
         "name": "today-edge",
-        "value": "inset 0 2px 0 var(--blue)",
-        "purpose": "Today's column in the month spread."
+        "value": "inset 0 2px 0 var(--blue) (drawn as a 2px ::after line)",
+        "purpose": "Today's day in the month calendar, over the indigo wash."
       }
     ],
     "motion": [
       {
         "name": "ink",
         "value": "600ms cubic-bezier(.16, 1, .3, 1), 18ms stagger by date",
-        "purpose": "Month spread dots scale and fade in once, in date order. The one authored moment."
+        "purpose": "Month calendar dots scale and fade in once, in date order. The one authored moment."
       },
       {
         "name": "stamp",
@@ -958,23 +963,60 @@
         "name": "reduced-motion",
         "value": "prefers-reduced-motion: reduce",
         "purpose": "All animation and transition durations collapse to near zero."
+      },
+      {
+        "name": "panels-still",
+        "value": "none",
+        "purpose": "Panels never move on arrival or hover: a box that moves can't be measured for the grid. Only the page header settles (0.5s)."
       }
     ],
     "breakpoints": [
       {
         "name": "rail-collapse",
         "value": "1099px",
-        "purpose": "At and below: 64px icon rail, side sheets stack, board goes to two columns."
+        "purpose": "At and below: 64px icon rail, side panels stack, the board and the This month panel go to one or two columns."
       },
       {
         "name": "side-column",
         "value": "1440px",
-        "purpose": "At and above: dashboard gains a 340px side column; the board beside it uses two columns."
+        "purpose": "At and above: the dashboard gains a 15-unit (330px) side column; the board beside it uses two columns."
       },
       {
-        "name": "single-column",
-        "value": "700px",
-        "purpose": "At and below: board is one column (narrow windows only; no phone layout)."
+        "name": "narrowest",
+        "value": "1000px",
+        "purpose": "The narrowest supported window (icons-only rail). No phone layout."
+      }
+    ],
+    "grid": [
+      {
+        "name": "unit",
+        "value": "22px (--u)",
+        "purpose": "The dot spacing and the layout unit: every panel edge, section rule, row and calendar line falls on a row or column of dots."
+      },
+      {
+        "name": "origin",
+        "value": ".main's padding-box corner",
+        "purpose": "Ruling marks at whole units from it (dots at -11px -11px / 22px; grid and ruled lines at 22k). Content starts 2U in."
+      },
+      {
+        "name": "widths",
+        "value": "round(down, …, var(--u)); gaps U",
+        "purpose": "The page content box is whole units wide (mod() on the right padding); column splits are whole units with the last taking the rest."
+      },
+      {
+        "name": "heights",
+        "value": "web/src/grid.js",
+        "purpose": "Panels, ruled sections and top-level blocks get a min-height of whole units, innermost first, on resize and content changes; subgrids grow by --snap-pad."
+      },
+      {
+        "name": "rows",
+        "value": "2U (44px)",
+        "purpose": "List and table rows, the rule on the row's top edge; panel heads 1U with 1U under; padding U."
+      },
+      {
+        "name": "board",
+        "value": "grid-auto-rows: U; row-gap: 0",
+        "purpose": "A board panel spans ceil(h / U) + 1 rows and fills all but the last, leaving one empty row of dots."
       }
     ]
   },
@@ -1020,12 +1062,12 @@
       "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"Atkinson Hyperlegible Next\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-tag{font-size:.7rem;padding:.1rem .45rem;border-radius:99px;background:var(--soft);color:var(--blue)}.ds-tag.in{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}"
     },
     {
-      "name": "Panel Sheet",
+      "name": "Panel",
       "kind": "card",
       "refersTo": "sheet",
-      "description": "A flat white sheet with a hairline; the tracked label is its title.",
+      "description": "A pencil-grey line (outline, inset 1px) around a 35% wash of the sheet colour on the dot-grid paper; 3px corners, no shadow; the tracked label is its title; rows are 2 units with their rule on top.",
       "html": "<section class=\"ds-sheet\"><div class=\"ds-head\"><h2>Coming up</h2><a href=\"#\">Bills</a></div><div class=\"ds-row\"><span>City Power and Light</span><span class=\"ds-m\">today</span><b>−$88.58</b></div><div class=\"ds-row\"><span>Fiberline</span><span class=\"ds-m\">Oct 18</span><b>−$65.00</b></div></section>",
-      "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"Atkinson Hyperlegible Next\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-sheet{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1.15rem 1.3rem;max-width:360px}.ds-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.45rem}.ds-head h2{margin:0;font-size:.74rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.ds-head a{font-size:.8rem;color:var(--blue)}.ds-head a:focus-visible{outline:2px solid var(--blue);outline-offset:2px}.ds-row{display:grid;grid-template-columns:1fr auto auto;gap:.75rem;align-items:baseline;padding:.42rem 0;border-top:1px solid var(--line)}.ds-row:first-of-type{border-top:0}.ds-m{font-size:.8rem;color:var(--muted)}.ds-row b{font-weight:600}"
+      "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"Atkinson Hyperlegible Next\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-sheet{background:color-mix(in srgb,var(--card) 35%,transparent);outline:1px solid var(--line-strong);outline-offset:-1px;border-radius:3px;padding:22px;max-width:352px}.ds-head{display:flex;justify-content:space-between;align-items:center;height:22px;margin-bottom:22px}.ds-head h2{margin:0;font-size:.74rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.ds-head a{font-size:.8rem;color:var(--blue)}.ds-head a:focus-visible{outline:2px solid var(--blue);outline-offset:2px}.ds-row{display:grid;grid-template-columns:1fr auto auto;gap:.75rem;align-items:center;height:44px;box-shadow:inset 0 1px 0 var(--line-strong)}.ds-m{font-size:.8rem;color:var(--muted)}.ds-row b{font-weight:600}"
     },
     {
       "name": "Standing Strip",
@@ -1036,23 +1078,24 @@
       "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"Atkinson Hyperlegible Next\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-stand{display:grid;grid-template-columns:1.5fr 1fr 1fr;background:var(--card);border:1px solid var(--line);border-radius:6px}.ds-stand>div{display:flex;flex-direction:column;gap:.3rem;padding:1.15rem 1.4rem 1.2rem;border-left:1px solid var(--line)}.ds-stand>div:first-child{border-left:0}.ds-stand span{font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.ds-stand b{font-size:1.95rem;font-weight:800;letter-spacing:-.02em;line-height:1.1}.ds-stand .lead b{font-size:3.1rem;letter-spacing:-.03em}.ds-stand small{font-size:.8rem;color:var(--muted)}.ds-stand .g{font-style:normal;color:var(--green);font-weight:700}"
     },
     {
-      "name": "Month Spread",
+      "name": "Month Calendar",
       "kind": "custom",
       "refersTo": "stamp-paid",
-      "description": "The signature: one ink dot per day on a fixed ramp, bills stamped on their dates, future days dashed, today tinted.",
-      "html": "<div class=\"ds-spread\"><span class=\"d\"><em>1</em><span class=\"ink\"><i style=\"width:30px;height:30px\"></i></span><span class=\"st\"><b class=\"stamp done\">L</b></span></span><span class=\"d\"><em>2</em><span class=\"ink\"><i style=\"width:8px;height:8px\"></i></span><span class=\"st\"><b class=\"stamp done\">T</b></span></span><span class=\"d\"><em>3</em><span class=\"ink\"><i style=\"width:8px;height:8px\"></i></span><span class=\"st\"><b class=\"stamp done\">E</b></span></span><span class=\"d\"><em>4</em><span class=\"ink\"></span><span class=\"st\"></span></span><span class=\"d\"><em>5</em><span class=\"ink\"><i style=\"width:5px;height:5px\"></i></span><span class=\"st\"></span></span><span class=\"d\"><em>6</em><span class=\"ink\"><i style=\"width:11px;height:11px\"></i></span><span class=\"st\"></span></span><span class=\"d\"><em>7</em><span class=\"ink\"><i style=\"width:15px;height:15px\"></i></span><span class=\"st\"><b class=\"stamp done\">N</b></span></span><span class=\"d\"><em>8</em><span class=\"ink\"><i style=\"width:8px;height:8px\"></i></span><span class=\"st\"></span></span><span class=\"d\"><em>9</em><span class=\"ink\"></span><span class=\"st\"><b class=\"stamp done in\">A</b></span></span><span class=\"d wk\"><em>10</em><span class=\"ink\"></span><span class=\"st\"></span></span><span class=\"d today\"><em>11</em><span class=\"ink\"></span><span class=\"st\"><b class=\"stamp\">C</b></span></span><span class=\"d\"><em>12</em><span class=\"ink\"><i class=\"fut\"></i></span><span class=\"st\"></span></span><span class=\"d\"><em>13</em><span class=\"ink\"><i class=\"fut\"></i></span><span class=\"st\"><b class=\"stamp\">S</b></span></span></div>",
-      "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"Atkinson Hyperlegible Next\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-spread{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));border-top:1px solid var(--ink);border-bottom:1px solid var(--line);background:var(--card);max-width:560px}.ds-spread .d{display:grid;grid-template-rows:auto 38px 18px;justify-items:center;align-items:center;gap:.3rem;padding:.5rem 0 .55rem;border-left:1px solid var(--line)}.ds-spread .d:first-child{border-left:0}.ds-spread .wk{background:var(--surface-2)}.ds-spread .today{background:var(--soft);box-shadow:inset 0 2px 0 var(--blue)}.ds-spread em{font-style:normal;font-size:.72rem;color:var(--muted)}.ds-spread .today em{color:var(--blue);font-weight:800}.ds-spread .ink{display:grid;place-items:center;height:38px}.ds-spread .ink i{display:block;border-radius:50%;background:var(--ink-dot);animation:ds-ink .6s cubic-bezier(.16,1,.3,1) both}.ds-spread .ink i.fut{width:8px;height:8px;background:none;border:1.5px dashed var(--line-strong);animation:none}.ds-spread .stamp{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:4px;border:1.5px dashed var(--hub);color:var(--hub);font-size:.62rem;font-weight:800;background:var(--card)}.ds-spread .stamp.done{border-style:solid;border-color:var(--blue);color:var(--blue);background:var(--soft)}.ds-spread .stamp.in{border-color:var(--green);color:var(--green)}.ds-spread .stamp.in.done{background:color-mix(in srgb,var(--green) 14%,var(--card))}.ds-spread .d:hover{background:color-mix(in srgb,var(--soft) 70%,transparent)}@keyframes ds-ink{from{transform:scale(.35);opacity:0}}@media (prefers-reduced-motion:reduce){.ds-spread .ink i{animation:none}}"
+      "description": "The signature: Sunday to Saturday under a 1.5px ink rule, each day a 3 × 3 unit (66px) square on the dot grid; one ink dot per day on a fixed ramp, bills and paydays stamped in the corner, days ahead dashed, blanks hatched, today washed with a 2px indigo edge.",
+      "html": "<div class=\"ds-cal\"><span class=\"w\">Sun</span><span class=\"w\">Mon</span><span class=\"w\">Tue</span><span class=\"w\">Wed</span><span class=\"w\">Thu</span><span class=\"w\">Fri</span><span class=\"w\">Sat</span><span class=\"d blank\"></span><span class=\"d blank\"></span><span class=\"d\"><em>1</em></span><span class=\"d\"><em>2</em><i style=\"width:8px;height:8px\"></i></span><span class=\"d\"><em>3</em><i style=\"width:30px;height:30px\"></i></span><span class=\"d\"><em>4</em></span><span class=\"d\"><em>5</em><i style=\"width:11px;height:11px\"></i></span><span class=\"d\"><em>6</em><i style=\"width:15px;height:15px\"></i><b class=\"stamp done\">L</b></span><span class=\"d\"><em>7</em><i style=\"width:5px;height:5px\"></i></span><span class=\"d\"><em>8</em><i style=\"width:8px;height:8px\"></i><b class=\"stamp done\">T</b></span><span class=\"d\"><em>9</em><i style=\"width:19px;height:19px\"></i></span><span class=\"d today\"><em>10</em><b class=\"stamp\">C</b></span><span class=\"d\"><em>11</em><i class=\"fut\"></i></span><span class=\"d\"><em>12</em><i class=\"fut\"></i><b class=\"stamp\">S</b></span><span class=\"d\"><em>13</em><i class=\"fut\"></i></span><span class=\"d\"><em>14</em><i class=\"fut\"></i></span></div>",
+      "css": ":host{--rail:#1e2a47;--rail-2:#2b3b63;--rail-ink:#c5ccdd;--blue:#2d4a93;--soft:#e8ecf5;--bg:#f3f3ef;--dot:#d6d9d3;--card:#fff;--surface-2:#f7f7f4;--line:#e1e3df;--line-strong:#c8ccd2;--ink:#1b2030;--muted:#555c6e;--hub:#475066;--ink-dot:#26355c;--green:#24724f;--red:#b4382a;--seal:#d9482e;--seal-ink:#fff6f2;font-family:\"Atkinson Hyperlegible Next\",\"Segoe UI\",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)} .ds-cal{display:grid;grid-template-columns:repeat(7,66px);width:462px;box-shadow:inset 0 1.5px 0 var(--ink)}.ds-cal .w{height:22px;line-height:22px;padding-left:5px;font-size:.64rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.ds-cal .d{position:relative;height:66px;padding:2px 5px;font-size:.76rem;line-height:18px;color:var(--muted);box-shadow:inset 0 1px 0 var(--line-strong),inset 1px 0 0 var(--line-strong)}.ds-cal .d:nth-child(7n+1){box-shadow:inset 0 1px 0 var(--line-strong)}.ds-cal .blank{background:repeating-linear-gradient(135deg,transparent 0 5px,color-mix(in srgb,var(--line-strong) 45%,transparent) 5px 6px)}.ds-cal em{font-style:normal;font-weight:600}.ds-cal .today{background:var(--soft);color:var(--blue)}.ds-cal .today:after{content:\"\";position:absolute;left:0;right:0;top:0;height:2px;background:var(--blue)}.ds-cal i{position:absolute;left:50%;top:52%;translate:-50% -50%;border-radius:50%;background:var(--ink-dot);animation:ds-ink .6s cubic-bezier(.16,1,.3,1) both}.ds-cal i.fut{width:8px;height:8px;background:none;border:1.5px dashed var(--line-strong);animation:none}.ds-cal .stamp{position:absolute;right:4px;bottom:4px;display:grid;place-items:center;width:15px;height:15px;border-radius:3px;border:1.5px dashed var(--hub);color:var(--hub);font-size:.55rem;font-weight:800}.ds-cal .stamp.done{border:0;background:var(--blue);color:var(--card);rotate:-5deg}@keyframes ds-ink{from{transform:scale(.35);opacity:0}}@media (prefers-reduced-motion:reduce){.ds-cal i{animation:none}}"
     }
   ],
   "narrative": {
     "northStar": "The Planner Page",
-    "overview": "Money is kept the way a careful person keeps a Japanese stationery planner: a cloth-bound indigo cover down the left, calm ruled pages with a faint dot grid, ink-dark figures, and the month always in view. The page is the instrument. Hierarchy comes from size, weight and hairline rules, not from colour, shadow or decoration, so the few things that carry colour (money in, money out, something that needs you) are read at once.\n\nDensity is that of a well-used planner, not a spreadsheet: content sits on white sheets with ruled rows and fixed columns, figures align on equal-width digits, and every page opens under a dated header rule. The one authored moment is the month spread inking in on the dashboard; everything else simply appears. Light and dark are equals: dark is the same planner at night, with its own validated steps (the indigo cover stays), never an inversion.\n\nThe world refuses the category default of a white card grid with a blue accent, glossy area charts and soft shadows. It also refuses the bank-app look, decoration, spreadsheet density and hiding detail. Decoration is a planner detail that marks nothing: the planner's objects are welcome, each for one meaning (see The Earned Detail Rule).",
+    "overview": "Money is kept the way a careful person keeps a Japanese stationery planner: a cloth-bound indigo cover down the left, calm ruled pages with a faint dot grid, ink-dark figures, and the month always in view. The page is the instrument. Hierarchy comes from size, weight and hairline rules, not from colour, shadow or decoration, so the few things that carry colour (money in, money out, something that needs you) are read at once.\n\nDensity is that of a well-used planner, not a spreadsheet: content sits in pencil-ruled panels on the dot grid, with ruled rows and fixed columns, figures align on equal-width digits, and every page opens under a dated header rule. The one authored moment is the month calendar inking in on the dashboard; everything else simply appears. Light and dark are equals: dark is the same planner at night, with its own validated steps (the indigo cover stays), never an inversion.\n\nThe world refuses the category default of a white card grid with a blue accent, glossy area charts and soft shadows. It also refuses the bank-app look, decoration, spreadsheet density and hiding detail. Decoration is a planner detail that marks nothing: the planner's objects are welcome, each for one meaning (see The Earned Detail Rule).",
     "keyCharacteristics": [
       "An indigo cover rail holds the seal and the navigation; the page beside it is quiet paper with a 22px dot grid.",
       "One family (Atkinson Hyperlegible Next, chosen for legibility at small sizes) at four weights carries every level; figures are tabular everywhere.",
-      "Hairline rules instead of shadows; 6px corners on every sheet and control.",
+      "Panels are pencil lines over a faint wash of the sheet colour on the dot-grid paper, not white sheets with shadows; 3px corners on panels, 6px on controls.",
+      "The 22px dot grid is the layout grid: every panel edge, section rule, row and calendar line falls on a row or column of dots.",
       "Tracked uppercase labels name panels and figures; they are the titles, never a line above one.",
-      "The month spread: one ink dot per day on a fixed size ramp, bills and paydays stamped on their dates.",
+      "The month as a Sunday-to-Saturday calendar of 3 × 3 unit days: one ink dot per day on a fixed size ramp, bills and paydays stamped in the corner.",
       "Estimated, partial and future data are always marked (dashed, faded, \"est\")."
     ],
     "rules": [
@@ -1098,12 +1141,17 @@
       },
       {
         "name": "The Hairline Rule",
-        "body": "Separate with a 1px rule, never a shadow. A sheet that needs a shadow to stand out is on the wrong background.",
+        "body": "Inside a panel, separate with a 1px rule, never a shadow. Panels on the page carry no shadow at all: a pencil line around a faint wash, the ruling showing through.",
         "section": "elevation"
+      },
+      {
+        "name": "The Grid Unit Rule",
+        "body": "Every panel edge, section rule, list row and calendar line sits on the 22px dot grid: widths in whole units (CSS), heights rounded up to whole units (grid.js), rows 2 units, gaps 1 unit. npm run check:ui fails on a box off the grid.",
+        "section": "layout"
       }
     ],
     "dos": [
-      "**Do** keep every sheet flat on the page with a 1px rule and 6px corners.",
+      "**Do** draw every panel as a 1px pencil line around a faint wash, 3px corners, no shadow, its edges on the dot grid.",
       "**Do** use Atkinson Hyperlegible Next for everything, with tabular figures.",
       "**Do** name panels with the tracked uppercase label (0.74rem, 800, 0.12em) as their title.",
       "**Do** mark estimated, partial or future data: dashed lines and outlines, faded partial months, a small \"est\".",
@@ -1115,7 +1163,7 @@
     "donts": [
       "**Don't** use green or red for anything but money in/out or good/bad.",
       "**Don't** use vermillion anywhere but the seal.",
-      "**Don't** add drop shadows to sheets, or glossy gradients and area fills to charts.",
+      "**Don't** put white sheets with shadows on the page, or glossy gradients and area fills in charts.",
       "**Don't** add a second typeface or a system display face.",
       "**Don't** put a small line of label text above a heading as a kicker or eyebrow.",
       "**Don't** use text glyphs (×, ‹, ›, ●, ↻) as icons; draw them.",

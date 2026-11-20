@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { I, iconKey } from './CategoryIcon.jsx';
 import { exitList, nextGhosts } from './exitList.js';
+import { handRect, handCircle } from './hand.js';
 
 // Money going down into a tray: a big move to savings or investments (the replay).
 const TRAY = <><path d="M12 3.5v10M7.5 9.5l4.5 4.5 4.5-4.5" /><path d="M4.5 15.5v4h15v-4" /></>;
@@ -43,7 +44,12 @@ export function StampArt({ s, kind, done, icon, count = 1, ink = 0, label }) {
   const shape = kind === 'in' ? <circle cx={c} cy={c} r={c - w} /> : <rect x={w} y={w} width={s - 2 * w} height={s - 2 * w} rx={s * 0.16} />;
   const text = count > 1 ? String(count) : label;
   const fig = text != null && s >= 11 && <text x={c} y={c} dy=".36em" textAnchor="middle" style={{ fontSize: s * (text.length > 1 ? 0.5 : 0.58) }}>{text}</text>;
-  if (!done) return <g className="st-due">{shape}{(count > 1 || label) && fig}</g>;
+  if (!done) {
+    // Still to come: a pencil outline drawn by hand (its own wobble per stamp), waiting for the ink.
+    const seed = 11 + ink * 7 + s + (text ? text.charCodeAt(0) : 0) + (kind === 'in' ? 3 : 0);
+    const d = kind === 'in' ? handCircle(c, c, c - w - 0.3, seed) : handRect(w + 0.4, w + 0.4, s - 2 * w - 0.8, s - 2 * w - 0.8, seed);
+    return <g className="st-due"><path d={d} />{(count > 1 || label) && fig}</g>;
+  }
   const k = s * (kind === 'in' ? 0.56 : 0.64), sc = k / 24;
   const art = kind === 'save' ? TRAY : I[icon];
   return (

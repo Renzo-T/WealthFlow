@@ -4,7 +4,7 @@ import { api } from './api.js';
 import { DashboardSkeleton, Trend, Check } from './ui.jsx';
 import Cards from './Cards.jsx';
 import MonthSpread from './MonthSpread.jsx';
-import Glance from './Glance.jsx';
+import { GlanceSide, GlanceBudget } from './Glance.jsx';
 import NetWorthChart from './NetWorthChart.jsx';
 import AssetAllocation from './AssetAllocation.jsx';
 import CashFlow from './CashFlow.jsx';
@@ -13,16 +13,19 @@ import { RecentTransactions } from './Transactions.jsx';
 import { GoalsPanel } from './Goals.jsx';
 import { InsightStrip, FrequentPanel, WatchlistPanel, InvestmentsCard } from './Insights.jsx';
 import { defaultLayout, mergeLayout } from './layout.js';
+import { unit } from './grid.js';
 
 // Every dashboard panel, in default order. `span` is its width in a 3-column row (3 = full width); `rail` means it
 // sits in the right-hand column on wide screens by default. To add a panel: add it here; saved layouts pick it
 // up at its default position automatically. `span` may be a function of the dashboard's data (Goals goes under a one-item Watchlist, beside Cash flow, and
-// runs full width under a longer one, so the board has no gaps). `hidden` panels start hidden for new or reset layouts only (a saved layout keeps what it shows). `lead` panels (where you stand, the month spread) run full width above the
+// runs full width under a longer one, so the board has no gaps). `hidden` panels start hidden for new or reset layouts only (a saved layout keeps what it shows). `lead` panels (where you stand, this month) run full width above the
 // rest, side column included, in your order, as sections of one ruled sheet (separate sheets while you customize).
 export const PANELS = [
   { id: 'cards', name: 'Where you stand', span: 3, lead: true, render: ({ s, extra }) => <Cards s={s} safe={extra.safe} budgets={extra.budgets} /> },
-  { id: 'month', name: 'Month spread', span: 3, lead: true, render: () => <MonthSpread /> },
-  { id: 'glance', name: 'Needs you, coming up, budget', span: 3, lead: true, render: ({ s, extra }) => <Glance todo={extra.todo} upcoming={extra.upcoming} budgets={extra.budgets} spentAll={s.spending.value} /> },
+  // The month as a calendar with Needs you and Coming up beside it and Budget under it, one panel (it was two: the
+  // month spread and the glance sheet; `was` folds a saved layout's old ids into it).
+  { id: 'month', was: ['glance'], name: 'This month', span: 3, lead: true, render: ({ extra }) => (
+    <MonthSpread aside={<GlanceSide todo={extra.todo} upcoming={extra.upcoming} />} below={<GlanceBudget budgets={extra.budgets} />} />) },
   { id: 'insight', name: 'What changed', span: 3, lead: true, render: ({ extra }) => <InsightStrip changed={extra.insights?.changed} todo={extra.todo} /> },
   { id: 'networth', name: 'Net worth chart', span: 2, render: ({ s }) => <NetWorthChart history={s.history} /> },
   { id: 'allocation', hidden: true, name: 'Asset allocation', span: 1, render: ({ extra }) => <AssetAllocation a={extra.allocation} /> },
@@ -55,6 +58,7 @@ function Controls({ p, i, n, layout, set }) {
 }
 
 // True while the window is wide enough for the side column (matches the CSS breakpoint).
+const LOOSE = new Set(['cards']);
 function useWide() {
   const q = '(min-width: 1440px)';
   const [wide, setWide] = useState(() => window.matchMedia(q).matches);
@@ -62,26 +66,30 @@ function useWide() {
   return wide;
 }
 
-// Packs the board like a well-kept page: the grid has small fixed rows, and each panel spans as many as its content
-// needs (re-measured whenever anything resizes), so with dense flow a short panel lets the next one sit right under
-// it instead of leaving a gap. No stretching, no holes.
-const ROW = 8, GAP = 16, NEAR = 4; // panels side by side within NEAR rows of each other share one height
+// Packs the board on the page's dot grid (grid.js): the grid's rows are one unit (22px) with no gap, and each panel spans
+// the whole units its content needs plus one empty row of dots under it (re-measured whenever anything resizes), so
+// with dense flow a short panel lets the next one sit right under it instead of leaving a gap. No stretching, no holes.
+const NEAR = 4; // panels side by side within NEAR rows of each other share one height
 function usePacked(ref, deps) {
   useLayoutEffect(() => {
     const grid = ref.current;
     if (!grid) return undefined;
     const fit = () => {
-      const cells = [...grid.children];
+      const U = unit(grid), cells = [...grid.children];
       const above = (cell) => [...cell.children].slice(0, -1).reduce((t, c) => t + c.getBoundingClientRect().height + 8, 0); // edit controls
+      const panel = (cell) => cell.lastElementChild;
+      cells.forEach((cell) => { if (panel(cell)) panel(cell).style.minHeight = ''; });
       const spans = cells.map((cell) => {
-        if (cell.lastElementChild) cell.lastElementChild.style.minHeight = '';
         const h = [...cell.children].reduce((t, c) => t + c.getBoundingClientRect().height, 0) + (cell.children.length - 1) * 8;
-        const span = Math.max(1, Math.ceil((h + GAP) / (ROW + GAP)));
-        cell.style.gridRowEnd = `span ${span}`;
-        return span;
+        return Math.max(1, Math.ceil((h - 0.1) / U)) + 1;
       });
+      const size = (cell, span) => {
+        cell.style.gridRowEnd = `span ${span}`;
+        if (panel(cell)) panel(cell).style.minHeight = `${(span - 1) * U - above(cell)}px`;
+      };
+      cells.forEach((cell, i) => size(cell, spans[i]));
       // Neighbours that start on the same line and are nearly the same height end on the same line too: the shorter
-      // ones take the tallest's rows and their sheet fills them, so a row of panels reads as one band, not a ragged edge.
+      // ones take the tallest's rows and their panel fills them, so a row of panels reads as one band, not a ragged edge.
       // Evening out one band moves the bands below it, so group again (a few times) until the lines settle.
       for (let pass = 0; pass < 4; pass++) {
         const rows = new Map();
@@ -89,10 +97,7 @@ function usePacked(ref, deps) {
         for (const row of rows.values()) {
           if (row.length < 2) continue;
           const max = Math.max(...row.map((i) => spans[i]));
-          for (const i of row.filter((j) => max - spans[j] <= NEAR)) {
-            cells[i].style.gridRowEnd = `span ${max}`;
-            if (cells[i].lastElementChild) cells[i].lastElementChild.style.minHeight = `${max * (ROW + GAP) - GAP - above(cells[i])}px`;
-          }
+          for (const i of row.filter((j) => max - spans[j] <= NEAR)) { spans[i] = max; size(cells[i], max); }
         }
       }
     };
@@ -151,6 +156,13 @@ export default function Dashboard(props) {
   const railIds = wide ? layout.rail : [];
   const lead = visible.filter((p) => p.lead && !railIds.includes(p.id));
   const main = visible.filter((p) => !p.lead && !railIds.includes(p.id)), rail = visible.filter((p) => railIds.includes(p.id));
+  // Lead panels share one ruled sheet, except Where you stand, which sits on the paper itself (LOOSE): the one thing
+  // without a box, so the eye lands there first. While you customize, they all stay together.
+  const leadRuns = [];
+  for (const p of lead) {
+    const last = leadRuns[leadRuns.length - 1], loose = !editing && LOOSE.has(p.id);
+    if (last && !loose && !(!editing && LOOSE.has(last[0].id))) last.push(p); else leadRuns.push([p]);
+  }
   const cell = (p, list) => (
     <div key={p.id} className={`dcell span${railIds.includes(p.id) ? 1 : typeof p.span === 'function' ? p.span(props) : p.span}`}>
       {editing && <Controls p={p} i={list.indexOf(p)} n={list.length} layout={layout} set={save} />}
@@ -172,7 +184,7 @@ export default function Dashboard(props) {
           <span className="btnrow">{layout.hidden.map((id) => byId[id] && (
             <button key={id} className="btn" onClick={() => save({ ...layout, hidden: layout.hidden.filter((x) => x !== id) })}>Show {byId[id].name}</button>))}</span></div>
       )}
-      {lead.length > 0 && <div className={`dlead${editing ? ' editing' : ' ledger'}`}>{lead.map((p) => cell(p, lead))}</div>}
+      {leadRuns.map((r) => <div key={r[0].id} className={`dlead${editing ? ' editing' : LOOSE.has(r[0].id) ? ' loose' : ' ledger'}`}>{r.map((p) => cell(p, lead))}</div>)}
       <div className={`dboard${rail.length ? ' has-rail' : ''}${editing ? ' editing' : ''}`}>
         <div className="dmain" ref={mainRef}>{main.map((p) => cell(p, main))}</div>
         {rail.length > 0 && <div className="drail">{rail.map((p) => cell(p, rail))}</div>}
