@@ -33,6 +33,18 @@ beforeEach(() => {
   bank('v', 'Venmo - Personal'); account('ven', { item: 'v' });
 });
 
+// ---------- Investments: contributions from your pay ----------
+test('investments: contributions from your pay are listed per account', async () => {
+  const { saveInvestmentTransactions } = await import('../server/contributions.js');
+  account('k401', { type: 'investment', subtype: '401k', name: 'Acme Corp 401(k)' });
+  const day = new Date().toLocaleDateString('en-CA');
+  saveInvestmentTransactions(['k401'], day, [{ investment_transaction_id: 'c1', account_id: 'k401', date: day, amount: -750, type: 'cash', subtype: 'contribution' }]);
+  const { status, body } = await get('/investments/contributions');
+  assert.equal(status, 200);
+  assert.equal(body.last12, 750);
+  assert.deepEqual(body.accounts.map((a) => [a.name, a.last.amount]), [['Acme Corp 401(k)', 750]]);
+});
+
 // ---------- Goals ----------
 test('goals: add, edit a goal that follows an account (the form sends an empty "saved"), remove', async () => {
   const { body: { id } } = await post('/goals', { name: 'Emergency', target: 2000, account_id: 'chk' });

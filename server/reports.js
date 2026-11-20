@@ -1,4 +1,5 @@
 import db from './db.js';
+import { payContributions, activitySince } from './contributions.js';
 import { GROUPS, NOT_SPENDING, SPEND_SQL, historyStart } from './categories.js';
 import { bills } from './recurring.js';
 import { coverageStart } from './insights.js';
@@ -110,8 +111,14 @@ export function yearInReview(year = new Date().getFullYear(), today = new Date()
     });
     return { m, steps, future: `${m}-01` > today, partial: `${m}-01` <= today && isPartial(m) };
   });
+  // Contributions taken from your pay (a 401(k) and the like) are saving too, out of pay you never saw deposited: they
+  // count in what you saved and in the rate, over income plus them. `fromPaySince` is set when the providers' activity
+  // starts after the year began, so the figure is partial.
+  const fromPay = payContributions(`${year - 1}-12-31`, to).reduce((s, c) => s + c.amount, 0);
+  const since = activitySince(), fromPaySince = fromPay > 0 && since > from ? since : null;
+  const saved = income - spending + fromPay;
   return {
-    year, years, glance, income, spending, saved: income - spending, rate: income > 0 ? ((income - spending) / income) * 100 : null,
+    year, years, glance, income, spending, saved, fromPay, fromPaySince, rate: income + fromPay > 0 ? (saved / (income + fromPay)) * 100 : null,
     groups: groups.map((g) => ({ ...g, share: spending ? (g.v / spending) * 100 : 0, categories: cats[g.name] ?? [] })),
     topMonth: months[0] ?? null, byMonth: [...months].sort((a, b) => a.m.localeCompare(b.m)), biggest, trips, merchants,
     // How complete the year's data is: when it starts, and whether every bank's history covers it.

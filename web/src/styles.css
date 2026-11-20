@@ -798,7 +798,7 @@ p.btrips { display: block; text-align: center; margin-top: .25rem; }
 /* Net worth: what moved it */
 .wm { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: .6rem 2rem; align-items: center; }
 .wmtotal { grid-row: span 2; display: flex; flex-direction: column; }
-.wm.rows3 .wmtotal { grid-row: span 3; } .wm.rows4 .wmtotal { grid-row: span 4; }
+.wm.rows3 .wmtotal { grid-row: span 3; } .wm.rows4 .wmtotal { grid-row: span 4; } .wm.rows5 .wmtotal { grid-row: span 5; }
 .wmtotal .big { font-size: 1.8rem; }
 .wmrow { display: grid; grid-template-columns: 14rem minmax(0, 1fr) 7rem; gap: .75rem; align-items: center; }
 .wmrow > b { text-align: right; }

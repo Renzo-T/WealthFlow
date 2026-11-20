@@ -317,7 +317,8 @@ function WhatMoved({ stamp }) {
   // Money paid into accounts Mizo Money can't see; hidden when it rounds to $0.
   const showMoved = Math.round(b.moved ?? 0) !== 0;
   const showValued = Math.round(b.revalued ?? 0) !== 0;
-  const max = Math.max(Math.abs(b.saved), Math.abs(b.market), showMoved ? Math.abs(b.moved) : 0, showValued ? Math.abs(b.revalued) : 0, 1);
+  const showPay = Math.round(b.fromPay ?? 0) !== 0; // 401(k) and similar contributions taken from your pay
+  const max = Math.max(Math.abs(b.saved), Math.abs(b.market), showMoved ? Math.abs(b.moved) : 0, showValued ? Math.abs(b.revalued) : 0, showPay ? Math.abs(b.fromPay) : 0, 1);
   const bar = (v, cls) => <span className="wmbar"><i className={`${cls} ${v < 0 ? 'neg' : ''}`} style={{ width: `${(Math.abs(v) / max) * 100}%` }} /></span>;
   // Market and other: each investment account's change, then whatever is left (cash, cards, interest, fees).
   const rest = b.market - b.investments.reduce((s, a) => s + a.change, 0);
@@ -329,11 +330,14 @@ function WhatMoved({ stamp }) {
     ...(b.movedMore?.count ? [[`and ${b.movedMore.count} more`, signed(b.movedMore.amount)]] : [])];
   return (
     <Panel className="mt" title="What moved your net worth" actions={head}>
-      <div className={`wm rows${2 + showMoved + showValued}`}>
+      <div className={`wm rows${2 + showMoved + showValued + showPay}`}>
         <div className="wmtotal"><span className="small muted">{shortDate(b.from)} → {shortDate(b.to)}</span>
           <b className={`amt big ${b.change < 0 ? 'bad' : 'good'}`}>{signedUsd(b.change)}</b></div>
         <div className="wmrow"><Hover className="quiet" tip={<TipList title="Earned minus spent" rows={[['Income', usd(b.income)], ['Spending', `−${usd(b.spending)}`]]}
           note="Income minus spending, from your transactions. Transfers between your own accounts don't count, so this is not what you put into savings." />}>Earned minus spent</Hover>{bar(b.saved, 'saved')}<b className="amt">{signedUsd(b.saved)}</b></div>
+        {showPay && <div className="wmrow"><Hover className="quiet" tip={<TipList title="Put in from your pay" rows={b.fromPayItems.map((a) => [a.name, signedUsd(a.amount), `${a.count} contribution${a.count === 1 ? '' : 's'}`])}
+          note="Taken from your paycheck before it was deposited, so it isn't in your income or spending." />}>Put in from your pay</Hover>
+          {bar(b.fromPay, 'saved')}<b className="amt">{signedUsd(b.fromPay)}</b></div>}
         {showMoved && <div className="wmrow"><Hover className="quiet" tip={<TipList title="Moved to accounts not tracked" rows={movedRows}
           note="Transfers, savings and debt payments to an account that isn't linked. The money is still yours, but Mizo Money can't see where it went. Link that account, or count the transfer toward an asset you added below, to move it out of this row." />}>Moved to accounts not tracked</Hover>
           {bar(b.moved, 'moved')}<b className="amt">{signedUsd(b.moved)}</b></div>}
@@ -341,7 +345,7 @@ function WhatMoved({ stamp }) {
           note="Changes to the values of assets and debts you added, beyond transfers you counted toward them." />}>Assets and debts you added</Hover>
           {bar(b.revalued, 'market')}<b className="amt">{signedUsd(b.revalued)}</b></div>}
         <div className="wmrow"><Hover className="quiet" tip={<TipList title="Market and other" rows={marketRows}
-          note="The rest of the change, mostly investments going up or down, not counting money you moved in. It also catches interest, fees, balance corrections, and 401(k) contributions taken from your paycheck, which never show up as transactions." />}>Market and other</Hover>
+          note="The rest of the change, mostly investments going up or down, not counting money you moved in. It also catches interest, fees and balance corrections." />}>Market and other</Hover>
           {bar(b.market, 'market')}<b className="amt">{signedUsd(b.market)}</b></div>
       </div>
       {b.clipped && <p className="small muted foot">Real daily values start {shortDate(b.since)}, so this covers from then.</p>}

@@ -55,7 +55,7 @@ export default function AccountFlow({ data, rename }) {
       {g.nodes.map((n) => {
         const right = n.x0 < W / 2;
         const x = right ? n.x1 + 6 : n.x0 - 6, y = (n.y0 + n.y1) / 2;
-        const clickable = n.kind === 'income';
+        const clickable = n.kind === 'income' && !n.pay; // income sources can be renamed; one from pay is named by its account
         return (
           <g key={n.id}>
             <rect x={n.x0} y={n.y0} width={n.x1 - n.x0} height={Math.max(1, n.y1 - n.y0)} rx="2" fill={color(n)}

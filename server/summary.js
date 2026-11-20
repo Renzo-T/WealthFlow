@@ -1,6 +1,7 @@
 import db from './db.js';
 import { NOT_SPENDING, SPEND_SQL, historyStart, spendingBetween } from './categories.js';
 import { manualAssets, manualOn, valueOn, UNTRACKED_SQL } from './assets.js';
+import { payContributions } from './contributions.js';
 
 export const iso = (d) => d.toLocaleDateString('en-CA'); // local YYYY-MM-DD
 const shift = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d; };
@@ -69,8 +70,8 @@ export function netWorthHistory() {
 // What moved your net worth over a period: what you saved (income − spending from transactions), money moved to
 // accounts Mizo Money doesn't track (unpaired transfers, savings and debt payments out of a net-worth account that don't
 // name another net-worth account, unless you counted them toward an asset you added), new values you gave assets you
-// added, and everything else, mostly investments' market moves (also interest, fees outside
-// transactions, corrections). Only on dates where every
+// added, contributions taken from your pay into a 401(k) or similar (contributions.js), and everything else, mostly
+// investments' market moves (also interest, fees outside transactions, corrections). Only on dates where every
 // account has a real daily value: before Mizo Money's first snapshots, investment values aren't known.
 export function netWorthBreakdown(period = 'month', today = iso(new Date())) {
   const accounts = db.prepare('SELECT * FROM accounts WHERE in_networth = 1').all();
@@ -114,12 +115,18 @@ export function netWorthBreakdown(period = 'month', today = iso(new Date())) {
     AND COALESCE(pending, 0) = 0 AND COALESCE(category, '') <> 'Sweep' GROUP BY account_id`).all(from, to).map((r) => [r.id, r.s]));
   const named = new Map(db.prepare(`SELECT transfer_account id, SUM(amount) s FROM transactions WHERE date > ? AND date <= ? AND split_of IS NULL AND COALESCE(pending, 0) = 0
     AND transfer_pair IS NULL AND transfer_account IS NOT NULL AND transfer_account <> account_id GROUP BY transfer_account`).all(from, to).map((r) => [r.id, r.s]));
+  // Contributions taken from your pay (contributions.js): new money that never passed through a bank account.
+  const pay = payContributions(from, to, { networth: true });
+  const fromPayBy = new Map();
+  for (const c of pay) fromPayBy.set(c.account_id, (fromPayBy.get(c.account_id) ?? 0) + c.amount);
+  const fromPay = pay.reduce((s, c) => s + c.amount, 0);
   const investments = accounts.filter((a) => a.type === 'investment').map((a) => {
-    const added = (own.get(a.id) ?? 0) + (named.get(a.id) ?? 0);
+    const added = (own.get(a.id) ?? 0) + (named.get(a.id) ?? 0) + (fromPayBy.get(a.id) ?? 0);
     return { name: a.nickname ?? a.name, change: hist[a.id][end].balance - hist[a.id][start].balance - added, added };
   }).filter((a) => Math.abs(a.change) >= 0.5 || Math.abs(a.added) >= 0.5).sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
   return { available: true, period, from, to, since: dates[firstReal], clipped: start > want, change, income: flows.income, spending: flows.spending,
-    saved, moved, revalued, valued, market: change - saved - moved - revalued, investments,
+    saved, moved, revalued, valued, fromPay, market: change - saved - moved - revalued - fromPay, investments,
+    fromPayItems: [...fromPayBy].map(([id, amount]) => ({ name: pay.find((c) => c.account_id === id).account, amount, count: pay.filter((c) => c.account_id === id).length })),
     movedItems: untracked.slice(0, 5).map(({ asset, ...t }) => t),
     movedMore: { count: Math.max(0, untracked.length - 5), amount: untracked.slice(5).reduce((s, t) => s + t.amount, 0) } };
 }

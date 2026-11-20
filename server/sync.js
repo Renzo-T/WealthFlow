@@ -5,6 +5,7 @@ import { classify, friendly } from './categories.js';
 import { refreshTrips } from './trips.js';
 import { autoBackup } from './backup.js';
 import { notifyAfterSync } from './notify.js';
+import { fetchStart, saveInvestmentTransactions } from './contributions.js';
 
 // Upsert, not replace: keeps the user's manual category. classify() fills in category and transfer_pair.
 const upsertTx = db.prepare(`INSERT INTO transactions
@@ -153,6 +154,23 @@ export async function syncItem(item) {
         // Otherwise: consent for Investments not granted yet, or data not ready.
         if (e.response?.data?.error_code === 'PRODUCTS_NOT_SUPPORTED')
           db.prepare('UPDATE items SET no_investments = 1 WHERE id = ?').run(item.id);
+      }
+      // Activity inside those accounts, for contributions taken from your pay (contributions.js). Paged: up to 500 a call.
+      const ids = a.accounts.filter((x) => x.type === 'investment').map((x) => x.account_id);
+      const start = fetchStart(ids, today);
+      try {
+        const list = [];
+        for (let offset = 0; ;) {
+          const { data: p } = await plaid.investmentsTransactionsGet({ access_token, start_date: start, end_date: today, options: { count: 500, offset } });
+          list.push(...p.investment_transactions);
+          offset += p.investment_transactions.length;
+          if (!p.investment_transactions.length || offset >= p.total_investment_transactions) break;
+        }
+        saveInvestmentTransactions(ids, start, list);
+      } catch (e) {
+        const code = e.response?.data?.error_code;
+        if (code && code !== 'PRODUCT_NOT_READY' && code !== 'PRODUCTS_NOT_SUPPORTED' && code !== 'NO_INVESTMENT_ACCOUNTS')
+          console.warn(`Investment activity for ${item.institution}: ${code}`);
       }
     }
     try {

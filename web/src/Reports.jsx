@@ -187,8 +187,9 @@ function YearInReview({ onOpen }) {
       <div className="cards ruled yearcards">
         {d.complete && <div className="card"><h3>Income</h3><div className="big amt good">{usd(d.income)}</div></div>}
         <div className="card"><h3>Spending</h3><div className="big amt"><Hover className="quiet" tip={<TipList title="By month" rows={d.byMonth.map((m) => [monYear(m.m), usd(m.v)])} />}>{usd(d.spending)}</Hover></div>{d.topMonth && <div className="small muted">Most in {monYear(d.topMonth.m)} (<span className="amt">{usd(d.topMonth.v)}</span>)</div>}</div>
-        {d.complete && <div className="card"><h3>Saved</h3><div className={`big amt ${d.saved < 0 ? 'bad' : ''}`}><Hover className="quiet" tip={<TipList rows={[['Income', usd(d.income)], ['Spending', `−${usd(d.spending)}`]]}
-          note="Transfers, savings and card payments aren't spending." />}>{d.saved < 0 ? '−' : ''}{usd(Math.abs(d.saved))}</Hover></div>
+        {d.complete && <div className="card"><h3>Saved</h3><div className={`big amt ${d.saved < 0 ? 'bad' : ''}`}><Hover className="quiet" tip={<TipList rows={[['Income', usd(d.income)], ['Spending', `−${usd(d.spending)}`],
+            ...(d.fromPay > 0 ? [['Put in from your pay', `+${usd(d.fromPay)}`, d.fromPaySince ? `since ${shortDate(d.fromPaySince)}` : '401(k) and similar']] : [])]}
+          note={d.fromPay > 0 ? 'Contributions taken from your paycheck count as saved, and the rate is over income plus them.' : "Transfers, savings and card payments aren't spending."} />}>{d.saved < 0 ? '−' : ''}{usd(Math.abs(d.saved))}</Hover></div>
           {d.rate != null && <div className="small muted">{Math.round(d.rate)}% of income</div>}</div>}
         <div className="card"><h3>Trips</h3><div className="big">{d.trips.length ? <Hover className="quiet" tip={<TipList rows={d.trips.map((t) => [t.name, usd(t.total), shortDate(t.start)])} />}>{d.trips.length}</Hover> : 0}</div><div className="small muted">{d.trips.length ? usd(d.trips.reduce((s, t) => s + t.total, 0)) : 'None confirmed'}</div></div>
       </div>

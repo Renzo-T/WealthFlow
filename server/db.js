@@ -202,4 +202,11 @@ if (!db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 
     CREATE INDEX idx_mav_asset ON manual_asset_values(asset_id, date);
     INSERT INTO manual_asset_values (asset_id, date, value) SELECT id, '', value FROM manual_assets;`);
 }
+// Activity inside investment accounts, from Plaid Investments (/investments/transactions/get): buys, sells, dividends,
+// fees and cash moves. Kept separately from `transactions` (which are bank activity and feed spending); used for
+// contributions taken from your pay (contributions.js), which never appear in a bank account. Plaid: positive = cash out
+// of the account, negative = cash in.
+db.exec(`CREATE TABLE IF NOT EXISTS investment_transactions (id TEXT PRIMARY KEY, account_id TEXT NOT NULL, date TEXT NOT NULL,
+    type TEXT, subtype TEXT, amount REAL NOT NULL, name TEXT, security_id TEXT, quantity REAL, price REAL, fees REAL);
+  CREATE INDEX IF NOT EXISTS idx_invtx_account_date ON investment_transactions(account_id, date);`);
 export default db;

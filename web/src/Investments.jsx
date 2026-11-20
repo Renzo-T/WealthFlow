@@ -45,6 +45,26 @@ const Gain = ({ value, cost }) => (cost == null ? <span className="muted" title=
   : <span className={value - cost >= 0 ? 'good' : 'bad'}>{signed(value - cost)} <span className="small">{pct(((value - cost) / cost) * 100)}</span></span>);
 
 const qty = (n) => n.toLocaleString('en-US', { maximumFractionDigits: 3 });
+// Contributions taken from your pay into a 401(k), HSA or similar: they never pass through a bank account, so this is
+// the one place they're listed. One 2-unit row per account.
+function FromPay({ pay }) {
+  const partial = pay.since && pay.since > pay.yearStart;
+  return (
+    <Panel className="mt" title="Put in from your pay" actions={<span className="small muted">
+      <Hover tip={<TipList title="Last 12 months" rows={pay.accounts.map((a) => [a.name, usd0(a.last12)])} />}><span className="amt">{usd0(pay.year)}</span> this year</Hover>
+      {partial ? ` (since ${day(pay.since)})` : ''}</span>}>
+      <table className="t frompay">
+        <thead><tr><th>Account</th><th className="r">Latest</th><th className="r">This year</th><th className="r">Last 12 months</th></tr></thead>
+        <tbody>{pay.accounts.map((a) => (
+          <tr key={a.id}><td>{a.name}</td>
+            <td className="r"><span className="amt">{usd2(a.last.amount)}</span> <span className="small muted">{day(a.last.date)}</span></td>
+            <td className="r amt">{usd0(a.year)}</td><td className="r amt">{usd0(a.last12)}</td></tr>))}
+        </tbody>
+      </table>
+    </Panel>
+  );
+}
+
 const day = (d) => new Date(`${d.slice(0, 10)}T00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 const signed2 = (n) => `${n >= 0 ? '+' : '−'}${usd2(Math.abs(n))}`;
 const tone = (n) => (n > 0.004 ? 'good' : n < -0.004 ? 'bad' : 'muted');
@@ -98,8 +118,10 @@ export default function Investments() {
   const [rows, setRows] = useState(null);
   const [pending, setPending] = useState([]);
   const [view, setView] = useState('position');
+  const [pay, setPay] = useState(null); // contributions taken from your pay (server/contributions.js)
   useEffect(() => {
     api('/holdings').then(setRows);
+    api('/investments/contributions').then(setPay).catch(() => setPay(null));
     api('/items').then((r) => setPending(r.items.filter((i) => i.holdings_pending).map((i) => i.institution)));
   }, []);
   if (!rows) return <PageSkeleton />;
@@ -167,6 +189,8 @@ export default function Investments() {
               detail={(k) => <TipList title={k} rows={byAccountAll.filter((g) => g.kind === k).map((g) => [g.name, usd0(g.value), g.institution])} />} />}
           </div>
         </Panel>
+
+        {pay?.accounts.length > 0 && <FromPay pay={pay} />}
 
         <Panel className="mt scroll" title="Holdings" actions={<>
           {asOf && <span className="small muted">Prices as of {day(asOf)}</span>}

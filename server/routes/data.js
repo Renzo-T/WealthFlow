@@ -15,6 +15,7 @@ import { whatChanged, groupChanges, frequentSpend, watchlist, addWatch, topMerch
 
 import { assignTrips } from '../trips.js';
 import { cardInterest } from '../debt.js';
+import { contributionSummary } from '../contributions.js';
 const router = Router();
 
 router.get('/items', (_req, res) =>
@@ -245,6 +246,8 @@ router.put('/settings/cushion', (req, res) => {
   res.json({ amount: v });
 });
 router.get('/investments/summary', (_req, res) => res.json(investmentSummary()));
+// Contributions taken from your pay into retirement and HSA accounts: this year and the last 12 months, per account.
+router.get('/investments/contributions', (_req, res) => res.json(contributionSummary()));
 // The dashboard's month spread: each day's spending and its bills and paydays (spread.js).
 router.get('/month-spread', (req, res) => {
   const m = /^\d{4}-\d{2}$/.test(req.query.month ?? '') ? req.query.month : new Date().toLocaleDateString('en-CA').slice(0, 7);

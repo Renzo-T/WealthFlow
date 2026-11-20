@@ -76,7 +76,7 @@ function layoutOf(f) {
     const isSave = (c) => /Savings|Debt/.test(c.name);
     const trimmed = new Map();
     for (const c of [...cats.filter(isSave), ...cats.filter((c) => !isSave(c) && !c.saved)]) {
-      const cut = Math.min(over, c.value);
+      const cut = Math.min(over, c.value - (c.fromPay ?? 0)); // what came straight from pay stays
       if (cut > 0) { trimmed.set(c, cut); over -= cut; }
     }
     cats = cats.map((c) => (trimmed.has(c) ? { ...c, value: c.value - trimmed.get(c), full: c.value } : c)).filter((c) => c.value > 0.005);
@@ -125,9 +125,10 @@ function Sankey({ f, rename, label }) {
       setHl(`${side}:${x.name}`);
       show(e, side === 'l' ? <>
         <b>{x.name}</b><div>{usd2(x.value)}</div>
-        <div className="muted">{x.saved ? "Money you already had: spent or put into savings beyond this period's income" : x.credit ? "Refunds beyond this group's spending: money in, but not income" : `${pctOf(x.value, income)} of income`}</div>
+        <div className="muted">{x.pay ? 'Taken from your paycheck before it was deposited (may include an employer match)' : x.saved ? "Money you already had: spent or put into savings beyond this period's income" : x.credit ? "Refunds beyond this group's spending: money in, but not income" : `${pctOf(x.value, income)} of income`}</div>
       </> : <>
         <b>{x.name}</b><div>{usd2(x.value)} <span className="muted">· {pctOf(x.value, income)} of income</span></div>
+        {x.fromPay > 0 && <div className="muted">{usd2(x.fromPay)} of it straight from your pay</div>}
         {x.full && <div className="muted">{usd2(x.full)} in all; the rest came from balances you already had</div>}
         {x.rest && <ul>{x.rest.map((s) => <li key={s.name}><span>{s.name}</span><span>{usd2(s.value)}</span></li>)}</ul>}
         {x.subs?.length > 0 && <ul>{x.subs.map((s) => <li key={s.name}><span>{s.name}</span><span>{usd2(s.value)}</span></li>)}</ul>}
@@ -220,6 +221,7 @@ export default function Flow() {
               <span>Income <b className="good">{usd2(f.income)}</b></span>
               <span>Spending <b>{usd2(f.spending)}</b></span>
               <span title="Income minus spending. Money moved into savings and investments isn't spending.">{net >= 0 ? 'Left after spending' : 'Spent beyond income'} <b className={net >= 0 ? 'good' : 'bad'}>{usd2(Math.abs(net))}</b></span>
+              {f.fromPay > 0 && <span title="Taken from your paycheck into a 401(k) or similar before the rest was deposited, so it isn't in Income.">Put in from your pay <b className="good">{usd2(f.fromPay)}</b></span>}
               {f.moved > 0 && <span>Moved between your accounts <b className="muted">{usd2(f.moved)}</b></span>}
             </div>
             {view === 'groups'

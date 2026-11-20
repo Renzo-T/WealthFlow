@@ -62,7 +62,9 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
 ## Data flow
 1. **Sync** (`server/sync.js`): `syncAll()` runs on startup (if none in the last hour), every 6 h, and from the Refresh
    button; one at a time. Per bank: transactions (`/transactions/sync` cursor), accounts + daily balance snapshot,
-   consent check (`/item/get`), holdings, card statements (Liabilities), Plaid recurring streams. Then `classify()`.
+   consent check (`/item/get`), holdings, investment activity (`/investments/transactions/get` into
+   `investment_transactions`: 24 months the first time, then the last 90 days), card statements (Liabilities), Plaid
+   recurring streams. Then `classify()`.
    The first sync each day also writes `backups/auto-YYYY-MM-DD.db` in the data folder (`server/backup.js`, keeps 14).
 2. **Categorize** (`server/categories.js`, `classify()` recomputes every transaction). Two levels: budget **groups**
    (`GROUPS`) and subcategories; `transactions.category` is the subcategory, `grp` its group. Precedence:
@@ -121,6 +123,12 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
 8. **Insights** (`server/insights.js`): cash flow, top spending, allocation (`holdingKind`), money flow (`flow`,
    `accountFlow`), coverage (which bank's history starts last; months before it are "partial").
    `accountHistory()` (`server/summary.js`) gives per-account daily balances; net worth history sums it.
+   **Contributions from your pay** (`server/contributions.js`): 401(k)/HSA money taken from a paycheck never reaches a
+   bank account; Plaid reports it in the investment account as `cash`/`contribution` (other cash in, like `deposit`, is
+   also realized gains and fund exchanges, so it's ignored). One matching a bank transfer within 5 days is left out.
+   Net worth's What moved shows it as "Put in from your pay" (not market), the year in review counts it as saved,
+   Investments lists it per account, and Money flow draws each account as its own source ("<account> from pay", never
+   added to take-home income) into Savings & investments, or into the account itself in Through accounts.
    Assets and debts you add (`server/assets.js`) have a value history (`manual_asset_values`: value from a date on, ''
    = from the start), so a new value never backdates; a transfer can be counted toward one (`tx_id`), which takes it
    out of What moved's "moved to accounts not tracked". `manual_assets.value` is kept as today's value.

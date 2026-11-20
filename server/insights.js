@@ -2,6 +2,7 @@ import db from './db.js';
 import { iso } from './summary.js';
 import { SPEND_SQL, NOT_SPENDING, historyStart } from './categories.js';
 import { bills } from './recurring.js';
+import { payContributionsIn } from './contributions.js';
 
 export const ACCT = `COALESCE(a.nickname, a.name)`; // display name for an account row aliased `a`
 
@@ -96,7 +97,27 @@ export function flow(from, to) {
   // More went out (spending plus money put into savings and investments) than came in: the rest came from balances you
   // already had, usually cash moved into investments.
   if (allocated > income) left.push({ name: 'From account balances', value: allocated - income, saved: true });
-  return { from, to, income, spending, moved, sources: left, categories: right };
+  // Contributions taken from your pay (a 401(k) and the like) never reached a bank account: each account is a source of
+  // its own (not added to a salary, whose figure is take-home pay) and goes into Savings & investments. `fromPay` on that
+  // group is the part that came this way, so the income-only view never trims it.
+  const pay = payBy(from, to);
+  if (pay.length) {
+    left.push(...pay.map((p) => ({ name: `${p.name} from pay`, value: p.value, pay: true })));
+    const add = pay.reduce((s, p) => s + p.value, 0);
+    const sv = right.find((c) => c.name === 'Savings & investments');
+    if (sv) { sv.value += add; sv.fromPay = add; } else right.push({ name: 'Savings & investments', value: add, fromPay: add, subs: [] });
+  }
+  return { from, to, income, spending, moved, fromPay: pay.reduce((s, p) => s + p.value, 0), sources: left, categories: right };
+}
+
+// Contributions from your pay over [from, to), summed per account (largest first).
+function payBy(from, to) {
+  const by = new Map();
+  for (const c of payContributionsIn(from, to)) {
+    const x = by.get(c.account_id) ?? { id: c.account_id, name: c.account, value: 0 };
+    x.value += c.amount; by.set(c.account_id, x);
+  }
+  return [...by.values()].sort((a, b) => b.value - a.value);
 }
 
 // Money moving through your accounts over [from, to), as a graph for a multi-column Sankey:
@@ -147,6 +168,9 @@ export function accountFlow(from, to) {
       else add(node('r:refunds', 'Refunds & cash back', 'credit'), A, -t.amount);
     }
   }
+
+  // Contributions from your pay go straight into their account, from a source of their own.
+  for (const p of payBy(from, to)) add(node(`p:${p.id}`, `${p.name} from pay`, 'income', { pay: true }), acct(p.id), p.value);
 
   // Net opposite links (A→B and B→A) and links into and out of the same pooled node.
   const net = new Map();

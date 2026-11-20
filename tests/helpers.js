@@ -9,7 +9,7 @@ process.env.WEALTHFLOW_UPDATE_CHECKS = '0'; // never ask GitHub from tests (upda
 export const { default: db } = await import('../server/db.js');
 
 export function reset() {
-  for (const t of ['items', 'accounts', 'transactions', 'category_rules', 'bill_settings', 'card_statements', 'recurring', 'holdings', 'budgets', 'budget_groups', 'trips', 'home_bases', 'manual_assets', 'manual_asset_values'])
+  for (const t of ['items', 'accounts', 'transactions', 'category_rules', 'bill_settings', 'card_statements', 'recurring', 'holdings', 'budgets', 'budget_groups', 'trips', 'home_bases', 'manual_assets', 'manual_asset_values', 'investment_transactions'])
     db.prepare(`DELETE FROM ${t}`).run();
 }
 
