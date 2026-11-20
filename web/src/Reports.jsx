@@ -3,6 +3,7 @@ import { api } from './api.js';
 import { usd, usd2, usdCompact, niceTicks, shortDate, SERIES, NEUTRAL } from './format.js';
 import useWidth from './useWidth.js';
 import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, Trend, Est } from './ui.jsx';
+import Tip from './Tip.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 import Trips from './Trips.jsx';
 import { SIZES } from './MonthSpread.jsx';
@@ -22,31 +23,84 @@ function Figure({ partial, current, tip, children }) {
   return tip ? <Hover className="quiet" tip={tip}>{fig}</Hover> : fig;
 }
 // `refunded`: refunds beyond the month's spending in this group (or, on the total, all groups), left out of spending.
-function Cell({ v, partial, current, behind, avg, title, month, focus, refunded = 0 }) {
+// `cats`: for a group row, its categories' amounts this month ([name, value]), listed before the largest transactions;
+// `card`: a whole tip to use instead (Total spending: the month's breakdown). The whole cell is the hover target, and
+// entering it marks its month (`onHot`) in the header and the chart.
+const txRow = (t) => [t.name, `${t.amount < 0 ? '−' : ''}${usd2(Math.abs(t.amount))}`, shortDate(t.date)];
+function Cell({ v, partial, current, behind, avg, title, month, focus, hot, onHot, refunded = 0, cats, card }) {
   const refund = refunded >= 0.5 ? `${usd(refunded)} in refunds beyond spending, left out.` : null;
   const empty = Math.abs(v) < 0.5 && !refund;
-  const tip = !empty && (behind?.count || refund) ? <TipList title={`${title}, ${monYear(month)}`}
-    rows={(behind?.top ?? []).map((t) => [t.name, `${t.amount < 0 ? '−' : ''}${usd2(Math.abs(t.amount))}`, shortDate(t.date)])}
-    note={[refund, behind?.count > behind?.top.length ? `${behind.count} transactions; the largest ${behind.top.length} shown.` : null,
-      avg ? `${v >= avg ? '+' : '−'}${usd(Math.abs(v - avg))} vs the average${current ? ' (month not over yet)' : ''}.` : null,
-      partial ? 'Missing history from at least one bank.' : null].filter(Boolean).join(' ') || null} /> : null;
+  const split = cats?.filter(([, x]) => Math.abs(x) >= 0.5) ?? [];
+  const shown = split.length > 1 ? 3 : behind?.top.length ?? 0;
+  const note = [refund, behind?.count > shown ? `${behind.count} transactions; the largest ${shown} shown.` : null,
+    avg ? `${v >= avg ? '+' : '−'}${usd(Math.abs(v - avg))} vs the average${current ? ' (month not over yet)' : ''}.` : null,
+    partial ? 'Missing history from at least one bank.' : null].filter(Boolean).join(' ') || null;
+  const tip = empty ? null : card ?? (split.length > 1
+    ? <><TipList title={`${title}, ${monYear(month)}`} rows={split.map(([n, x]) => [n, `${x < 0 ? '−' : ''}${usd(Math.abs(x))}`, v > 0 && x > 0 ? `${Math.round((x / v) * 100)}%` : null])} />
+      <div className="hovsub">Largest</div><TipList rows={(behind?.top ?? []).slice(0, 3).map(txRow)} note={note} /></>
+    : behind?.count || refund ? <TipList title={`${title}, ${monYear(month)}`} rows={(behind?.top ?? []).map(txRow)} note={note} /> : null);
   return (
-    <td className={`r amt rcell${partial ? ' partial' : ''}${current ? ' current' : ''}${focus ? ' rfocus' : ''}`}>
+    <td className={`r amt rcell${partial ? ' partial' : ''}${current ? ' current' : ''}${focus ? ' rfocus' : ''}${hot ? ' rhot' : ''}`} onMouseEnter={onHot}>
       {empty ? <span className="muted">—</span> : <Figure partial={partial} current={current} tip={tip}>{usd(v)}</Figure>}
     </td>
+  );
+}
+
+// One month's spending group by group: the breakdown behind a chart column and a Total spending figure. Each group in
+// its chart colour, with its share of the month and how far it is from its own average (finished, complete months
+// only, and only when it's a real difference); then anything left out.
+function MonthBreakdown({ d, i, color, hint }) {
+  const m = d.months[i], total = d.totals.spending.values[i], avgT = d.totals.spending.avg;
+  const current = m === d.current, partial = d.partial[i], compare = !current && !partial;
+  const rows = d.groups.filter((g) => g.spending && g.values[i] >= 0.5).sort((a, b) => b.values[i] - a.values[i]);
+  const off = (v, avg) => (compare && avg != null && Math.abs(v - avg) >= Math.max(20, avg * 0.1) ? v - avg : null);
+  const refunded = d.totals.spending.refunded?.[i] ?? 0;
+  const notes = [refunded >= 0.5 ? `${usd(refunded)} in refunds beyond a group's spending, left out.` : null,
+    partial ? 'Missing history from at least one bank.' : current ? "The month isn't over yet." : null, hint].filter(Boolean);
+  return (
+    <div className="mbk">
+      <div className="mbk-head"><span>{monYear(m)}{current ? ' so far' : ''}</span><b className="amt">{usd(total)}</b></div>
+      {compare && avgT != null && <div className="mbk-sub">{total >= avgT ? '+' : '−'}{usd(Math.abs(total - avgT))} vs the average month</div>}
+      {rows.length > 0 && <div className="mbk-grid">
+        <span className="mbk-cols"><span /><span /><span>Share</span><span /><span>{compare ? 'vs avg' : ''}</span></span>
+        {rows.map((g) => {
+          const v = g.values[i], dx = off(v, g.avg);
+          return (
+            <span className="mbk-row" key={g.group}>
+              <i className="dot" style={{ background: color(g.name) }} />
+              <span className="mbk-name">{g.name}</span>
+              <span className="mbk-share">{total > 0 ? `${Math.round((v / total) * 100)}%` : ''}</span>
+              <b className="amt">{usd(v)}</b>
+              <span className={`mbk-delta${dx == null ? '' : dx > 0 ? ' up' : ' down'}`}>{dx == null ? '' : <><Trend up={dx > 0} />{usd(Math.abs(dx))}</>}</span>
+            </span>
+          );
+        })}
+      </div>}
+      {notes.length > 0 && <div className="hovnote muted">{notes.join(' ')}</div>}
+    </div>
   );
 }
 
 // The months' shape before their numbers: each month's spending as a stack of its four biggest groups (over the range,
 // in series order) and everything else in grey, its total written on top, the average a dashed rule. A month missing
 // a bank's history is faded and the month in progress is drawn in outline, the same pencil the table uses.
-function MonthShape({ d, cols }) {
-  const [ref, W] = useWidth(900);
-  const H = 190, L = 52, T = 22, B = 24;
+// The chart's colours: the four biggest spending groups over the range in series order, everything else grey.
+function shapeColors(d, cols) {
   const spend = d.groups.filter((g) => g.spending);
   const tot = (g) => cols.reduce((s, i) => s + Math.max(0, g.values[i]), 0);
   const top = [...spend].sort((a, b) => tot(b) - tot(a)).slice(0, 4).filter((g) => tot(g) > 0);
   const rest = spend.filter((g) => !top.includes(g));
+  return { top, rest, color: (name) => SERIES[top.findIndex((g) => g.name === name)] ?? NEUTRAL };
+}
+
+// Hovering a month anywhere in its column (or focusing it; arrow keys move along) lifts it, fades the rest, marks its
+// column in the table and opens its breakdown beside the bar. Clicking marks the month in the table (again: unmarks).
+// `hot`: the month index hovered here or in the table.
+function MonthShape({ d, cols, hot, onHot, mark, onPick }) {
+  const [ref, W] = useWidth(900);
+  const [tip, setTip] = useState(null);
+  const H = 190, L = 52, T = 22, B = 24;
+  const { top, rest, color } = shapeColors(d, cols);
   const stacks = cols.map((i) => {
     const parts = [...top.map((g, k) => ({ name: g.name, v: Math.max(0, g.values[i]), color: SERIES[k] })),
       { name: 'Everything else', v: rest.reduce((s, g) => s + Math.max(0, g.values[i]), 0), color: NEUTRAL }];
@@ -57,29 +111,49 @@ function MonthShape({ d, cols }) {
   const y = (v) => T + ((hi - v) * (H - T - B)) / hi;
   const band = (W - L) / Math.max(1, stacks.length), bw = Math.min(56, band * 0.56);
   const cx = (k) => L + band * (k + 0.5);
+  // The card sits beside the bar (right of it; left of it in the right half), level with the top of the plot.
+  const enter = (k) => {
+    onHot(stacks[k].i);
+    const right = k >= stacks.length / 2;
+    setTip({ x: right ? cx(k) - bw / 2 + 2 : cx(k) + bw / 2 - 2, y: T - 18, right,
+      content: <MonthBreakdown d={d} i={stacks[k].i} color={color} hint={stacks[k].m === mark ? 'Click to unmark it in the table.' : 'Click to mark it in the table.'} /> });
+  };
+  const leave = () => { setTip(null); onHot(null); };
+  const step = (e, k) => {
+    const to = { ArrowRight: k + 1, ArrowLeft: k - 1, Home: 0, End: stacks.length - 1 }[e.key];
+    if (to != null) { e.preventDefault(); e.currentTarget.parentNode.querySelectorAll('.rshape-col')[Math.max(0, Math.min(stacks.length - 1, to))]?.focus(); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(stacks[k].m); }
+    else if (e.key === 'Escape') leave();
+  };
   return (
-    <div className="rshape">
+    <div className={`rshape${hot != null ? ' hot' : ''}`}>
       <div ref={ref} />
       <div className="legend rshape-key">{top.map((g, k) => <span key={g.name}><i className="dot" style={{ background: SERIES[k] }} />{g.name}</span>)}
         {rest.length > 0 && <span><i className="dot" style={{ background: NEUTRAL }} />Everything else</span>}
         {avg != null && <span><i className="rshape-avgkey" />Average</span>}</div>
-      <svg className="chart" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Spending by month, by group" style={{ '--base': `${y(0)}px` }}>
+      <div className="rshape-plot" onMouseLeave={leave}>
+      <svg className="chart" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="group" aria-label="Spending by month, by group" style={{ '--base': `${y(0)}px` }}>
         {ticks.map((v) => <g key={v}><line className="grid" x1={L} x2={W} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{usdCompact(v, 1)}</text></g>)}
         {stacks.map((s, k) => {
           let base = 0;
           return (
-            <g key={s.m} className={`rshape-col${s.partial ? ' partial' : ''}${s.current ? ' current' : ''}`} style={{ '--i': k }}>
+            <g key={s.m} className={`rshape-col${s.partial ? ' partial' : ''}${s.current ? ' current' : ''}${hot === s.i ? ' on' : ''}${mark === s.m ? ' mark' : ''}`} style={{ '--i': k }}
+              tabIndex={0} role="button" aria-pressed={mark === s.m} aria-label={`${monYear(s.m)}${s.current ? ' so far' : ''}: ${usd(s.total)} spent. Mark it in the table.`}
+              onMouseEnter={() => enter(k)} onFocus={() => enter(k)} onBlur={leave} onClick={() => onPick(s.m)} onKeyDown={(e) => step(e, k)}>
+              <rect className="rshape-bg" x={L + band * k + 2} y={T - 18} width={band - 4} height={H - T + 18} rx="6" />
               {s.parts.filter((p) => p.v > 0).map((p) => {
                 const y0 = y(base + p.v), h = y(base) - y0; base += p.v;
-                return <rect key={p.name} x={cx(k) - bw / 2} y={y0} width={bw} height={Math.max(0, h - 1)} fill={p.color} stroke={s.current ? p.color : undefined}><title>{`${p.name}: ${usd(p.v)}`}</title></rect>;
+                return <rect key={p.name} className="rshape-seg" x={cx(k) - bw / 2} y={y0} width={bw} height={Math.max(0, h - 1)} fill={p.color} stroke={s.current ? p.color : undefined} />;
               })}
               <text className="rshape-tot" x={cx(k)} y={y(s.total) - 6} textAnchor="middle">{s.total >= 1000 ? usdCompact(s.total, 1) : usd(s.total)}</text>
-              <text x={cx(k)} y={H - 6} textAnchor="middle">{mon(s.m)}{s.current ? ' so far' : ''}</text>
+              <text className="rshape-mon" x={cx(k)} y={H - 6} textAnchor="middle">{mon(s.m)}{s.current ? ' so far' : ''}</text>
             </g>
           );
         })}
         {avg != null && <line className="rshape-avg" x1={L} x2={W} y1={y(avg)} y2={y(avg)} />}
       </svg>
+      <Tip tip={tip} />
+      </div>
     </div>
   );
 }
@@ -95,19 +169,26 @@ function MonthTable({ focus }) {
   });
   const [d, setD] = useState(null);
   const [open, setOpen] = useState(() => recall('open', {}));
+  const [mark, setMark] = useState(focus); // the month marked in the table: picked in the year at a glance or the chart
+  const [hot, setHot] = useState(null); // the month index under the pointer, in the chart or the table
+  useEffect(() => setMark(focus), [focus]);
   useEffect(() => { setD(null); api(`/reports/months?months=${n}`).then(setD); }, [n]);
-  useEffect(() => { if (d && focus) document.querySelector('.rtable .rfocus')?.scrollIntoView({ block: 'nearest', inline: 'center' }); }, [d, focus]);
+  useEffect(() => { if (d && focus) document.querySelector('.rtable th.rfocus')?.scrollIntoView({ block: 'nearest', inline: 'center' }); }, [d, focus]);
   if (!d) return <PageSkeleton panels={1} header={false} />;
   // A month with nothing in any row (before any history) is left out rather than shown as a column of dashes.
   const used = d.months.map((_, i) => i).filter((i) => d.groups.some((g) => Math.abs(g.values[i]) >= 0.5) || Math.abs(d.totals.spending.values[i]) >= 0.5);
   const cols = used.length ? used : d.months.map((_, i) => i);
   const toggle = (g) => { const o = { ...open, [g]: !open[g] }; setOpen(o); remember('open', o); };
+  const { color } = shapeColors(d, cols);
   const row = (r, opts = {}) => {
     return (
       <tr key={opts.key ?? r.name} className={opts.cls}>
         <td>{opts.label ?? r.name}</td>
         {cols.map((i) => <Cell key={d.months[i]} v={r.values[i]} partial={d.partial[i]} current={d.months[i] === d.current}
-          behind={r.behind?.[i]} refunded={r.refunded?.[i]} avg={r.avg} title={typeof opts.label === 'string' ? opts.label : r.name} month={d.months[i]} focus={d.months[i] === focus} />)}
+          behind={r.behind?.[i]} refunded={r.refunded?.[i]} avg={r.avg} title={typeof opts.label === 'string' ? opts.label : r.name} month={d.months[i]}
+          focus={d.months[i] === mark} hot={hot === i} onHot={() => setHot(i)}
+          cats={r.categories?.length > 1 ? r.categories.map((c) => [c.name, c.values[i]]).sort((a, b) => b[1] - a[1]) : undefined}
+          card={opts.total ? <MonthBreakdown d={d} i={i} color={color} /> : undefined} />)}
         <td className="r amt ravg">{r.avg == null ? '—' : <Hover className="quiet" tip={<TipList title="Average" rows={d.averaged.map((m) => [monYear(m), usd(r.values[d.months.indexOf(m)])])}
           note="Finished months with history from every bank." />}>{usd(r.avg)}</Hover>}</td>
       </tr>
@@ -126,9 +207,9 @@ function MonthTable({ focus }) {
   return (
     <Panel className="scroll" title="Month by month" actions={
       <div className="ranges">{[6, 12].map((k) => <button key={k} className={n === k ? 'on' : ''} onClick={() => { setN(k); remember('months', k); }}>{k} months</button>)}</div>}>
-      <MonthShape d={d} cols={cols} />
-      <table className="t rtable">
-        <thead><tr><th />{cols.map((i) => [d.months[i], i]).map(([m, i]) => <th key={m} className={`r${d.partial[i] ? ' partial' : ''}${m === focus ? ' rfocus' : ''}`}>
+      <MonthShape d={d} cols={cols} hot={hot} onHot={setHot} mark={mark} onPick={(m) => setMark(mark === m ? null : m)} />
+      <table className="t rtable" onMouseLeave={() => setHot(null)}>
+        <thead><tr><th />{cols.map((i) => [d.months[i], i]).map(([m, i]) => <th key={m} className={`r${d.partial[i] ? ' partial' : ''}${m === mark ? ' rfocus' : ''}${hot === i ? ' rhot' : ''}`}>
           {d.partial[i] && d.missing[i]?.length ? <Hover className="quiet" tip={<TipList title={`${monYear(m)} is incomplete`}
             rows={d.missing[i].map((x) => [x.bank, `from ${shortDate(x.from)}`])} note="These banks' history starts later, so their activity this month is missing." />}>
             {mon(m)}{m === d.current ? ' so far' : ''}</Hover> : <>{mon(m)}{m === d.current ? ' so far' : ''}</>}</th>)}
@@ -137,7 +218,7 @@ function MonthTable({ focus }) {
           {income && <>{row(income, { cls: 'rgroup rincome', label: <><CategoryIcon group="Income" size={22} />Income</> })}</>}
           <tr className="rsep"><td colSpan={cols.length + 2}>Spending</td></tr>
           {section(spend)}
-          {row(d.totals.spending, { cls: 'rtotal', label: 'Total spending' })}
+          {row(d.totals.spending, { cls: 'rtotal', label: 'Total spending', total: true })}
           {other.length > 0 && <><tr className="rsep"><td colSpan={cols.length + 2}>Saving & debt</td></tr>{section(other)}</>}
         </tbody>
       </table>

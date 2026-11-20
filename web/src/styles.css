@@ -1213,12 +1213,12 @@ h1 {
 .main[data-page="networth"] :is(.bar i, .meter i, .bbar i, .wmbar i, .sharebar i) { animation: none; }
 .main[data-page="plan"] :is(.chart .draw, .chart .nw-halo) { animation: none; }
 .listdays .clist .stamp { animation: stamp var(--t-arrive) var(--ease) both; animation-delay: calc(var(--i, 0) * 18ms + 120ms); }
-.rshape-col rect { transform-box: view-box; transform-origin: 0 var(--base, 100%); animation: rise var(--t-draw) var(--ease) both;
+.rshape-col .rshape-seg { transform-box: view-box; transform-origin: 0 var(--base, 100%); animation: rise var(--t-draw) var(--ease) both;
   animation-delay: calc(var(--i, 0) * 45ms); }
 .rshape-col .rshape-tot { animation: fadein var(--t-arrive) var(--ease) calc(var(--t-draw) * .5 + var(--i, 0) * 45ms) both; }
 .main[data-page="investments"] .splitbar { animation: draw var(--t-draw) var(--ease) both; }
 @keyframes fadein { from { opacity: 0; } }
-.main[data-quiet] :is(.clist .stamp, .rshape-col rect, .rshape-col .rshape-tot, .splitbar) { animation: none; }
+.main[data-quiet] :is(.clist .stamp, .rshape-col .rshape-seg, .rshape-col .rshape-tot, .splitbar) { animation: none; }
 .main > * { transition: opacity var(--t-base) var(--ease); }
 .main[data-settling] > :not(.top, .alert) { opacity: 0; transition: none; }
 .main[data-settling] *, .main[data-settling] *::before { animation-play-state: paused; }
@@ -1439,6 +1439,12 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 .yg-head { display: flex; align-items: baseline; justify-content: space-between; gap: .4rem; padding-bottom: .3rem; border-bottom: 1px solid var(--ink); }
 .yg-head b { font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .yg-head .small { color: var(--muted); white-space: nowrap; }
+/* Hovering a figure (or its month in the chart) washes its month's column and its row, darker where they cross, so the
+   eye keeps its place; the whole cell is the hover target, not just the number. */
+.rtable :is(th, td).rhot, .rtable tbody tr:not(.rsep):hover > td { background-color: color-mix(in srgb, var(--soft) 50%, transparent); }
+.rtable tbody tr:not(.rsep):hover > td.rhot { background-color: var(--soft); }
+.rtable th.rhot { color: var(--ink); }
+.rtable td.rcell > .hov { display: flex; align-items: center; justify-content: flex-end; height: calc(2 * var(--u)); margin: -3px -.5rem; padding: 0 .5rem; }
 .yg-month.future .yg-head b { color: var(--muted); }
 .yg-month.future .yg-head { border-bottom-color: var(--line-strong); }
 .yg-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
@@ -2127,9 +2133,37 @@ button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 .rshape-avgkey { display: inline-block; width: 16px; margin-right: .35rem; vertical-align: middle; border-top: 1.5px dashed var(--ink); opacity: .6; }
 .chart .rshape-avg { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 5 4; opacity: .6; }
 .chart .rshape-tot { fill: var(--ink); font-weight: 700; }
-.rshape-col.partial rect { opacity: .35; }
-.rshape-col.current rect { fill-opacity: .25; }
-.rshape-col.current rect { stroke-width: 1; stroke-dasharray: 3 2; }
+.rshape-col.partial .rshape-seg { opacity: .35; }
+.rshape-col.current .rshape-seg { fill-opacity: .25; }
+.rshape-col.current .rshape-seg { stroke-width: 1; stroke-dasharray: 3 2; }
+/* A month is one target, its whole column: hovered (here or in the table) it gets a pencil wash and the rest fade; the
+   month marked in the table keeps a blue label. Its breakdown (MonthBreakdown) floats beside the bar. */
+.rshape-plot { position: relative; }
+.rshape-col { cursor: pointer; outline: none; }
+.chart .rshape-bg { fill: transparent; transition: fill var(--t-quick) var(--ease); }
+.chart .rshape-col.on .rshape-bg { fill: color-mix(in srgb, var(--soft) 70%, transparent); }
+.chart .rshape-col:focus-visible .rshape-bg { stroke: var(--blue); stroke-width: 1.5; }
+.chart .rshape-col.mark .rshape-mon { fill: var(--blue); font-weight: 700; }
+.rshape-col :is(.rshape-seg, .rshape-tot) { transition: opacity var(--t-quick) var(--ease); }
+.rshape.hot .rshape-col:not(.on) :is(.rshape-seg, .rshape-tot) { opacity: .3; }
+.rshape.hot .rshape-col.partial:not(.on) .rshape-seg { opacity: .15; }
+
+/* The month's breakdown: group, share, amount, and how far it is from its own average, on equal-width figures. */
+.tip:has(.mbk), .hovtip:has(.mbk) { min-width: 17rem; max-width: 22rem; }
+.mbk-head { display: flex; justify-content: space-between; gap: 1rem; font-weight: 600; }
+.mbk-head b { font-weight: 700; }
+.mbk-sub { color: var(--muted); font-size: .75rem; }
+.mbk-grid { display: grid; grid-template-columns: auto 1fr auto auto auto; column-gap: .6rem; align-items: center; margin-top: .45rem; }
+.mbk-grid > span { display: contents; }
+.mbk-grid .dot { margin: 0; }
+.mbk-cols > span { font-size: .65rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: right; padding-bottom: .15rem; }
+.mbk-row > * { padding: .1rem 0; }
+.mbk-share { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.mbk-row b { text-align: right; font-weight: 600; white-space: nowrap; }
+.mbk-delta { display: inline-flex; align-items: center; justify-content: flex-end; gap: .2rem; color: var(--muted); font-size: .75rem; white-space: nowrap; min-width: 3.5rem; }
+.mbk-delta.up { color: var(--ink); }
+.mbk-delta .trend { flex: none; }
+.hovsub { margin-top: .45rem; font-size: .65rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 
 /* Goals beside a one-item Watchlist is one column wide: the table folds to the goal, what's saved, and the meter (the
    target and what's left are a click away on Plan). */
