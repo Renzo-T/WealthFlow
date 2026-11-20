@@ -12,7 +12,7 @@ export const JOURNALS = {
   indigo: {
     name: 'Indigo', desc: 'Cloth-bound indigo on warm white dot-grid paper, with a yellow highlighter.', ruling: 'dots', doodle: 'star',
     light: { rail: '#1e2a47', rail2: '#2b3b63', railInk: '#c5ccdd', railInk2: '#a9b2c8', btn: '#1e2a47', btnHover: '#2b3b63', bg: '#f2f0e9', card: '#fffefc', tint: '#f8f6f0', dot: '#d9d9d0', accent: '#2d4a93', soft: '#e8ecf5', noteInk: '#2d4a93', inkDot: '#26355c', hi: '#ffe27a' },
-    dark: { rail: '#1a2440', rail2: '#283a66', railInk: '#aab4cc', railInk2: '#8f9bbb', btn: '#3c58a8', btnHover: '#4a67b8', bg: '#11141c', card: '#181c27', tint: '#1d2230', dot: '#191e23', accent: '#9db2ea', soft: '#222a40', noteInk: '#afc0ee', inkDot: '#a9b9e6', hi: '#5a4c12' },
+    dark: { rail: '#1a2440', rail2: '#283a66', railInk: '#aab4cc', railInk2: '#8f9bbb', btn: '#3c58a8', btnHover: '#4a67b8', bg: '#11141c', card: '#181c27', tint: '#1d2230', dot: '#191e23', accent: '#9db2ea', soft: '#222a40', noteInk: '#afc0ee', inkDot: '#a9b9e6', hi: '#836400' },
     tapes: [['stripe', '#b9c8ec', '#e2e8f6'], ['dots', '#f6df98', '#fff8e0'], ['grid', '#ece7da', '#c3cbe0']],
   },
   plum: {
@@ -24,7 +24,7 @@ export const JOURNALS = {
   charcoal: {
     name: 'Charcoal', desc: 'A black cover on bright white grid paper, with an orange highlighter.', ruling: 'grid', doodle: 'plane',
     light: { rail: '#25262a', rail2: '#3b3d44', railInk: '#c9cbd1', railInk2: '#a9acb4', btn: '#25262a', btnHover: '#3b3d44', bg: '#f3f3f0', card: '#ffffff', tint: '#f7f7f4', dot: '#e0e0db', accent: '#24478f', soft: '#e7ecf6', noteInk: '#24478f', inkDot: '#202226', hi: '#ffc685' },
-    dark: { rail: '#1b1c1f', rail2: '#33353b', railInk: '#b9bbc2', railInk2: '#9a9ca4', btn: '#4a4d55', btnHover: '#575a63', bg: '#121213', card: '#1b1b1d', tint: '#222224', dot: '#1d1d20', accent: '#a3bbec', soft: '#24283a', noteInk: '#b6c8f0', inkDot: '#d6d7db', hi: '#6e4519' },
+    dark: { rail: '#1b1c1f', rail2: '#33353b', railInk: '#b9bbc2', railInk2: '#9a9ca4', btn: '#4a4d55', btnHover: '#575a63', bg: '#121213', card: '#1b1b1d', tint: '#222224', dot: '#1d1d20', accent: '#a3bbec', soft: '#24283a', noteInk: '#b6c8f0', inkDot: '#d6d7db', hi: '#7a4710' },
     tapes: [['stripe', '#cfcfca', '#f3f2ee'], ['solid', '#d9bd94'], ['dots', '#ffd9ae', '#e58c3a']],
   },
   saddle: {

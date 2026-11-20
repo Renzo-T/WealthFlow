@@ -27,16 +27,18 @@ export const signed = (n, fmt = usd2) => `${n < 0 ? '−' : '+'}${fmt(Math.abs(n
 // as "series 5". They're theme variables (styles.css: --s1..--s4), so dark mode gets its own validated steps.
 export const SERIES = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)'];
 export const NEUTRAL = 'var(--neutral)', NEUTRAL_LIGHT = 'var(--neutral-light)';
-export const INCOME = 'var(--in)', SPENDING = 'var(--s4)';
+export const INCOME = 'var(--in)', SPENDING = 'var(--ink-dot)';
 // A colour at a given strength over the page (for icon chips and soft fills): works with theme variables.
 export const tint = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+// What a holding is: one hue per class, so neighbours never share a family (ETFs and index funds used to be two
+// indigos). Classes past the first five take darker steps of the hues; "Other" is a grey that stays visible.
+// Where it's held (taxable, retirement, HSA) is a second, different question, so it never reuses those hues: one ink in
+// three strengths, darkest for the largest kind, so the two allocation bars can't be read as one key.
 export const ALLOC_COLORS = {
-  ETFs: SERIES[0], 'Employer plan funds': SERIES[1], Stocks: SERIES[2], 'Mutual funds': SERIES[3], Cash: NEUTRAL,
-  Taxable: SERIES[0], Retirement: SERIES[1], HSA: SERIES[3],
-  // Classes named from a fund's name (insights.js holdingKind): darker steps of the four hues, and an "Other" grey that
-  // stays visible, so a large slice is never the pale grey.
-  'Index funds': 'color-mix(in srgb, var(--s1) 55%, var(--ink))', 'Target date funds': 'color-mix(in srgb, var(--s2) 55%, var(--ink))',
+  ETFs: SERIES[0], 'Index funds': SERIES[2], 'Employer plan funds': SERIES[1], Stocks: SERIES[3], Cash: NEUTRAL,
+  'Mutual funds': 'color-mix(in srgb, var(--s4) 55%, var(--ink))', 'Target date funds': 'color-mix(in srgb, var(--s2) 55%, var(--ink))',
   Bonds: 'color-mix(in srgb, var(--s3) 55%, var(--ink))', Other: 'color-mix(in srgb, var(--neutral) 60%, var(--ink))',
+  Taxable: 'color-mix(in srgb, var(--ink-dot) 45%, var(--card))', Retirement: 'var(--ink-dot)', HSA: 'color-mix(in srgb, var(--ink-dot) 22%, var(--card))',
 };
 export const allocColor = (name) => ALLOC_COLORS[name] ?? NEUTRAL_LIGHT;
 export const PALETTE = [...SERIES, NEUTRAL]; // legacy: prefer the named colours above

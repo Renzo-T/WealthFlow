@@ -27,7 +27,7 @@ start; `.env`/environment variables override it). See README.md for setup.
 ## Run
 - `npm start`: API (`node --watch`, port 4000) and Vite 8 (port 3000, proxies `/api`) together. Node 22.13+ (`node:sqlite`
   without a flag; `server/env-check.js` refuses older).
-- The rail is icons only (`.shell.slim`, App.jsx) and opens over the page while hovered or focused (`.shell.railopen`); the page never moves.
+- The rail is icons only (`.shell.slim`, App.jsx) and opens over the page while hovered or focused (`.shell.railopen`); the page never moves. Its first item, Find, opens the Ctrl+K jump dialog (`mizo:jump` event, Jump.jsx).
 - `npm run app`: everyday use. `scripts/app.mjs` builds `web/dist` when sources are newer, then runs the server with
   `WEALTHFLOW_APP=1`: page + API together on 3000 (https with `certs/`). Installable (manifest, icons, `web/public/sw.js`,
   which only shows a built-in "isn't running" page when the server is down; nothing is cached). Settings > App:

@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { api } from './api.js';
-import { usd2, shortDate } from './format.js';
+import { usd, usd2, shortDate } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 import MonthSpread, { dayName } from './MonthSpread.jsx';
@@ -18,6 +18,10 @@ const KINDS = [
 // "Detected" is the usual case, so it isn't said; only a different source (or your own edit) is named.
 const srcLine = (b) => [b.pinned ? 'Your schedule' : b.source === 'detected' ? null : SOURCE[b.source], b.edited && !b.pinned ? 'edited' : null,
   b.account ? `${b.direction === 'in' ? 'into' : 'from'} ${b.account}` : null].filter(Boolean).join(' · ');
+// Card names from the bank carry trademark marks ("Card® Elite™"); they read better without them.
+const tidy = (s) => s.replace(/[®™]/g, '').replace(/\s{2,}/g, ' ');
+// A card paid from its running balance with nothing on it.
+const owesNothing = (b) => !!b.card && b.amount_mode === 'current' && Math.abs(b.amount ?? 0) < 0.005;
 const BillCols = () => <colgroup><col /><col className="c-sched" /><col className="c-next" /><col className="c-amt" /></colgroup>;
 const SHOWN = 6;
 const today = () => new Date().toLocaleDateString('en-CA');
@@ -252,11 +256,11 @@ export default function Bills() {
   const toggle = (b) => setEditing(editing === b.key ? null : b.key);
   const row = (b) => (
     <Fragment key={b.key}>
-      <tr className={`billrow${b.hidden ? ' dim' : ''}${editing === b.key ? ' open' : ''}`} tabIndex={0} aria-expanded={editing === b.key}
+      <tr className={`billrow${b.hidden ? ' dim' : ''}${owesNothing(b) ? ' quiet' : ''}${editing === b.key ? ' open' : ''}`} tabIndex={0} aria-expanded={editing === b.key}
         title="Click to edit" onClick={(e) => { if (!e.target.closest('button, a')) toggle(b); }}
         onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); toggle(b); } }}>
         <td><span className="rowicon"><CategoryIcon group={b.can_card ? 'Debt repayment' : b.direction === 'in' ? 'Income' : b.grp} sub={b.category} kind={b.can_card ? 'card' : undefined} />
-          <span className="bname1"><b title={b.name}>{b.name}</b>{srcLine(b) && <div className="small muted" title={srcLine(b)}>{srcLine(b)}</div>}</span></span>
+          <span className="bname1"><b title={b.name}>{tidy(b.name)}</b>{srcLine(b) && <div className="small muted" title={srcLine(b)}>{srcLine(b)}</div>}</span></span>
 </td>
         <td className="cut" title={[b.schedule ? b.schedule[0].toUpperCase() + b.schedule.slice(1) : null,
           b.card ? `Due ${shortDate(b.card.due)}${b.card.paid ? ' · paid' : ''}` : null].filter(Boolean).join('. ') || undefined}>{b.schedule_short || '—'}</td>
@@ -266,7 +270,7 @@ export default function Bills() {
         <td className="r"><Hover tip={<TipList title={`${MODE[b.amount_mode] ?? 'Amount'}${paidOn(b) ? ` · ${b.direction === 'in' ? 'received' : 'paid'} ${shortDate(paidOn(b))}` : ''}`}
           rows={(b.recent ?? []).map((r) => [shortDate(r.date), usd2(r.amount)])}
           note={b.card ? `Statement ${usd2(b.card.statement ?? 0)} · current balance ${usd2(b.card.current ?? 0)}` : null} />}>
-          <span className={`tamt${b.direction === 'in' ? ' good' : ''}`}>{billAmount(b)}</span>
+          {owesNothing(b) ? <span className="tamt muted">Nothing owed</span> : <span className={`tamt${b.direction === 'in' ? ' good' : ''}`}>{billAmount(b)}</span>}
           {paidOn(b) ? <div className="small muted paidline"><Stamp kind={b.direction === 'in' ? 'in' : 'out'} done icon={markIcon(b)} className="mini" />{b.direction === 'in' ? 'Received' : 'Paid'} {shortDate(paidOn(b))}</div>
             : <div className="small muted paidline">{MODE[b.amount_mode]}</div>}</Hover></td>
       </tr>
@@ -279,7 +283,9 @@ export default function Bills() {
         </>} /></td></tr>}
     </Fragment>
   );
-  const outgoing = active.filter((b) => b.direction !== 'in'), incoming = active.filter((b) => b.direction === 'in');
+  // A card paid from its running balance with nothing on it owes nothing: it goes last, written quietly.
+  const outgoing = [...active.filter((b) => b.direction !== 'in' && !owesNothing(b)), ...active.filter((b) => b.direction !== 'in' && owesNothing(b))];
+  const incoming = active.filter((b) => b.direction === 'in');
   const head = (label) => <thead><tr><th>{label}</th><th>Schedule</th><th>Next</th><th className="r">Amount</th></tr></thead>;
 
   return (
@@ -291,7 +297,7 @@ export default function Bills() {
       {adding && <Panel className="mt" title="Add a bill or recurring income">
         <AddBill addManual={add} onAdded={() => { setAdding(false); load(); }} onCancel={() => setAdding(false)} /></Panel>}
       <PaycheckPrompt onDone={load} />
-      <p className="small muted billcount" title="Click a bill to change its schedule or amount. Schedules account for weekends and bank holidays; your edits always win.">{active.length} active · <b className="amt">{usd2(monthOut)}</b> going out in the next 30 days</p>
+      <p className="small muted billcount" title="Click a bill to change its schedule or amount. Schedules account for weekends and bank holidays; your edits always win.">{active.length} active · <b className="amt">{usd(monthOut)}</b> going out in the next 30 days</p>
       <section className="card scroll sticky-head mt-sm">
         <table className="t billtable">
           <BillCols />

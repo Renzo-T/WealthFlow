@@ -65,8 +65,10 @@ function RowMenu({ g, onEdit, onRemove, onSaved }) {
         onBlur={commit(close)} onKeyDown={(e) => e.key === 'Enter' && commit(close)(e)} /></label>)} />;
 }
 
+// A line only when the balance moved; flat or missing history draws nothing (and no label).
+const hasSpark = (data) => data?.length > 1 && Math.max(...data) - Math.min(...data) >= 1;
 function Spark({ data }) {
-  if (!data?.length || Math.max(...data) - Math.min(...data) < 1) return null;
+  if (!hasSpark(data)) return null;
   const lo = Math.min(...data), span = Math.max(...data) - lo;
   const pts = data.map((v, i) => `${((i / (data.length - 1)) * 100).toFixed(1)},${(30 - ((v - lo) / span) * 26).toFixed(1)}`).join(' ');
   return <svg className="goalspark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"><polyline points={pts} fill="none" style={{ stroke: 'var(--blue)' }} strokeWidth="1.6" vectorEffect="non-scaling-stroke" /></svg>;
@@ -141,7 +143,9 @@ function GoalCard({ g, accounts, reload }) {
         {p.eta && !g.everyday && <div><span className="muted">At that pace</span><b>{monthYear(p.eta)}</b></div>}
         {!g.target_date && !done && <button className="linkbtn" onClick={() => setEdit(true)}>Add a date to see what it takes each month</button>}
       </div>
-      <div className="goalsparkslot"><Spark data={g.spark} /></div>
+      <div className="goalsparkslot">{hasSpark(g.spark) && <>
+        <span className="goalsparklabel small muted">{g.account ? `${g.account} balance` : 'Balance'}, last 3 months</span>
+        <Spark data={g.spark} /></>}</div>
     </div>
   );
 }

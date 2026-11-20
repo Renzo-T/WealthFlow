@@ -112,7 +112,7 @@ function WatchBar({ w, over }) {
 }
 
 // Column heads of the watchlist rows (the first and last columns are the name and the remove button).
-const WATCH_HEADS = ['Monthly average', 'This year', 'This month', 'Target', 'On pace for'];
+const WATCH_HEADS = ['Average', 'This year', 'This month', 'Target', 'On pace'];
 
 export function WatchlistPanel({ data, reload }) {
   const [adding, setAdding] = useState(false);

@@ -4,13 +4,14 @@ import { Panel, PageHeader, Hover, confirmDialog } from './ui.jsx';
 import { PlaidKeys } from './PlaidSetup.jsx';
 import { JOURNALS, RULING_NAME, tapeBackground } from './journals.js';
 import { currentJournal, setJournal, decorationOn, setDecoration } from './journal.js';
+import { crossfade } from './motion.js';
 
 // The journal: cover, paper, ink, highlighter and tapes (journals.js), and whether the tape and doodles show.
 // Remembered in this browser, like the light/dark choice.
 function JournalSetting() {
   const [id, setId] = useState(currentJournal);
   const [deco, setDeco] = useState(decorationOn);
-  const pick = (k) => { setJournal(k); setId(k); };
+  const pick = (k) => { if (k !== id) crossfade(() => { setJournal(k); setId(k); }); };
   return (
     <Panel className="mt" title="Journal">
       <div className="jpicker" role="group" aria-label="Journal">

@@ -20,6 +20,7 @@ import { api } from './api.js';
 import { syncLine } from './syncStatus.js';
 import { syncThemeColor } from './journal.js';
 import { startGrid } from './grid.js';
+import { crossfade } from './motion.js';
 import { PageHeader, HeaderTools, DashboardSkeleton, PageBoundary, Seal, DialogHost } from './ui.jsx';
 
 const HIDE_KEY = 'wealthflow.hideAmounts', THEME_KEY = 'wealthflow.theme';
@@ -70,6 +71,12 @@ function usePage() {
 export default function App() {
   const resume = window.location.pathname === '/oauth';
   const [page, pageQs] = usePage();
+  // A page's arrival (meters filling, charts drawing, the month inking in) plays the first time you open it in this
+  // window. Coming back to it is a plain cut (data-quiet on .main; styles.css), so quick check-ins never wait on motion.
+  const seenPages = useRef(new Set());
+  const [visit, setVisit] = useState({ page, quiet: false });
+  if (visit.page !== page) setVisit({ page, quiet: seenPages.current.has(page) });
+  useEffect(() => { seenPages.current.add(page); }, [page]);
   const [meta, setMeta] = useState({ items: [], max: 10 });
   const [s, setS] = useState(null);
   const [extra, setExtra] = useState(null);
@@ -78,7 +85,7 @@ export default function App() {
   // Hide amounts. The body class is set before rendering (not only in the effect below), so text that checks it while
   // rendering (amountsHidden) is right straight away.
   const [hide, setHideState] = useState(() => { const h = store.get(HIDE_KEY) === '1'; document.body.classList.toggle('privacy', h); return h; });
-  const setHide = (h) => { document.body.classList.toggle('privacy', h); setHideState(h); };
+  const setHide = (h) => crossfade(() => { document.body.classList.toggle('privacy', h); setHideState(h); });
   const [update, setUpdate] = useState(null); // a newer release? (Settings › Updates)
   useEffect(() => { api('/update').then(setUpdate).catch(() => {}); }, []);
   const [setup, setSetup] = useState(null); // Plaid keys saved yet? Until they are, the first-run screen shows.
@@ -106,7 +113,12 @@ export default function App() {
     window.addEventListener('scroll', f, { passive: true });
     return () => window.removeEventListener('scroll', f);
   }, []);
-  const toggleTheme = () => { const next = dark ? 'light' : 'dark'; setTheme((next === 'dark') === systemDark() ? null : next); };
+  // The new theme goes on <html> inside the cross-fade (not only in the effect above), so the fade lands on it.
+  const toggleTheme = () => crossfade(() => {
+    const next = dark ? 'light' : 'dark', t = (next === 'dark') === systemDark() ? null : next;
+    if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+    setTheme(t);
+  });
 
   const load = useCallback(async () => {
     const [items, sum, recent, cashflow, categories, allocation, upcoming, budgets, goals, insights, watchlist, todo, safe, invest] = await Promise.all(
@@ -157,6 +169,9 @@ export default function App() {
       <aside className="side" onMouseEnter={() => railTo(true, 120)} onMouseLeave={() => railTo(false, 200)}
         onFocus={() => railTo(true, 0)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) railTo(false, 0); }}>
         <div className="logo"><Seal size={30} /><span className="wordmark">Mizo Money</span></div>
+        <button className="nav findnav" title="Find a page, transaction, bill or account (Ctrl+K)" onClick={() => window.dispatchEvent(new Event('mizo:jump'))}>
+          <svg className="navicon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5L21 21" /></svg>
+          <span className="navlabel">Find <kbd>Ctrl K</kbd></span></button>
         {RAIL.map((g) => (
           <Fragment key={g.ids[0]}>
             {g.head && <div className="navgroup">{g.head}</div>}
@@ -189,7 +204,7 @@ export default function App() {
           </Fragment>
         ))}
       </aside>
-      <main className="main" ref={mainRef}>
+      <main className="main" ref={mainRef} data-quiet={visit.quiet ? '' : undefined}>
         {/* Signing in again is urgent (that bank's data has stopped), so it stays a banner on every page. Other failures
             aren't yours to fix: say why, and that it's tried again (at the next sync, or now with Try again). */}
         {broken.map((i) => (

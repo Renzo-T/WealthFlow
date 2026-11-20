@@ -5,6 +5,7 @@ import { usd, label, usd2 } from './format.js';
 import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, amountsHidden, Chevron, Migrate, Close, confirmDialog, Standing, Stand } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 import CloseMonth from './CloseMonth.jsx';
+import { incomeSplit } from './incomeSplit.js';
 
 export function BudgetsPanel({ items, suggestions }) {
   const top = [...items].sort((a, b) => b.spent / b.amount - a.spent / a.amount).slice(0, 4);
@@ -40,7 +41,8 @@ const bigOver = (over, budget) => over > Math.max(25, 0.1 * (budget || 0));
 function Remaining({ value, income, saving, of }) {
   const v = Math.round(value);
   if (saving && v < 0) return <span className="rem muted" title={amountsHidden() ? 'Saved more than planned' : `${usd(-v)} more than planned`}>met</span>;
-  if (income && v < 0) return <span className="rem amt" title={amountsHidden() ? 'Received more than budgeted' : `${usd(-v)} more than budgeted`}>+{usd(-v)}</span>; // income above budget is good news, not "over"
+  // Income above budget is good news, not "over", and not more still to come: "+$X extra".
+  if (income && v < 0) return <span className="rem nowrap" title={amountsHidden() ? 'Received more than budgeted' : `${usd(-v)} more than budgeted`}><span className="amt good">+{usd(-v)}</span> <span className="small muted">extra</span></span>;
   const alarm = v < 0 && bigOver(-v, of);
   return <span className={`rem amt${alarm ? ' over' : v < 0 ? ' slight' : ''}`}>{v < 0 ? '−' : ''}{usd(Math.abs(v))}</span>;
 }
@@ -76,12 +78,13 @@ function BudgetInput({ c, save }) {
   );
 }
 
-// Actual against budget. Green: on track. Amber: a flexible category ahead of an even pace for today. Red: over.
-// Income fills green as it arrives. The tick marks the even pace (flexible spending only).
+// Actual against budget, the same colours as the dashboard: ink on track, amber a flexible category ahead of an even pace
+// for today (or a few dollars over), red well over. Money in (income, saving) fills green.
+// The tick marks the even pace (flexible spending only).
 function Meter({ actual, budget, income, pace, saving }) {
-  if (!budget) return <div className="meter blank" />;
+  if (!budget || Math.abs(actual) < 0.5) return <div className="meter blank" />; // nothing yet: the $0 already says so
   const p = Math.min(100, (Math.max(0, actual) / budget) * 100);
-  const state = income || saving ? 'ok' : bigOver(actual - budget, budget) ? 'over' : actual > budget + 0.5 ? 'ahead' : pace != null && pace < 1 && p > pace * 100 + 10 ? 'ahead' : 'ok';
+  const state = income || saving ? 'in' : bigOver(actual - budget, budget) ? 'over' : actual > budget + 0.5 ? 'ahead' : pace != null && pace < 1 && p > pace * 100 + 10 ? 'ahead' : 'ok';
   return (
     <div className="meter"><i className={state} style={{ width: `${p}%` }} />
       {pace != null && pace > 0 && pace < 1 && <b style={{ left: `${pace * 100}%` }} title="An even pace for today" />}</div>
@@ -150,40 +153,60 @@ function GroupBlock({ id, title, rows, income, progress, save, tags, clear, grou
   const hidden = rows.length - rows.filter(active).length;
   if (!rows.length) return null;
   const whole = !!group?.whole;
-  const budget = whole ? group.groupBudget ?? 0 : rows.reduce((s, c) => s + (c.budget ?? 0), 0), actual = rows.reduce((s, c) => s + c.actual, 0);
-  const left = budget - actual;
+  const budget = whole ? group.groupBudget ?? 0 : rows.reduce((s, c) => s + (c.budget ?? 0), 0), signed = rows.reduce((s, c) => s + c.actual, 0);
   const saving = rows.every((c) => c.saving);
+  // A refund lowers only its own group's spending, never below zero: the same rule as Reports, the dashboard and the
+  // totals below. The categories keep their signed amounts; what's left out is named on the group's figure.
+  const refunded = !income && !saving && signed < -0.5 ? -signed : 0;
+  const actual = refunded ? 0 : signed;
+  const left = budget - actual;
   const toggle = () => { setOpen(!open); remember(`closed.${id}`, open); };
   // The group as one budget line (its amount, suggestion and spending), for the header's input and meter.
   const self = whole && { category: title, isGroup: true, budget: group.groupBudget, suggested: group.groupSuggested, basis: 'its categories', kind: group.kind,
     overridden: group.groupOverridden, usual: group.groupUsual };
+  // The group's less-used actions sit beside its title (shown on hover or focus), not on a row of their own.
+  const menu = ((group && rows.length > 1) || budget > 0) && <GroupMenu label={title}>
+    {group && rows.length > 1 && <button type="button" onClick={() => setWhole(group.group, !whole)}
+      title={whole ? 'Give each category its own amount, split by recent spending' : 'One amount for the whole group; categories just show what was spent'}>
+      {whole ? 'Budget each category' : 'Budget as one amount'}</button>}
+    {budget > 0 && <button type="button" onClick={() => clear(whole ? { groups: [group.group] } : {
+      categories: rows.filter((c) => c.budget != null && !c.isGroup).map((c) => c.category),
+      groups: rows.filter((c) => c.budget != null && c.isGroup).map((c) => c.category) }, title)}>Clear budgets</button>}
+  </GroupMenu>;
   return (
     <div className="bgroup">
       <div className={`bhead${whole ? ' whole' : ''}`}>
-        <button className="btitle" onClick={toggle} aria-expanded={open}>
-          <svg className={`chev${open ? ' open' : ''}`} viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>{title}</button>
+        <span className="btitlecell">
+          <button className="btitle" onClick={toggle} aria-expanded={open}>
+            <svg className={`chev${open ? ' open' : ''}`} viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>{title}</button>
+          {menu}
+        </span>
         <span className="r amt bheadin">{self?.overridden && <span className="ftag mtag">{monthShort(month)} only<button className="tagx" onClick={() => resetMonth(self)} aria-label="Back to the usual amount"><Close /></button></span>}
           {whole ? <BudgetInput c={self} save={save} /> : budget ? usd(budget) : '—'}</span>
-        <span className="r amt">{usd(actual)}</span>
+        <span className="r amt">{refunded ? <Hover className="quiet" tip={`${usd(refunded)} in refunds beyond this group's spending, left out (a refund only offsets its own group).`}>{usd(0)}</Hover> : usd(actual)}</span>
         <span className="r">{whole ? (group.groupBudget != null ? <Remaining value={left} income={income} saving={saving} of={group.groupBudget} /> : <span className="muted" title="No budget">—</span>)
           : budget ? <Remaining value={left} income={income} saving={saving} of={budget} /> : null}</span>
         {whole && <span className="bmeter"><Meter actual={actual} budget={group.groupBudget} income={income} saving={saving} pace={!income && group.kind === 'flexible' ? progress : null} /></span>}
       </div>
       {open && shown.map((c) => <Row key={c.category} c={c} income={income} progress={progress} save={save} tags={tags} inGroup={whole} month={month} resetMonth={resetMonth} setRollover={setRollover} />)}
-      {open && <div className="bfoot">
-        {hidden > 0 && <button className="bmore" onClick={() => setMore(!more)}>
+      {open && hidden > 0 && <div className="bfoot">
+        <button className="bmore" onClick={() => setMore(!more)}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
-          {more ? 'Hide' : 'Show'} {hidden} unbudgeted</button>}
-        {!hidden && <span className="bfill" />}
-        {((group && rows.length > 1) || budget > 0) && <GroupMenu label={title}>
-          {group && rows.length > 1 && <button type="button" onClick={() => setWhole(group.group, !whole)}
-            title={whole ? 'Give each category its own amount, split by recent spending' : 'One amount for the whole group; categories just show what was spent'}>
-            {whole ? 'Budget each category' : 'Budget as one amount'}</button>}
-          {budget > 0 && <button type="button" onClick={() => clear(whole ? { groups: [group.group] } : {
-            categories: rows.filter((c) => c.budget != null && !c.isGroup).map((c) => c.category),
-            groups: rows.filter((c) => c.budget != null && c.isGroup).map((c) => c.category) }, title)}>Clear budgets</button>}
-        </GroupMenu>}
+          {more ? 'Hide' : 'Show'} {hidden} unbudgeted</button>
       </div>}
+    </div>
+  );
+}
+
+// Two income lines that look like the same pay (incomeSplit.js), said once under Income with the fix beside it.
+function IncomeSplit({ rows, merge }) {
+  const s = incomeSplit(rows);
+  if (!s) return null;
+  return (
+    <div className="bsplitnote small">
+      <span><b>{label(s.over.category)}</b> has <span className="amt">{usd(s.extra)}</span> more than budgeted while <b>{label(s.idle.category)}</b> has
+        received nothing. If they're the same pay, budget it once.</span>
+      <button type="button" className="btn" onClick={() => merge(s.over, s.idle)}>Move {label(s.idle.category)} into {label(s.over.category)}</button>
     </div>
   );
 }
@@ -303,6 +326,8 @@ export default function Budget() {
   const setRollover = async (c, on) => { await api(`/budget-rollover/${encodeURIComponent(c.category)}`, { method: 'PUT', body: JSON.stringify({ on }) }); load(); };
   const extra = { month, resetMonth, setRollover };
   const save = async (c, amount) => { await put(c, amount); load(); };
+  // Two income lines that are the same pay: one budget, on the line the money arrives in (every month, like any budget).
+  const merge = async (into, from) => { await put(into, into.budget + from.budget, false); await put(from, '', false); load(); };
   const setWhole = async (group, whole) => { await api(`/budget-groups/${encodeURIComponent(group)}`, { method: 'PUT', body: JSON.stringify({ whole }) }); load(); };
   const withGroup = (g) => g.categories.map((c) => ({ ...c, group: g.group }));
   // A group budgeted as one amount, as a single line (for the Fixed & flexible view, suggestions and totals).
@@ -368,6 +393,7 @@ export default function Budget() {
             </span></div>
           <ColHeads last="To come" />
           <GroupBlock id="income" title="Income" rows={incomeRows} income progress={b.progress} save={save} clear={clear} group={b.income} setWhole={setWhole} {...extra} />
+          {!b.income.whole && <IncomeSplit rows={incomeRows} merge={merge} />}
           <Total title="Total income" budget={b.totals.income} actual={b.totals.incomeActual} income />
           <div className="bsection">Expenses</div>
           <ColHeads />
@@ -388,12 +414,13 @@ export default function Budget() {
             await api('/settings/budget-trips', { method: 'PUT', body: JSON.stringify({ on: e.target.checked }) }); load(); }} />
             Count trips in these categories</label>
           {!b.trips.counted && b.trips.left_out > 0 && <p className="small muted btrips">Leaving out <b className="amt">{usd(b.trips.left_out)}</b> spent on <a href="#/trips">trips</a> this month.</p>}
-          {!none && <button className="linkbtn bclearall" onClick={() => clear(null)}>Clear the whole budget</button>}
           </div>
           {todo.length > 0 && <Panel title="Suggestions">
             <p className="small muted mt-0"><Hover tip={<TipList title="Where suggestions come from" note={`Your recurring bills and your average spending (${b.suggestedFrom.map((m) => monthName(m).split(' ')[0]).join(', ')}). They show as ≈ amounts until you set them.`} />}>{todo.length} {todo.length === 1 ? 'line has' : 'lines have'} no budget yet.</Hover></p>
             <button className="btn primary" onClick={suggest}>Fill in suggestions</button>
           </Panel>}
+          {/* The one destructive action, last and on its own, not among the settings above. */}
+          {!none && <div className="bdanger"><button className="linkbtn bad bclearall" onClick={() => clear(null)}>Clear the whole budget</button></div>}
         </aside>
       </div>
     </>

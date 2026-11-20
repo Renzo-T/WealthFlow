@@ -6,6 +6,9 @@ import { signed } from './format.js';
 // Ctrl+K, or / when focus isn't in a field: one small dialog to go to a page or find a transaction.
 const typing = (el) => !!el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
 
+// Shortcuts shown in the dialog; the Transactions page handles all but Ctrl K.
+const KEYS = [[['Ctrl', 'K'], 'find'], [['/'], 'search transactions'], [['j', 'k'], 'move'], [['Enter'], 'open'], [['c'], 'category'], [['Esc'], 'clear']];
+
 export default function Jump({ pages, commands = [] }) {
   const dlg = useRef(null), input = useRef(null), from = useRef(null);
   const [open, setOpen] = useState(false);
@@ -15,18 +18,21 @@ export default function Jump({ pages, commands = [] }) {
   const [at, setAt] = useState(0);
 
   useEffect(() => {
-    const onKey = (e) => {
+    const show = () => {
       if (dlg.current?.open) return;
-      const ctrlK = (e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k';
-      const slash = e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(document.activeElement);
-      if (!ctrlK && !slash) return;
-      e.preventDefault();
       from.current = document.activeElement;
       setText(''); setTxs([]); setAt(0); setOpen(true);
       dlg.current?.showModal();
     };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    const onKey = (e) => {
+      const ctrlK = (e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k';
+      const slash = e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(document.activeElement);
+      if (!ctrlK && !slash) return;
+      e.preventDefault(); show();
+    };
+    // The rail's Find button opens it too, so the shortcut isn't the only way in (and it says what the shortcut is).
+    document.addEventListener('keydown', onKey); window.addEventListener('mizo:jump', show);
+    return () => { document.removeEventListener('keydown', onKey); window.removeEventListener('mizo:jump', show); };
   }, []);
 
   useEffect(() => {
@@ -58,6 +64,8 @@ export default function Jump({ pages, commands = [] }) {
   const found = term.length >= 2 ? places.filter((x) => x.name.toLowerCase().includes(low)).slice(0, 5) : [];
   const items = [...hits.map((p) => ({ kind: 'page', key: `p-${p.id}`, page: p })), ...cmds.map((c) => ({ kind: 'cmd', key: `c-${c.label}`, cmd: c })), ...found.map((x) => ({ kind: 'place', key: `l-${x.kind}-${x.id}`, place: x })), ...txs.map((t) => ({ kind: 'tx', key: `t-${t.id}`, tx: t }))];
   const cur = Math.min(at, Math.max(items.length - 1, 0));
+  // Keyboard help: with nothing typed, or when "keys" / "shortcuts" is.
+  const showKeys = !low || (low.length >= 2 && ['keyboard', 'keys', 'shortcuts'].some((w) => w.startsWith(low)));
 
   const close = () => dlg.current?.close();
   const go = (item) => {
@@ -94,6 +102,12 @@ export default function Jump({ pages, commands = [] }) {
             </li>))}
           {!items.length && <li className="jnone muted" role="presentation">{term.length < 2 ? 'No page matches.' : 'Nothing found.'}</li>}
         </ul>
+        {showKeys && (
+          <dl className="jkeys small" aria-label="Keyboard">
+            <dt className="muted">Keyboard</dt>
+            {KEYS.map(([keys, what]) => <div key={what}><dd>{keys.map((k) => <kbd key={k}>{k}</kbd>)}</dd><dd className="muted">{what}</dd></div>)}
+          </dl>
+        )}
         <p className="small muted jhint">↑ ↓ to move · Enter to open · Esc to close</p>
       </>}
     </dialog>

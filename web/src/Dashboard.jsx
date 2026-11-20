@@ -17,8 +17,8 @@ import { unit } from './grid.js';
 
 // Every dashboard panel, in default order. `span` is its width in a 3-column row (3 = full width); `rail` means it
 // sits in the right-hand column on wide screens by default. To add a panel: add it here; saved layouts pick it
-// up at its default position automatically. `span` may be a function of the dashboard's data (Goals goes under a one-item Watchlist, beside Cash flow, and
-// runs full width under a longer one, so the board has no gaps). `hidden` panels start hidden for new or reset layouts only (a saved layout keeps what it shows). `lead` panels (where you stand, this month) run full width above the
+// up at its default position automatically. `span` may be a function of the dashboard's data (Goals sits beside a one-item Watchlist and runs full
+// width under a longer one, so the board has no gaps). `hidden` panels start hidden for new or reset layouts only (a saved layout keeps what it shows). `lead` panels (where you stand, this month) run full width above the
 // rest, side column included, in your order, as sections of one ruled sheet (separate sheets while you customize).
 export const PANELS = [
   { id: 'cards', name: 'Where you stand', span: 3, lead: true, render: ({ s, extra }) => <Cards s={s} safe={extra.safe} budgets={extra.budgets} /> },
@@ -27,15 +27,17 @@ export const PANELS = [
   { id: 'month', was: ['glance'], name: 'This month', span: 3, lead: true, render: ({ extra }) => (
     <MonthSpread aside={<GlanceSide todo={extra.todo} upcoming={extra.upcoming} />} below={<GlanceBudget budgets={extra.budgets} />} />) },
   { id: 'insight', name: 'What changed', span: 3, lead: true, render: ({ extra }) => <InsightStrip changed={extra.insights?.changed} todo={extra.todo} /> },
-  { id: 'networth', name: 'Net worth chart', span: 2, render: ({ s }) => <NetWorthChart history={s.history} /> },
+  // The same chart leads the Net worth page, and net worth with its 30-day change already leads the dashboard, so it
+  // starts hidden (a new id, so saved layouts hide it too); Customize brings it back.
+  { id: 'nwchart', hidden: true, name: 'Net worth chart', span: 2, render: ({ s }) => <NetWorthChart history={s.history} /> },
   { id: 'allocation', hidden: true, name: 'Asset allocation', span: 1, render: ({ extra }) => <AssetAllocation a={extra.allocation} /> },
   { id: 'investments', hidden: true, name: 'Investments', span: 1, render: ({ extra }) => <InvestmentsCard d={extra.invest} /> },
   { id: 'recent', name: 'Recent transactions', span: 1, render: ({ extra }) => <RecentTransactions items={extra.recent} /> },
-  { id: 'cashflow', name: 'Cash flow', span: 1, render: ({ extra }) => <CashFlow data={extra.cashflow} /> },
+  { id: 'cashflow', name: 'Cash flow', span: 2, render: ({ extra }) => <CashFlow data={extra.cashflow} /> },
   { id: 'top', hidden: true, name: 'Top spending', span: 1, rail: true, render: ({ extra }) => <Categories c={extra.categories} changes={extra.insights?.groupChanges} /> },
   { id: 'watchlist', name: 'Watchlist', span: 2, render: ({ extra, reload }) => <WatchlistPanel data={extra.watchlist} reload={reload} /> },
   { id: 'frequent', hidden: true, name: 'Frequent spending', span: 1, render: ({ extra }) => <FrequentPanel items={extra.insights?.frequent ?? []} early={extra.insights?.changed?.reason === 'early'} /> },
-  { id: 'goals', name: 'Goals', span: ({ extra }) => ((extra.watchlist?.items.length ?? 0) <= 1 ? 2 : 3), render: ({ extra }) => <GoalsPanel items={extra.goals} /> },
+  { id: 'goals', name: 'Goals', span: ({ extra }) => ((extra.watchlist?.items.length ?? 0) <= 1 ? 1 : 3), render: ({ extra }) => <GoalsPanel items={extra.goals} /> },
 ];
 const DEFAULT = defaultLayout(PANELS);
 const merge = (saved) => mergeLayout(saved, PANELS);

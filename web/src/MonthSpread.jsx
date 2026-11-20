@@ -12,7 +12,7 @@ import { unit } from './grid.js';
 // corner (Stamp.jsx: square for bills, round when money comes in, the category's drawn icon knocked out once it has
 // happened, a dashed pencil box while something is still to come, a count when there are several). It reads without a
 // legend: the figures are written out and the hover names each item. Days before the 1st and after the last day are
-// hatched blanks.
+// hatched blanks. On the dashboard the head carries a one-line key for the stamps (money in, bill paid, due).
 export const SIZES = [0, 5, 7, 10, 13, 16, 20, 24]; // dot diameter per step of the fixed ramp (server/spread.js): Reports' year at a glance
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const monthName = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -122,6 +122,13 @@ export default function MonthSpread({ month: fixed, onMonth, selected, onPick, d
           <div className="head">
             <h2><span className="mlabel">{monthName(month)}</span>{month !== thisMonth && <span className="asof">{month < thisMonth ? 'past' : 'ahead'}</span>}
               {due > 0 && <span className="asof">Bills still due <b className="amt">{usd(due)}</b></span>}</h2>
+            {/* The key, on the dashboard: there the days carry only a figure and a stamp, so what the marks mean is written
+                once in the head (Bills writes each bill out in its day and needs none). */}
+            {!list && <span className="legend ckey" aria-hidden="true">
+              <span><Stamp kind="in" done icon="arrowin" />Money in</span>
+              <span><Stamp kind="out" done icon="receipt" />Bill paid</span>
+              <span><Stamp kind="out" />Due</span>
+            </span>}
             {nav && <span className="spreadnav">
               <button className="iconbtn" onClick={() => setMonth(shift(month, -1))} aria-label="Previous month"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 3L4.5 7l4 4" /></svg></button>
               <button className="iconbtn" onClick={() => setMonth(shift(month, 1))} disabled={month >= shift(thisMonth, 1)} aria-label="Next month"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5.5 3l4 4-4 4" /></svg></button>

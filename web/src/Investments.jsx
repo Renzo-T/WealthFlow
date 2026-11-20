@@ -50,11 +50,11 @@ const qty = (n) => n.toLocaleString('en-US', { maximumFractionDigits: 3 });
 function FromPay({ pay }) {
   const partial = pay.since && pay.since > pay.yearStart;
   return (
-    <Panel className="mt" title="Put in from your pay" actions={<span className="small muted">
+    <Panel className="mt" title="Put in from your pay" actions={pay.accounts.length > 1 && <span className="small muted">
       <Hover tip={<TipList title="Last 12 months" rows={pay.accounts.map((a) => [a.name, usd0(a.last12)])} />}><span className="amt">{usd0(pay.year)}</span> this year</Hover>
       {partial ? ` (since ${day(pay.since)})` : ''}</span>}>
       <table className="t frompay">
-        <thead><tr><th>Account</th><th className="r">Latest</th><th className="r">This year</th><th className="r">Last 12 months</th></tr></thead>
+        <thead><tr><th>Account</th><th className="r">Latest</th><th className="r">This year{partial && pay.accounts.length === 1 ? <span className="muted"> since {day(pay.since)}</span> : null}</th><th className="r">Last 12 months</th></tr></thead>
         <tbody>{pay.accounts.map((a) => (
           <tr key={a.id}><td>{a.name}</td>
             <td className="r"><span className="amt">{usd2(a.last.amount)}</span> <span className="small muted">{day(a.last.date)}</span></td>

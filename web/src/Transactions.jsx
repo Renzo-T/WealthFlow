@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { api } from './api.js';
 import { usd2, usd, signed, label, shortDate, SERIES, tint } from './format.js';
 import Select from './Select.jsx';
@@ -22,11 +22,13 @@ export function RecentTransactions({ items }) {
     <Panel title="Recent transactions" actions={<a href="#/transactions">View all</a>}>
       {items.length === 0 && <p className="small muted">No transactions yet.</p>}
       {items.map((t) => (
-        <div className="trow" key={t.id}>
+        // One line, like Coming up beside it: what, where it went, when, how much.
+        <div className="trow tline" key={t.id}>
           <span className="rowicon"><CategoryIcon {...txIcon(t)} />
-            <span className="tmain"><b title={title(t)}>{title(t)}</b>
-              <span className="small muted">{t.to_account ? accounts(t) : label(t.shown)}</span></span></span>
-          <span className="r">{amount(t)}<div className="small muted">{shortDate(t.date)}</div></span>
+            <span className="tline-name" title={title(t)}>{title(t)}</span>
+            <span className="small muted tline-cat">{t.to_account ? accounts(t) : label(t.shown)}</span></span>
+          <span className="small muted">{shortDate(t.date)}</span>
+          <span className="r">{amount(t)}</span>
         </div>
       ))}
     </Panel>
@@ -298,6 +300,8 @@ export default function Transactions() {
   const [open, setOpen] = useState(opened);
   const [editing, setEditing] = useState(false);
   const [sel, setSel] = useState(() => new Set());
+  const [cur, setCur] = useState(null); // the keyboard's current row (j/k, Enter, c)
+  const search = useRef(null);
   const LIMIT = 300;
 
   const load = useCallback(async () => {
@@ -356,6 +360,43 @@ export default function Transactions() {
     await api('/transactions/bulk', { method: 'POST', body: JSON.stringify({ ids: [...sel], category: cat }) });
     setSel(new Set()); setEditing(false); load();
   };
+  // Keyboard: j/k or arrows move a current row, Enter opens it, c picks its category, / searches, ? lists these, Esc lets go.
+  // Capture phase so "/" reaches the search box before Jump's own "/" handler (which it then never sees).
+  const flat = rows.map((t) => t.id);
+  const keys = useRef(null);
+  keys.current = { flat, cur, open, editing };
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.defaultPrevented || e.ctrlKey || e.altKey || e.metaKey) return;
+      const el = document.activeElement;
+      if (el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName))) return;
+      if (document.querySelector('dialog[open]')) return;
+      const { flat: ids, cur: at, open: shown, editing: multi } = keys.current;
+      const stop = () => { e.preventDefault(); e.stopPropagation(); };
+      const k = e.key;
+      if (k === '/') { stop(); search.current?.focus(); search.current?.select(); }
+      else if (k === '?') { stop(); window.dispatchEvent(new Event('mizo:jump')); }
+      else if (k === 'j' || k === 'k' || k === 'ArrowDown' || k === 'ArrowUp') {
+        if (!ids.length) return;
+        stop();
+        const i = ids.indexOf(at), down = k === 'j' || k === 'ArrowDown';
+        const next = ids[i < 0 ? 0 : Math.min(Math.max(i + (down ? 1 : -1), 0), ids.length - 1)];
+        setCur(next);
+        document.getElementById('tx-' + next)?.scrollIntoView({ block: 'nearest' });
+      } else if (k === 'Enter' && at != null && !['BUTTON', 'A'].includes(el?.tagName)) {
+        stop();
+        if (multi) toggleSel(at); else setOpen(shown === at ? null : at);
+      } else if (k === 'c' && at != null) {
+        const sel = document.querySelector('#tx-' + at + ' .catsel');
+        if (!sel) return;
+        stop(); sel.focus();
+        try { sel.showPicker?.(); } catch { /* needs a recent click in some browsers; focus is enough */ }
+      } else if (k === 'Escape' && at != null) setCur(null);
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, []);
+  const curRow = rows.find((t) => t.id === cur);
   const filtered = !!(q || category || account || preset !== 'all');
   const cols = editing ? 5 : 4;
   return (
@@ -364,11 +405,12 @@ export default function Transactions() {
         <a className="btn quiet" href={`/api/transactions.csv?${filterQs}`}>Download CSV</a>
         <button className={`btn quiet${editing ? ' on' : ''}`} onClick={() => { setEditing(!editing); setSel(new Set()); }}>{editing ? 'Done' : 'Edit multiple'}</button>
       </PageHeader>
+      <span className="kbsr" role="status" aria-live="polite">{curRow ? `${title(curRow)}, ${label(curRow.category)}, ${usd2(-curRow.amount)}, ${shortDate(curRow.date)}` : ''}</span>
       <Review dir="in" items={review.in} decide={decide} cats={cats} />
       <Review dir="out" items={review.out} decide={decide} cats={cats} />
       <PeoplePanel data={people} cats={cats} reload={load} />
       <div className="filters filterbar">
-        <input type="search" placeholder="Search merchant or description" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search transactions" />
+        <input ref={search} type="search" placeholder="Search merchant or description" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search transactions" />
         <Select value={category} onChange={setCategory} label="Category" options={[
           { value: '', label: 'All categories' }, { value: 'unsure', label: "Plaid wasn't sure (worth a look)" },
           ...cats.map(({ group, subs }) => ({ group, options: [{ value: `g:${group}`, label: `All ${group}` }, ...(subs.length > 1 ? subs.map((c) => ({ value: c, label: c })) : [])] })),
@@ -427,7 +469,7 @@ export default function Transactions() {
                   {newMonth && <tr className="monthrow"><td colSpan={cols + 1}>{when.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</td></tr>}
                   {d.rows.map((t, ti) => (
                     <Fragment key={t.id}>
-                      <tr id={`tx-${t.id}`} className={`txrow${opened === t.id && open === t.id ? ' found' : ''}${sel.has(t.id) ? ' picked' : ''}${ti === 0 ? ' dayfirst' : ''}`} onClick={(e) => {
+                      <tr id={`tx-${t.id}`} aria-current={cur === t.id ? 'true' : undefined} className={`txrow${cur === t.id ? ' kbcur' : ''}${opened === t.id && open === t.id ? ' found' : ''}${sel.has(t.id) ? ' picked' : ''}${ti === 0 ? ' dayfirst' : ''}`} onClick={(e) => {
                         if (['SELECT', 'INPUT', 'BUTTON'].includes(e.target.tagName)) return;
                         if (editing) toggleSel(t.id); else setOpen(open === t.id ? null : t.id);
                       }}>

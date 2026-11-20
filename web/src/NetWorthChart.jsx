@@ -49,13 +49,12 @@ export default function NetWorthChart({ history }) {
         {nice.ticks.map((v) => { return <g key={v}><line className="grid" x1={L} x2={W - R} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{usdCompact(v, 1)}</text></g>; })}
         {[0, 1, 2, 3, 4, 5].map((k) => { const i = Math.round((k * (data.length - 1)) / 5); return <text key={k} x={x(i)} y={H - 6} textAnchor={k === 0 ? 'start' : k === 5 ? 'end' : 'middle'}>{day(data[i].date)}</text>; })}
         <defs>
-          <pattern id="nw-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" strokeWidth="1" style={{ stroke: 'var(--blue)' }} /></pattern>
           <linearGradient id="nw-fade" gradientUnits="userSpaceOnUse" x1="0" y1={T} x2="0" y2={H - B}><stop offset="0" stopColor="#fff" /><stop offset="1" stopColor="#000" /></linearGradient>
           <mask id="nw-mask" maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}><rect x="0" y="0" width={W} height={H} fill="url(#nw-fade)" /></mask>
         </defs>
         <g className="draw" key={range}>
           <g mask="url(#nw-mask)">
-            {runs.filter((r) => !r.est).map((r, k) => <path key={k} className="nw-wash" d={`${path(r)} L${x(r.to).toFixed(1)},${H - B} L${x(r.from).toFixed(1)},${H - B} Z`} fill="url(#nw-hatch)" stroke="none" />)}
+            {runs.filter((r) => !r.est).map((r, k) => <path key={k} className="nw-wash" d={`${path(r)} L${x(r.to).toFixed(1)},${H - B} L${x(r.from).toFixed(1)},${H - B} Z`} style={{ fill: 'var(--blue)' }} stroke="none" />)}
           </g>
           {runs.map((r, k) => <path key={k} d={path(r)} fill="none" style={{ stroke: 'var(--blue)' }} strokeLinejoin="round" strokeLinecap="round"
             strokeWidth={r.est ? 1.75 : 2.75} strokeDasharray={r.est ? '5 4' : undefined} opacity={r.est ? 0.55 : 1} />)}

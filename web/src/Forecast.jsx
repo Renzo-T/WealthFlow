@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from './api.js';
 import { usd } from './Cards.jsx';
+import { usdCompact } from './format.js';
 import { ProjectionChart } from './Projection.jsx';
 import { useAssumptions, buildSeries } from './projection.js';
 import { Panel, PanelSkeleton } from './ui.jsx';
@@ -25,7 +26,7 @@ export default function Forecast() {
       <p className="muted mt-0">Project your net worth from <span className="amt">{usd(s.netWorth.value)}</span> today, in {dollars}.</p>
       <div className="form">
         <label className="lbl">Monthly contribution
-          <input type="number" step="any" value={a.monthly} onChange={(e) => update({ monthly: e.target.value })} placeholder={Math.round(avg ?? 0).toLocaleString('en-US')} /></label>
+          <input type="number" step="any" value={a.monthly} onChange={(e) => update({ monthly: e.target.value })} placeholder={avg == null ? '0' : `Average ${Math.round(avg).toLocaleString('en-US')}`} /></label>
         <label className="lbl">Horizon
           <select value={a.years} onChange={(e) => update({ years: e.target.value })}>
             {[10, 20, 30, 40].map((y) => <option key={y} value={y}>{y} years</option>)}
@@ -74,7 +75,7 @@ export default function Forecast() {
           <thead><tr><th>Scenario</th><th className="r">Annual return</th><th className="r">In {years} years <span className="muted dollars">in {dollars}</span></th>
             {target && <th className="r">Reaches target</th>}</tr></thead>
           <tbody>{[...series].reverse().map((sc) => (
-            <tr key={sc.key}><td>{sc.label}</td><td className="r">{sc.rate}%</td><td className="r"><b>{usd(sc.values.at(-1))}</b></td>
+            <tr key={sc.key}><td>{sc.label}</td><td className="r">{sc.rate}%</td><td className="r"><b className="amt" title="Rounded: a guess this far out isn't good to the dollar">{usdCompact(sc.values.at(-1), 1)}</b></td>
               {target && <td className="r">{sc.reaches == null ? <span className="muted">not within {years} years</span>
                 : sc.reaches === 0 ? 'Already there' : <>in {sc.reaches} {sc.reaches === 1 ? 'year' : 'years'} <span className="muted">({thisYear + sc.reaches})</span></>}</td>}
             </tr>
