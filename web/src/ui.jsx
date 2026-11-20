@@ -56,6 +56,22 @@ export function PageHeader({ title, sub, children }) {
   );
 }
 
+// Where you stand on a page: the one block every page opens with, written on the paper with no panel. The first
+// figure leads (largest, its label marked with the highlighter); up to three more sit after it on fixed unit columns,
+// so the figures fall in the same places on every page. `tone` ('good' / 'bad') is for figures whose sign is the news.
+export function Standing({ label, className = '', children }) {
+  return <section className={`standing ${className}`.trim()} aria-label={label}>{children}</section>;
+}
+export function Stand({ lead = false, label, tone, children, note }) {
+  return (
+    <div className={`stand${lead ? ' lead' : ''}`}>
+      <span className="slabel">{label}</span>
+      <span className={`sfig big${tone ? ` ${tone}` : ''}`}>{children}</span>
+      {note}
+    </div>
+  );
+}
+
 // A dollar figure that "Hide amounts" can blur. Use for amounts outside the usual amount classes.
 // Hide amounts is on (for text that can't be blurred, like a native tooltip).
 export const amountsHidden = () => document.body.classList.contains('privacy');

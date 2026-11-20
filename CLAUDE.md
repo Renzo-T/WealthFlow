@@ -149,7 +149,8 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
 - The visual system is **DESIGN.md** (the "Planner Page" world: indigo cover rail, ruled paper, one typeface Atkinson Hyperlegible Next
   with equal-width figures, vermillion seal as the logo only) with tokens in `.impeccable/design.json`; PRODUCT.md holds
   product truth and `.impeccable/surfaces/` the dashboard's direction contract. Read DESIGN.md before UI work.
-- Building blocks in `web/src/ui.jsx`: `Panel` (card + header), `PageHeader`, `Amt` (amount that "Hide amounts"
+- Building blocks in `web/src/ui.jsx`: `Panel` (card + header), `PageHeader`, `Standing`/`Stand` (the figures a page with a lead figure opens
+  with, on the same unit columns everywhere; don't build a page's lead figure any other way), `Amt` (amount that "Hide amounts"
   blurs), `Seal` (logo), drawn icons (`Trend`, `Chevron`, `Check`, `Close`, `Repeat`; never text glyphs as icons).
   Prefer classes over inline styles; inline styles are for data-driven colours only.
 - Journals (Settings › Journal): colour presets in `web/src/journals.js` (the only place cover/paper/ink/highlighter/tape

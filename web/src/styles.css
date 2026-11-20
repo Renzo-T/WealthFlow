@@ -133,8 +133,6 @@ input[type=search] { min-width: min(320px, 100%); }
 .note { background: var(--soft); color: var(--note-ink); }
 .catsel { font: inherit; font-size: .9rem; border: 1px solid transparent; background: none; padding: .15rem .25rem; border-radius: 6px; cursor: pointer; }
 .catsel:hover, .catsel:focus { border-color: var(--line); background: var(--card); }
-.flowstats { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: .25rem 0 1rem; font-size: .9rem; color: var(--muted); }
-.flowstats b { margin-left: .35rem; }
 .chart text.fl { fill: var(--ink); font-size: .75rem; font-weight: 600; }
 .review { border-bottom: 1px solid var(--line); padding-bottom: .4rem; }
 .review:last-child { border: 0; }
@@ -145,7 +143,8 @@ input[type=search] { min-width: min(320px, 100%); }
 .nick:hover, .nick:focus { border-color: var(--line); background: var(--card); }
 .nick::placeholder { color: var(--ink); }
 .grp { color: var(--muted); font-size: .8rem; margin-right: .25rem; }
-.chart text.click { cursor: pointer; text-decoration: underline dotted; }
+.chart text.click { cursor: pointer; }
+.chart text.click:hover { text-decoration: underline; } /* click to rename: a link, so no line until hovered */
 .chart tspan.fl { fill: var(--ink); font-weight: 600; }
 .gapnote { background: var(--warn-bg); color: var(--warn-ink); border-radius: 10px; padding: .6rem .9rem; margin-top: .75rem; }
 .gapnote ul { margin: .35rem 0; padding-left: 1.2rem; }
@@ -281,7 +280,7 @@ tr.dim td { opacity: .6; }
 
 /* ---------- Hide amounts (screen sharing) ---------- */
 body.privacy .big, body.privacy .tamt, body.privacy td.r, body.privacy .legend2 b, body.privacy .chart text,
-body.privacy .flowstats b, body.privacy .txsum b, body.privacy .tip, body.privacy .donutsvg text, body.privacy .cat .small,
+body.privacy .txsum b, body.privacy .tip, body.privacy .donutsvg text, body.privacy .cat .small,
 body.privacy .amt, body.privacy .explain, body.privacy .cards .card .small, body.privacy input[type=number] { filter: blur(7px); }
 
 /* ---------- Empty states ---------- */
@@ -618,11 +617,6 @@ button.insight-line:hover .insight-ic.chev { color: var(--blue); }
   border-top: 1px solid var(--line); border-bottom: 2px solid var(--ink); }
 .btot::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; border-bottom: 1px solid var(--ink); opacity: .3; pointer-events: none; }
 .btot .good { color: var(--green); } .btot .bad { color: var(--red); }
-.bassign { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; padding: 1.1rem 1.3rem; }
-.bassign > span:first-child { display: flex; flex-direction: column; gap: .15rem; font-size: 1.05rem; }
-.bassign > span:first-child b { font-weight: 600; }
-.bassign .big { font-size: 2.6rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; color: var(--ink); }
-.bassign.neg .big { color: var(--red); }
 .rem.over { color: var(--red); } .rem.muted, .rem.slight { color: var(--muted); }
 .bval { display: block; margin-left: auto; width: 6.5rem; padding: .1rem .5rem; border: 0; border-bottom: 1px dotted transparent; border-radius: 0; background: none; box-shadow: none;
   font: inherit; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; cursor: text; }
@@ -687,7 +681,6 @@ button.insight-line:hover .insight-ic.chev { color: var(--blue); }
 .brow.ingroup { padding-bottom: .55rem; }
 
 /* ---------- Goals page ---------- */
-.goalcards { grid-template-columns: repeat(3, 1fr); }
 .goalsgrid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1rem; align-items: start; }
 @media (max-width: 1099px) { .goalsgrid { grid-template-columns: 1fr; } }
 .goal { display: flex; flex-direction: column; gap: .3rem; }
@@ -772,12 +765,8 @@ p.btrips { display: block; text-align: center; margin-top: .25rem; }
 /* ---------- Reports ---------- */
 .rtable th, .rtable td { padding-left: .5rem; padding-right: .5rem; }
 .rtable th.partial { color: var(--muted-2); }
-/* Each month's share of the row's largest month as a short ink bar under the figure, not a filled cell (the highlighter
-   is kept for what needs you). */
-.rtable .rcell { --bar: color-mix(in srgb, var(--ink-dot) 28%, transparent);
-  background: linear-gradient(var(--bar), var(--bar)) no-repeat right .5rem bottom 8px / calc(var(--share) * (100% - 1rem)) 3px; }
 .rtable .ravg { color: var(--muted); border-left: 1px solid var(--line); }
-.rtable .est-fig { text-decoration: none; } /* not final = pencil grey; the length bar is the only underline */
+.rtable .est-fig { text-decoration: none; } /* not final = pencil grey, without the dashed line: the bar on the rule is enough */
 .rtable tr.rgroup td { font-weight: 600; }
 .rtable td:first-child, .rtable tr.rgroup td:first-child, .rtable tr.rtotal td:first-child, .rtable td:first-child b { font-weight: 500; }
 .rtable tr.rcat td { font-size: .85rem; color: var(--muted); }
@@ -877,7 +866,7 @@ a { color: var(--blue); text-underline-offset: 3px; }
 .top { border-bottom: 1.5px solid var(--ink); padding-bottom: .7rem; margin-bottom: 1.25rem; align-items: flex-end; }
 h1 { font-size: 2.15rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
 .sub { font-size: .95rem; margin-top: .3rem; }
-/* Secondary figures (summary cards, goal amounts) are 700; each page's lead figure stays 800 (.sfig.big, .bassign, .rp-fig). */
+/* Secondary figures (summary cards, goal amounts) are 700; each page's lead figure stays 800 (.sfig.big, .rp-fig). */
 .big, .stsbig { font-weight: 700; letter-spacing: -.02em; }
 
 /* Controls: standard ones, in the world's ink. */
@@ -1030,7 +1019,6 @@ input:hover, select:hover { border-color: var(--hub); }
 .flowchart.stale { opacity: .55; transition: opacity .2s; }
 .chart text.hubname { font-size: .6875rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted); }
 .chart text.amtsvg { font-size: .8125rem; font-weight: 700; fill: var(--ink); }
-.flowstats b { font-weight: 800; }
 
 /* Changed since your last visit (Cards.jsx): a quiet note under the figure. */
 .since { display: block; }
@@ -1592,7 +1580,6 @@ p.small.foot { margin-top: .9rem; }
 .sweeptoggle:has(input:focus-visible) { outline: 2px solid var(--blue); outline-offset: 1px; }
 
 /* ---------- Charts: round ticks, one-range projection, softer night bars, net worth lead ---------- */
-.standing.solo { grid-template-columns: minmax(0, 1fr); }
 .chart .edge { fill: none; stroke: var(--blue); stroke-width: 1.25; stroke-dasharray: 5 4; opacity: .75; }
 .chart .mid { fill: none; stroke: var(--blue); stroke-width: 2.75; stroke-linejoin: round; }
 .chart text.endlab { fill: var(--muted); font-size: .6875rem; }
@@ -1613,10 +1600,6 @@ p.small.foot { margin-top: .9rem; }
 /* ---------- Review polish ---------- */
 /* One allocation split takes the full width. */
 .splits.one { grid-template-columns: minmax(0, 1fr); }
-/* Net worth page's lead figure: what you own and owe sit at its right. */
-.stand.lead > .bandparts { position: absolute; right: 0; bottom: .35rem; display: flex; gap: 2.5rem; margin: 0; }
-.bandparts dt { font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-.bandparts dd { margin: .2rem 0 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
 
 /* ---------- Journals: decoration ---------- */
 
@@ -1833,6 +1816,15 @@ button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 @media (max-width: 1099px) {
   .grid2, .grid4, .ledger > .grid2, .nwtop, .budgetgrid, .goalsgrid { grid-template-columns: minmax(0, 1fr); }
 }
+/* Where you stand (Standing in ui.jsx), the line every page opens with: the lead figure on 17 units, up to three more on
+   11 each, so each page's figures fall on the same columns and the rest of the line stays paper. Narrower windows
+   (under 50 units) share the width out instead. */
+.standing { grid-template-columns: calc(17 * var(--u)) repeat(3, calc(11 * var(--u))); }
+.stand { padding: 0 var(--u) 0 0; }
+.stand + .stand { padding-left: var(--u); }
+.stand .sfig.big.good { color: var(--green); }
+.stand .sfig.big.bad, .stand.lead .sfig.big.bad { color: var(--red); }
+@media (max-width: 1279px) { .standing { grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr)); } }
 /* A ruled strip of N figures: N - 1 equal whole-unit columns, the last takes the rest. */
 .cards.ruled { --n: 1; --col: round(down, calc(100% / var(--n)), var(--u)); grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: minmax(0, 1fr); }
 .cards.ruled:has(> :nth-child(2)) { --n: 2; grid-template-columns: var(--col) minmax(0, 1fr); }
@@ -1930,9 +1922,6 @@ button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 .card { padding-bottom: calc(var(--u) / 2); }
 :is(.card, .msec) > :last-child { margin-bottom: 0; }
 .panel > .head .btn { padding: 0 .7rem; line-height: 20px; font-size: .85rem; }
-/* Budget's "Not yet assigned": one line, three units. */
-.card.bassign { padding: calc(var(--u) / 2) var(--u); }
-.bassign .big { line-height: calc(2 * var(--u)); margin: 0; }
 /* Ruled strips of figures: label, figure and note each on the unit. */
 .cards.ruled > .card { padding: calc(var(--u) / 2) var(--u); }
 .cards.ruled > .card h3 { line-height: var(--u); margin: 0; }
@@ -2007,3 +1996,48 @@ button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 
 /* ---------- Transactions: the first month's name sits right under the column heads (one unit, not two) ---------- */
 .txtable tbody tr.monthrow:first-child td { height: var(--u); }
+
+/* ---------- One meaning per line under text ----------
+   Solid = a link inside a sentence (it'd otherwise be told apart by colour alone). Dotted = a word the page doesn't
+   explain beside it has more on hover. Dashed = an estimate (pencil). The highlighter stroke = a day's spending in the
+   month calendar. Nothing else draws a line under text. */
+/* Action links (buttons that read as text) are indigo, the pen colour of interaction, and underline only on hover. */
+.linkbtn, .btn.quiet, .btn.quiet:hover:not(:disabled), .btn.quiet:active:not(:disabled) { color: var(--blue); text-decoration: none; }
+:is(.linkbtn, .btn.quiet):is(:hover, :focus-visible):not(:disabled) { color: var(--blue); text-decoration: underline; text-underline-offset: 3px; }
+.linkbtn.bad, .linkbtn.bad:hover { color: var(--red); }
+.linkbtn.plain { color: var(--ink); }
+.calnav .linkbtn:hover { text-decoration: none; }
+/* Figures never carry a dotted line at rest: a number with a breakdown shows the line, and its tip, on hover. */
+:is(td.r, .amt, .big, .sfig, .tamt) .hov, .hov.amt, .hov:has(.amt) { text-decoration-color: transparent; }
+:is(td.r, .amt, .big, .sfig, .tamt) .hov:is(:hover, :focus-visible), .hov.amt:is(:hover, :focus-visible), .hov:has(.amt):is(:hover, :focus-visible) {
+  text-decoration-color: color-mix(in srgb, currentColor 50%, transparent);
+}
+/* Reports: each month's share of the row's largest month drawn on the row's ruled line, a heavier stretch of the rule
+   at the foot of the cell, well clear of the figure: it reads as part of the ruling, not as a line under the text. */
+.rtable .rcell { --bar: color-mix(in srgb, var(--ink-dot) 45%, transparent);
+  background: linear-gradient(var(--bar), var(--bar)) no-repeat right .5rem bottom 0 / calc(var(--share) * (100% - 1rem)) 3px; }
+
+/* ---------- Money flow: the period as a ledger that adds up to the chart's hub ----------
+   Two ruled two-unit rows, In and Out, each part named then its figure, each row ending "= total" (the hub's "in"
+   figure), then one muted line with what's left after spending and what moved between your own accounts. */
+.flowledger { margin-bottom: var(--u); }
+.flrow { display: grid; grid-template-columns: calc(3 * var(--u)) minmax(0, 1fr) auto; align-items: center; column-gap: var(--u);
+  min-height: calc(2 * var(--u)); box-shadow: inset 0 1px 0 var(--line); }
+.flrow + .flrow { box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line); }
+.fltag { font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.flparts { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: .6rem; color: var(--muted); }
+.flpart { white-space: nowrap; }
+.flpart b, .fltotal b, .flnote b { font-weight: 700; color: var(--ink); }
+.flpart b.good, .flnote b.good { color: var(--green); }
+.flnote b.bad { color: var(--red); }
+.flpart i, .fltotal i { font-style: normal; color: var(--muted); margin-right: .6rem; }
+.fltotal { white-space: nowrap; }
+.fltotal b { font-weight: 800; }
+.flnote { margin: 0; padding-top: calc(var(--u) / 2); line-height: var(--u); font-size: .8rem; color: var(--muted); }
+
+/* Month replay: where a few days sit far above the rest, the line runs along the top and its step down (or up) is cut by
+   an axis break: two short pencil strokes over a gap of the panel's paper. Hover it for the value above the scale. */
+.replay .rp-break path { fill: none; stroke: var(--ink); stroke-width: 1.25; stroke-linecap: round; }
+.replay .rp-break path.gap { fill: var(--bg); stroke: none; }
+.replay .rp-break { opacity: 0; transition: opacity .3s var(--ease); }
+.replay .rp-break.on { opacity: 1; }

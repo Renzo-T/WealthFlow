@@ -4,6 +4,7 @@ import { usd, usd2, usdCompact, niceTicks, signed } from './format.js';
 import useWidth from './useWidth.js';
 import { Panel, Skeleton, EmptyState, Chevron, Est, Hover, tipText } from './ui.jsx';
 import { Stamp, StampArt, markIcon } from './Stamp.jsx';
+import { replayRange } from './replayScale.js';
 
 // The month, replayed: the cash in your everyday accounts at the end of each day, as one stepped line across the
 // month's days (planner columns, weekends tinted, today washed). Paydays step it up and bills step it down; they're
@@ -19,15 +20,9 @@ const shortDay = (d) => new Date(`${d}T00:00`).toLocaleDateString('en-US', { mon
 const shift = (m, n) => { const d = new Date(`${m}-01T00:00`); d.setMonth(d.getMonth() + n); return d.toLocaleDateString('en-CA').slice(0, 7); };
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const clip = (s, n) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
-// The chart's value range (padded), shared by the chart and the legend's "big move" threshold.
-function range(r) {
-  const vals = [r.start, ...r.days.map((d) => d.cash)].filter((v) => v != null);
-  let lo = Math.min(...vals, ...(r.cushion > 0 ? [r.cushion] : [])), hi = Math.max(...vals);
-  if (hi - lo < 200) { const mid = (hi + lo) / 2; lo = mid - 100; hi = mid + 100; }
-  const pad = (hi - lo) * 0.14; lo -= pad; hi += pad;
-  if (lo > 0 && lo < (hi - lo) * 0.25) lo = 0; // close to zero: show zero
-  return [lo, hi];
-}
+// The chart's value range (padded, its top capped when a few days sit far above the rest: replayScale.js), shared by
+// the chart and the legend's "big move" threshold.
+const range = (r) => replayRange(r);
 // A step (or a move to savings) worth naming: at least 6% of the chart's height.
 const bigAt = (r) => { const [lo, hi] = range(r); return (hi - lo) * 0.06; };
 const savedOf = (d) => -(d.parts?.find((x) => x.key === 'saved')?.amount ?? 0);
@@ -45,8 +40,10 @@ function Chart({ r, p, hover, setHover, playing }) {
   const [ref, W] = useWidth(900);
   const n = r.days.length, colw = (W - L - R) / n;
   const cx = (i) => L + (i + 0.5) * colw;
-  const [lo, hi] = range(r), big = bigAt(r);
-  const y = (v) => T + ((hi - v) * (PB - T)) / (hi - lo);
+  const [lo, hi, capped] = range(r), big = bigAt(r);
+  // Above a capped top the line runs along the top edge, and each step across it gets an axis break.
+  const CEIL = T - 10;
+  const y = (v) => Math.max(CEIL, T + ((hi - v) * (PB - T)) / (hi - lo));
 
   // Stepped line: flat through each day, stepping at the day's centre (where its stamps sit).
   const firstI = r.days.findIndex((d) => d.cash != null);
@@ -96,11 +93,15 @@ function Chart({ r, p, hover, setHover, playing }) {
     // Lift the label over any stamp it would sit on.
     const name = mainItem(e), wd = ((name ? Math.min(name.length, 16) + 1 : 0) + 7) * 6.6, x = cx(e.i);
     const edge = x < L + 100 ? 'start' : x > W - R - 100 ? 'end' : 'middle';
-    const x0 = edge === 'start' ? Math.max(L + 4, x - 8) : edge === 'end' ? Math.min(W - R - 4, x + 8) - wd : x - wd / 2;
+    const x0 = edge === 'start' ? Math.max(L + 4, x + 6) : edge === 'end' ? Math.min(W - R - 4, x - 6) - wd : x - wd / 2;
     for (let g = 0, hit; g < 4 && (hit = stamps.find((s) => hits({ x0, x1: x0 + wd, y0: ly - 12, y1: ly + 3 }, s))); g++) ly = hit.y0 - 5;
-    if (ly < 10) continue;
-    if (labels.some((l) => Math.abs(l.x - x) < 120 && Math.abs(l.y - ly) < 16)) continue;
-    labels.push({ i: e.i, change: e.change, name, x, y: ly });
+    // Labels never overlap: compare whole boxes (a label near the right edge runs left from its step), and a label
+    // that would sit on another goes just above it, or is left out when there's no room.
+    const box = (yy) => ({ x0: x0 - 6, x1: x0 + wd + 6, y0: yy - 13, y1: yy + 4 });
+    const over = labels.find((l) => hits(box(ly), l.box));
+    if (over) ly = over.box.y0 - 5;
+    if (ly < 10 || labels.some((l) => hits(box(ly), l.box))) continue;
+    labels.push({ i: e.i, change: e.change, name, x, y: ly, box: box(ly) });
   }
   const low = r.low ? r.days.findIndex((d) => d.date === r.low.date) : -1;
   // "Lowest $…" goes under the point; if a stamp is there, to the side of it.
@@ -126,6 +127,9 @@ function Chart({ r, p, hover, setHover, playing }) {
     const opts = [{ x: tx - 4, y: ty }, { x: tx - 4, y: ty + 20 }];
     cashAt = opts.find((o) => !stamps.some((s) => hits({ x0: o.x - wd, x1: o.x, y0: o.y - 11, y1: o.y + 3 }, s))) ?? null;
   }
+  const breaks = capped ? r.days.map((d, i) => ({ i, before: i ? r.days[i - 1].cash : r.start, cash: d.cash }))
+    .filter(({ before, cash }) => before != null && cash != null && (before > hi) !== (cash > hi))
+    .map(({ i, before, cash }) => ({ i, top: Math.max(before, cash) })) : [];
   const head = Math.min(W - R, L + p * colw);
   const ticks = niceTicks(lo, hi, 4, { expand: false }).ticks;
   const move = (e) => {
@@ -156,15 +160,21 @@ function Chart({ r, p, hover, setHover, playing }) {
         {(ahead || past) && <text className="rp-end" x={W - R + 6} y={y(r.days.at(-1).cash ?? r.days[pastEnd].cash) + 4}>{ahead ? 'Ahead' : 'Cash'}</text>}
         {ahead && cashAt && <text className="rp-end" x={cashAt.x} y={cashAt.y} textAnchor="end">Cash</text>}
         {under.length > 0 && <text className="rp-end neg" x={W - R + 6} y={y(under.at(-1).d.cash) + (ahead && under.at(-1).i > todayI ? 4 : 18)}>Below $0</text>}
+        {breaks.map(({ i, top }) => (
+          <g key={`b${i}`} className={`rp-break${revealed(i) ? ' on' : ''}`} transform={`translate(${cx(i)},${T + 18})`}>
+            <title>{tipText(`Above the scale: ${usd(top)}`)}</title>
+            <path className="gap" d="M-7,0 L7,-5 L7,1 L-7,6 Z" /><path d="M-7,0 L7,-5 M-7,6 L7,1" />
+          </g>
+        ))}
         {p < n && p > 0 && <line className="rp-head" x1={head} x2={head} y1={T - 14} y2={PB} />}
         {low >= 0 && revealed(low) && <g className="rp-low">
           <circle cx={cx(low)} cy={y(r.low.cash)} r="4.5" />
           <text x={lowAt.x} y={lowAt.y} textAnchor={lowAt.a}>Lowest {usd(r.low.cash)}{r.low.future ? ' est' : ''}</text>
         </g>}
         {labels.map((l) => {
-          // Near either edge the label runs inward from its step instead of centring on it.
+          // Near either edge the label runs inward from just past its step (clear of the line) instead of centring on it.
           const edge = l.x < L + 100 ? 'start' : l.x > W - R - 100 ? 'end' : 'middle';
-          const lx = edge === 'start' ? Math.max(L + 4, l.x - 8) : edge === 'end' ? Math.min(W - R - 4, l.x + 8) : l.x;
+          const lx = edge === 'start' ? Math.max(L + 4, l.x + 6) : edge === 'end' ? Math.min(W - R - 4, l.x - 6) : l.x;
           return (
           <text key={l.i} className={`rp-label${revealed(l.i) ? ' on' : ''}`} x={lx} y={l.y} textAnchor={edge}>
             {l.name && `${clip(l.name, 16)} `}<tspan className={l.change > 0 ? 'in' : ''}>{signed(l.change, (v) => usdCompact(v, 1))}</tspan>

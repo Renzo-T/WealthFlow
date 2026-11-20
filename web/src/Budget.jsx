@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { api } from './api.js';
 import Progress from './Progress.jsx';
 import { usd, label, usd2 } from './format.js';
-import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, amountsHidden, Chevron, Migrate, Close, confirmDialog } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, amountsHidden, Chevron, Migrate, Close, confirmDialog, Standing, Stand } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 import CloseMonth from './CloseMonth.jsx';
 
@@ -205,25 +205,31 @@ const Total = ({ title, budget, actual, income, extra = 0, refunds = 0 }) => {
   );
 };
 
-// The page's lead figure: budgeted income not yet given a job. A planning number, not money you can spend.
+// The page's lead figure: budgeted income not yet given a job. A planning number, not money you can spend. Its two
+// halves (income budgeted, spending & saving budgeted) follow it, the way net worth is followed by what you own and owe.
 function Unassigned({ b }) {
   const left = b.leftToBudget, t = b.totals;
   const none = !t.income && !t.expenses;
+  const income = <Stand label="Income budgeted">{usd(t.income)}</Stand>;
+  const expenses = <Stand label="Assigned">{usd(t.expenses)}</Stand>;
   if (!t.income && t.expenses > 0) { // spending budgeted but no income: "left" would just be minus the spending
     return (
-      <section className="card bassign none">
-        <span><b>Budgeted for spending & saving</b><span className="small muted">Add your income below to see what's not yet assigned.</span></span>
-        <span className="big amt">{usd(t.expenses)}</span>
-      </section>
+      <Standing label="Budget" className="mt">
+        <Stand lead label="Budgeted for spending & saving" note={<span className="small muted">Add your income below to see what's not yet assigned.</span>}>{usd(t.expenses)}</Stand>
+      </Standing>
     );
   }
   return (
-    <section className={`card bassign ${left < 0 ? 'neg' : none ? 'none' : ''}`}>
-      <span><b><Hover tip={<TipList title="Not yet assigned" rows={[['Income budgeted', usd(t.income)], ['Spending & saving budgeted', `−${usd(t.expenses)}`]]}
-        note="Give every dollar of expected income a job: aim for $0. This is a planning number, not money to spend." />}>{left < 0 ? 'Over assigned' : none ? 'Nothing budgeted yet' : 'Not yet assigned'}</Hover></b>
-        {left < 0 && <span className="small muted">More than your income.</span>}</span>
-      <span className="big amt">{left < 0 ? '−' : ''}{usd(Math.abs(left))}</span>
-    </section>
+    <Standing label="Budget" className="mt">
+      <Stand lead tone={left < 0 ? 'bad' : undefined}
+        label={<Hover tip={<TipList title="Not yet assigned" rows={[['Income budgeted', usd(t.income)], ['Spending & saving budgeted', `−${usd(t.expenses)}`]]}
+          note="Give every dollar of expected income a job: aim for $0. This is a planning number, not money to spend." />}>{left < 0 ? 'Over assigned' : none ? 'Nothing budgeted yet' : 'Not yet assigned'}</Hover>}
+        note={left < 0 ? <span className="small muted">More than your income.</span> : !none && <span className="small muted">Aim for zero: give every dollar a job.</span>}>
+        {left < 0 ? '−' : ''}{usd(Math.abs(left))}
+      </Stand>
+      {!none && income}
+      {!none && expenses}
+    </Standing>
   );
 }
 

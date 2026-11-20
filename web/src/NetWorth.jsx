@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from './api.js';
 import { usd, usd2, signed, label, SERIES, NEUTRAL, shortDate, tint } from './format.js';
-import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, tipText, Trend, Est, confirmDialog } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, tipText, Trend, Est, confirmDialog, Standing, Stand } from './ui.jsx';
 import NetWorthChart from './NetWorthChart.jsx';
 import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
 
@@ -357,17 +357,13 @@ function WhatMoved({ stamp }) {
 }
 
 // Assets and liabilities, each as one bar with a legend.
-// The lead band's right side: what you own and what you owe, the two halves of the figure (the Summary sheet breaks them down).
-function BandParts({ accounts, manual }) {
+// What you own and what you owe: the two halves of net worth, written after it in the page's standing line (the Summary
+// sheet breaks them down).
+function ownOwe(accounts, manual) {
   const inc = accounts.filter((a) => a.in_networth), DEBT = ['credit', 'loan'];
   const owe = inc.filter((a) => DEBT.includes(a.type)).reduce((s, a) => s + a.balance, 0) + manual.filter((m) => m.kind === 'liability').reduce((s, m) => s + m.value, 0);
   const own = inc.filter((a) => !DEBT.includes(a.type)).reduce((s, a) => s + a.balance, 0) + manual.filter((m) => m.kind !== 'liability').reduce((s, m) => s + m.value, 0);
-  return (
-    <dl className="bandparts">
-      <div><dt>You own</dt><dd className="amt">{usd(own)}</dd></div>
-      <div><dt>You owe</dt><dd className="amt">{usd(owe)}</dd></div>
-    </dl>
-  );
+  return { own, owe };
 }
 
 function Summary({ accounts, manual }) {
@@ -422,6 +418,7 @@ export default function NetWorth({ onChange }) {
   // Connecting, approving or removing a bank also changes the top bar's "needs attention" chip.
   const saved = () => { load(); onChange?.(); };
   if (!d || !history || !meta || !nw) return <PageSkeleton />;
+  const parts = ownOwe(d.accounts, d.manual);
 
   return (
     <>
@@ -430,19 +427,18 @@ export default function NetWorth({ onChange }) {
       </PageHeader>
       {meta.items.length === 0 && <div className="card empty mt"><EmptyState art="banks" title="No banks yet">Connect a bank to see its accounts here.</EmptyState></div>}
       {d.accounts.length > 0 && (
-        <section className="standing solo mt" aria-label="Net worth">
-          <div className="stand lead">
-            <span className="slabel">Net worth today</span>
-            <span className="sfig big"><Hover className="quiet" tip={nw.ago == null ? null : <TipList title="Net worth" rows={[['30 days ago', usd(nw.ago)], ['Today', usd(nw.value)]]} />}>{usd(nw.value)}</Hover></span>
-            {nw.ago != null && (() => {
-              const diff = nw.value - nw.ago, pct = nw.ago ? (diff / Math.abs(nw.ago)) * 100 : null;
-              return <span className="delta small" title={`${signedUsd(diff)} since 30 days ago`}>
-                <span className={diff >= 0 ? 'good' : 'bad'}><Trend up={diff >= 0} /> {pct == null ? signedUsd(diff) : `${Math.abs(pct).toFixed(1)}%`}</span>{' '}
-                <span className="muted">vs. 30 days ago</span></span>;
-            })()}
-            <BandParts accounts={d.accounts} manual={d.manual} />
-          </div>
-        </section>
+        <Standing label="Net worth" className="mt">
+          <Stand lead label="Net worth today" note={nw.ago != null && (() => {
+            const diff = nw.value - nw.ago, pct = nw.ago ? (diff / Math.abs(nw.ago)) * 100 : null;
+            return <span className="delta small" title={`${signedUsd(diff)} since 30 days ago`}>
+              <span className={diff >= 0 ? 'good' : 'bad'}><Trend up={diff >= 0} /> {pct == null ? signedUsd(diff) : `${Math.abs(pct).toFixed(1)}%`}</span>{' '}
+              <span className="muted">vs. 30 days ago</span></span>;
+          })()}>
+            <Hover className="quiet" tip={nw.ago == null ? null : <TipList title="Net worth" rows={[['30 days ago', usd(nw.ago)], ['Today', usd(nw.value)]]} />}>{usd(nw.value)}</Hover>
+          </Stand>
+          <Stand label="You own">{usd(parts.own)}</Stand>
+          <Stand label="You owe">{usd(parts.owe)}</Stand>
+        </Standing>
       )}
       <div className="nwtop mt">
         <NetWorthChart history={history} />

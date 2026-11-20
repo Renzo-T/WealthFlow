@@ -39,7 +39,7 @@ function HistorySetting() {
   return (
     <Panel className="mt" title="History">
       <label className="check"><input type="checkbox" checked={h.capped} onChange={(e) => set(e.target.checked)} />
-        <Hover tip="Banks share very different amounts of history, so totals only compare fairly from about 3 months before you connected. Older history stays saved and still helps spot bills. Turn this off to chart everything, with incomplete months marked." tabbable={false}>
+        <Hover className="quiet" tip="Banks share very different amounts of history, so totals only compare fairly from about 3 months before you connected. Older history stays saved and still helps spot bills. Turn this off to chart everything, with incomplete months marked." tabbable={false}>
           Start charts and reports {day ? `on ${day}` : '3 months before your first bank connection'}</Hover></label>
       <p className="small muted">Older history stays saved and still helps spot bills.</p>
     </Panel>
@@ -104,7 +104,7 @@ function AppSetting() {
       </div>
       {a.startup.supported ? <>
         <label className="check mt"><input type="checkbox" checked={a.startup.enabled} onChange={(e) => change('startup', e.target.checked)} />
-          <Hover tip="Runs quietly in the background (about 90 MB) and checks your banks every 6 hours. It keeps daily balances complete (Plaid can't supply past days later), makes daily backups, and means no wait on opening. Without it, transactions still catch up when you open the app." tabbable={false}>Start Mizo Money when I sign in</Hover></label>
+          <Hover className="quiet" tip="Runs quietly in the background (about 90 MB) and checks your banks every 6 hours. It keeps daily balances complete (Plaid can't supply past days later), makes daily backups, and means no wait on opening. Without it, transactions still catch up when you open the app." tabbable={false}>Start Mizo Money when I sign in</Hover></label>
         <p className="small muted">Keeps daily balances and backups complete.</p>
         {a.startup.enabled && !a.startup.here && <p className="small muted">It currently starts a copy in another folder; turn this off and on to use this one.</p>}
         <label className="check mt"><input type="checkbox" checked={a.launcher.enabled} onChange={(e) => change('launcher', e.target.checked)} />
@@ -199,7 +199,7 @@ export default function Settings({ onChange }) {
       </Panel>
       <Panel className="mt" title="Backup">
         <p className="small muted">
-          <Hover tip={<>A copy is saved automatically once a day after the first sync (the last 14 are kept in <code>data/backups</code>). Your daily net worth history can't be re-downloaded from Plaid. Bank connections are stored encrypted with a key {sys?.keyInEnv ? <>in your <code>.env</code> file</> : <>in <code>config.json</code> in the data folder{sys?.dataDir && <> (<code>{sys.dataDir}</code>)</>}</>}; keep a copy with your backups, or you'll need to connect every bank again. Forecast assumptions live in your browser and aren't included.</>} tabbable={false}>
+          <Hover className="quiet" tip={<>A copy is saved automatically once a day after the first sync (the last 14 are kept in <code>data/backups</code>). Your daily net worth history can't be re-downloaded from Plaid. Bank connections are stored encrypted with a key {sys?.keyInEnv ? <>in your <code>.env</code> file</> : <>in <code>config.json</code> in the data folder{sys?.dataDir && <> (<code>{sys.dataDir}</code>)</>}</>}; keep a copy with your backups, or you'll need to connect every bank again. Forecast assumptions live in your browser and aren't included.</>} tabbable={false}>
             Saved automatically every day, last 14 kept.</Hover>
           {(() => { const last = backups.find((b) => b.auto); return last ? ` Latest: ${last.name.slice(5, 15)}.` : ''; })()}</p>
         <a className="btn primary linkbtn-solid" href="/api/backup/download">Download backup</a>

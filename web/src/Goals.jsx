@@ -3,7 +3,7 @@ import { api } from './api.js';
 import Progress from './Progress.jsx';
 import { usd } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
-import { Panel, PageHeader, EmptyState, PageSkeleton, Hover, TipList, confirmDialog } from './ui.jsx';
+import { Panel, PageHeader, EmptyState, PageSkeleton, Hover, TipList, confirmDialog, Standing, Stand } from './ui.jsx';
 import { TextStamp } from './Stamp.jsx';
 import { statusText } from './goalStatus.js';
 
@@ -259,12 +259,12 @@ export default function Goals() {
       <PageHeader title="Plan">
         <button className="btn primary" onClick={() => setAdding(adding ? null : {})}>{adding ? 'Cancel' : 'Add a goal'}</button>
       </PageHeader>
-      {goals.length > 0 && <div className="cards ruled goalcards">
-        <div className="card"><h3>Saved toward goals</h3><div className="big amt">{usd(saved)}</div><div className="small muted">of <span className="amt">{usd(target)}</span> across {goals.length} goal{goals.length > 1 ? 's' : ''}</div></div>
-        {reached > 0 && <div className="card"><h3>Reached</h3><div className="big">{reached} of {goals.length}</div><div className="small muted">{reached === goals.length ? 'All done. Time for a new one?' : `${goals.length - reached} in progress`}</div></div>}
-        {monthly > 0 && <div className="card"><h3>Needed each month</h3><div className="big amt">{usd(monthly)}</div>
-          <div className="small muted">To reach goals with a date on time</div></div>}
-      </div>}
+      {/* With one goal its own card says all of this, so the standing line starts at two. */}
+      {goals.length > 1 && <Standing label="Goals" className="mt">
+        <Stand lead label="Saved toward goals" note={<span className="small muted">of <span className="amt">{usd(target)}</span> across {goals.length} goals</span>}>{usd(saved)}</Stand>
+        {reached > 0 && <Stand label="Reached" note={<span className="small muted">{reached === goals.length ? 'All done. Time for a new one?' : `${goals.length - reached} in progress`}</span>}>{reached} of {goals.length}</Stand>}
+        {monthly > 0 && <Stand label="Needed each month" note={<span className="small muted">To reach goals with a date on time</span>}>{usd(monthly)}</Stand>}
+      </Standing>}
       {adding && <Panel className="mt" title="New goal">
         <GoalForm key={JSON.stringify(adding)} initial={adding} accounts={accounts} onSave={add} submit="Add goal" />
         {err && <p className="bad small">{err}</p>}

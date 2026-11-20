@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from './api.js';
-import { usd, usd2, INCOME, SERIES, NEUTRAL } from './format.js';
+import { usd, INCOME, SERIES, NEUTRAL } from './format.js';
 import AccountFlow from './AccountFlow.jsx';
 import MonthReplay from './MonthReplay.jsx';
 import Tip, { useTip } from './Tip.jsx';
@@ -10,9 +10,9 @@ const VIEW_KEY = 'wealthflow.flowView';
 const savedView = () => { try { return localStorage.getItem(VIEW_KEY) || 'groups'; } catch { return 'groups'; } };
 
 const W = 760, BAR = 8, LX = 190, RX = W - 190 - BAR, HW = 12, HX = W / 2 - HW / 2, GAP = 12, SLOT = 34, TOP = 34;
-// Colour by role, never by rank: money in and money kept are green, spending is the planner's indigo ink, saving and
-// debt payments are grey, money taken from savings is ochre, refunds teal. Every bar is labelled, so colour never has to
-// tell one group from another on its own.
+// Colour by role, never by rank: money in and money that stays yours (savings & investments, left over) are green,
+// spending is the planner's indigo ink, debt payments are grey, refunds teal. Every bar is labelled, so colour never has
+// to tell one group from another on its own. Figures here are totals, so they're whole dollars (format.js's rule).
 const GREEN = INCOME, AMBER = SERIES[1], TEAL = SERIES[2], INK = 'var(--ink-dot)';
 const SMALL = 0.02; // spending groups under 2% of the total fold into "Everything else" (listed on hover)
 const monthName = (m) => new Date(m + '-01T00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
@@ -25,6 +25,15 @@ const band = (x0, a0, b0, x1, a1, b1) => {
 // Income sources → one "income" bar in the middle → spending categories and what was saved.
 // Both sides add up to the same total: "From account balances" or "Left over" balances them.
 // Shares under 1% say "<1%" rather than a misleading 0%.
+// Whole dollars that still add up: each figure rounds down, then the ones that lost the most get the dollars back
+// until the parts sum to the rounded total (so the ledger's parts and the hub never disagree by a dollar).
+const whole = (vals) => {
+  const out = vals.map((v) => Math.floor(v));
+  let left = Math.round(vals.reduce((s, v) => s + v, 0)) - out.reduce((s, v) => s + v, 0);
+  for (const [, i] of vals.map((v, i) => [v - Math.floor(v), i]).sort((a, b) => b[0] - a[0])) { if (left <= 0) break; out[i] += 1; left -= 1; }
+  return out;
+};
+const withWhole = (nodes) => { const w = whole(nodes.map((x) => x.value)); return nodes.map((x, i) => ({ ...x, shown: w[i] })); };
 const pctOf = (v, t) => { const p = (v / t) * 100; return p > 0 && p < 1 ? '<1%' : `${Math.round(p)}%`; };
 const lastDay = (to) => new Date(Date.parse(to + 'T00:00') - 864e5).toLocaleDateString('en-CA'); // `to` is exclusive
 
@@ -81,14 +90,14 @@ function layoutOf(f) {
     }
     cats = cats.map((c) => (trimmed.has(c) ? { ...c, value: c.value - trimmed.get(c), full: c.value } : c)).filter((c) => c.value > 0.005);
   }
-  const left = f.sources.filter((s) => !s.saved).map((s) => ({ ...s, color: s.credit ? TEAL : GREEN }));
+  const left = withWhole(f.sources.filter((s) => !s.saved).map((s) => ({ ...s, color: s.credit ? TEAL : GREEN })));
   const total = left.reduce((s, x) => s + x.value, 0);
-  const role = (c) => (c.saved ? GREEN : /Savings|Debt/.test(c.name) ? NEUTRAL : INK);
+  const role = (c) => (c.saved || /Savings/.test(c.name) ? GREEN : /Debt/.test(c.name) ? NEUTRAL : INK);
   const big = cats.filter((c) => c.saved || /Savings|Debt/.test(c.name) || c.value >= total * SMALL);
   const small = cats.filter((c) => !big.includes(c));
   const rest = small.length > 1 ? [{ name: 'Everything else', value: small.reduce((s, c) => s + c.value, 0), rest: small }] : small;
   const spend = [...big.filter((c) => !c.saved && role(c) === INK), ...rest];
-  const right = [...spend, ...big.filter((c) => !spend.includes(c))].map((c) => ({ ...c, color: c.rest ? NEUTRAL : role(c) }));
+  const right = withWhole([...spend, ...big.filter((c) => !spend.includes(c))].map((c) => ({ ...c, color: c.rest ? NEUTRAL : role(c), spending: !!c.rest || (!c.saved && role(c) === INK) })));
   const n = Math.max(left.length, right.length);
   const k = Math.max(180, n * 28) / total; // px per dollar: the hub is at least 180px tall
   const hub = total * k;
@@ -109,10 +118,9 @@ function layoutOf(f) {
   return { total, income: f.income || total, H, hub, hubTop, nodes: [...stack(left, 'l'), ...stack(right, 'r')] };
 }
 
-function Sankey({ f, rename, label }) {
+function Sankey({ f, layout, rename, label }) {
   const [hl, setHl] = useState(null); // 'l:<name>' or 'r:<name>'
   const [tip, show, hide] = useTip();
-  const layout = useMemo(() => layoutOf(f), [f]);
   const shown = useMorph(layout);
   const { total, income, H, hub, hubTop, nodes } = shown;
   const moving = shown !== layout; // mid-morph: the hover fade must not trail the per-frame opacity
@@ -124,15 +132,15 @@ function Sankey({ f, rename, label }) {
     onMouseMove: (e) => {
       setHl(`${side}:${x.name}`);
       show(e, side === 'l' ? <>
-        <b>{x.name}</b><div>{usd2(x.value)}</div>
+        <b>{x.name}</b><div>{usd(x.shown)}</div>
         <div className="muted">{x.pay ? 'Taken from your paycheck before it was deposited (may include an employer match)' : x.saved ? "Money you already had: spent or put into savings beyond this period's income" : x.credit ? "Refunds beyond what was spent in their group this period: money in, but not income" : `${pctOf(x.value, income)} of income`}</div>
-        {x.parts?.length > 0 && <ul>{x.parts.map((p) => <li key={p.name}><span>{p.name}</span><span>{usd2(p.value)}</span></li>)}</ul>}
+        {x.parts?.length > 0 && <ul>{x.parts.map((p) => <li key={p.name}><span>{p.name}</span><span>{usd(p.value)}</span></li>)}</ul>}
       </> : <>
-        <b>{x.name}</b><div>{usd2(x.value)} <span className="muted">· {pctOf(x.value, income)} of income</span></div>
-        {x.fromPay > 0 && <div className="muted">{usd2(x.fromPay)} of it straight from your pay</div>}
-        {x.full && <div className="muted">{usd2(x.full)} in all; the rest came from balances you already had</div>}
-        {x.rest && <ul>{x.rest.map((s) => <li key={s.name}><span>{s.name}</span><span>{usd2(s.value)}</span></li>)}</ul>}
-        {x.subs?.length > 0 && <ul>{x.subs.map((s) => <li key={s.name}><span>{s.name}</span><span>{usd2(s.value)}</span></li>)}</ul>}
+        <b>{x.name}</b><div>{usd(x.shown)} <span className="muted">· {pctOf(x.value, income)} of income</span></div>
+        {x.fromPay > 0 && <div className="muted">{usd(x.fromPay)} of it straight from your pay</div>}
+        {x.full && <div className="muted">{usd(x.full)} in all; the rest came from balances you already had</div>}
+        {x.rest && <ul>{x.rest.map((s) => <li key={s.name}><span>{s.name}</span><span>{usd(s.value)}</span></li>)}</ul>}
+        {x.subs?.length > 0 && <ul>{x.subs.map((s) => <li key={s.name}><span>{s.name}</span><span>{usd(s.value)}</span></li>)}</ul>}
         {!x.saved && !x.rest && <div className="muted">Click to see these transactions</div>}
       </>);
     },
@@ -155,19 +163,55 @@ function Sankey({ f, rename, label }) {
           <rect x={LX} y={x.y} width={BAR} height={x.hgt} rx={Math.min(BAR / 2, x.hgt / 2)} fill={x.color} {...on('l', x)} />
           <text x={LX - 8} y={x.mid - 2} textAnchor="end" className={`fl${x.key ? ' click' : ''}`}
             onClick={x.key ? () => rename(x.key, x.name) : undefined}><title>{x.key ? 'Click to rename' : x.name}</title>{short(x.name)}</text>
-          <text x={LX - 8} y={x.mid + 11} textAnchor="end">{usd2(x.value)}</text>
+          <text x={LX - 8} y={x.mid + 11} textAnchor="end">{usd(x.shown)}</text>
         </g>
       ))}
       {R.map((x) => (
         <g key={'rn' + x.name} style={fade(x)}>
           <rect x={RX} y={x.y} width={BAR} height={x.hgt} rx={Math.min(BAR / 2, x.hgt / 2)} fill={x.color} {...on('r', x)} />
           <text x={RX + BAR + 8} y={x.mid - 2} className="fl" {...on('r', x)}>{short(x.name)}</text>
-          <text x={RX + BAR + 8} y={x.mid + 11}>{usd2(x.value)} · {pctOf(x.value, total)}</text>
+          <text x={RX + BAR + 8} y={x.mid + 11}>{usd(x.shown)} · {pctOf(x.value, total)}</text>
         </g>
       ))}
     </svg>
     <Tip tip={tip} />
     </>
+  );
+}
+
+// The period as a two-line ledger that adds up to the chart's hub: what came in (income, money taken from your pay before
+// it was deposited, refunds beyond their group's spending) and where it went (spending, then each thing that stayed
+// yours). Both lines total the hub's "in" figure, in the same whole dollars as the chart's labels.
+function Ledger({ f, layout }) {
+  const L = layout.nodes.filter((x) => x.side === 'l'), R = layout.nodes.filter((x) => x.side === 'r');
+  const sum = (xs) => xs.reduce((s, x) => s + x.shown, 0);
+  const total = sum(L);
+  const into = [
+    ['Income', sum(L.filter((x) => !x.pay && !x.credit)), 'Take-home pay and other income that reached your accounts.'],
+    ['From your pay', sum(L.filter((x) => x.pay)), "Taken from your paycheck into a 401(k) or similar before the rest was deposited, so it isn't in Income."],
+    ['Refunds', sum(L.filter((x) => x.credit)), 'Refunds beyond what was spent in their own group this period: money in, but not income.'],
+  ].filter(([, v]) => v > 0);
+  const out = [
+    ['Spending', sum(R.filter((x) => x.spending)), 'Refunds lower spending in their own group, never below zero.'],
+    ...R.filter((x) => !x.spending).map((x) => [x.name, x.shown, x.full ? `${usd(x.full)} in all; the rest came from balances you already had.` : undefined]),
+  ].filter(([, v]) => v > 0);
+  const income = into.find(([k]) => k === 'Income')?.[1] ?? 0, spent = out.find(([k]) => k === 'Spending')?.[1] ?? 0, net = income - spent;
+  const row = (tag, parts, cls) => (
+    <div className="flrow">
+      <span className="fltag">{tag}</span>
+      <span className="flparts">{parts.map(([k, v, why], i) => <span key={k} className="flpart" title={why}>{i > 0 && <i aria-hidden="true">+</i>}{k} <b className={`amt ${cls(k)}`}>{usd(v)}</b></span>)}</span>
+      <span className="fltotal"><i aria-hidden="true">=</i> <b className="amt">{usd(total)}</b></span>
+    </div>
+  );
+  return (
+    <div className="flowledger">
+      {row('In', into, () => 'good')}
+      {row('Out', out, (k) => (k === 'Spending' ? '' : /Savings|Left over/.test(k) ? 'good' : ''))}
+      <p className="flnote">
+        {income > 0 && <span title="Income minus spending. Money moved into savings and investments isn't spending.">{net >= 0 ? 'Left after spending' : 'Spent beyond income'} <b className={`amt ${net >= 0 ? 'good' : 'bad'}`}>{usd(Math.abs(net))}</b>.</span>}
+        {f.moved > 0 && <span> Moved between your accounts <b className="amt">{usd(f.moved)}</b>, not counted above.</span>}
+      </p>
+    </div>
   );
 }
 
@@ -194,7 +238,7 @@ export default function Flow() {
   const picked = sel.startsWith('month=') ? sel.slice(6) : null;
   const mi = picked ? months.findIndex((m) => m.month === picked) : months.length;
   const step = (d) => { const m = months[Math.max(0, Math.min(months.length - 1, mi + d))]; if (m) setSel(`month=${m.month}`); };
-  const net = f ? f.income - f.spending : 0;
+  const layout = useMemo(() => (f && f.income + f.spending > 0 ? layoutOf(f) : null), [f]);
   const day = (d) => new Date(d + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const period = f ? `${day(f.from)} – ${day(new Date(Date.parse(f.to + 'T00:00') - 864e5).toLocaleDateString('en-CA'))}` : '';
   return (
@@ -218,15 +262,9 @@ export default function Flow() {
         {!f && <Skeleton h={420} r={12} />}
         {f && (
           <>
-            <div className="flowstats">
-              <span>Income <b className="good">{usd2(f.income)}</b></span>
-              <span title={f.refunds > 0 ? `Refunds lower spending in their own group, never below zero; ${usd2(f.refunds)} beyond that is shown as Refunds.` : undefined}>Spending <b>{usd2(f.spending)}</b></span>
-              <span title="Income minus spending. Money moved into savings and investments isn't spending.">{net >= 0 ? 'Left after spending' : 'Spent beyond income'} <b className={net >= 0 ? 'good' : 'bad'}>{usd2(Math.abs(net))}</b></span>
-              {f.fromPay > 0 && <span title="Taken from your paycheck into a 401(k) or similar before the rest was deposited, so it isn't in Income.">Put in from your pay <b className="good">{usd2(f.fromPay)}</b></span>}
-              {f.moved > 0 && <span>Moved between your accounts <b className="muted">{usd2(f.moved)}</b></span>}
-            </div>
+            {layout && view === 'groups' && <Ledger f={f} layout={layout} />}
             {view === 'groups'
-              ? (f.income + f.spending > 0 ? <div className={`flowchart${f.sel !== sel ? ' stale' : ''}`} aria-busy={f.sel !== sel}><Sankey f={f} rename={rename} label={period} /></div> : <div className="empty">No income or spending in this period.</div>)
+              ? (layout ? <div className={`flowchart${f.sel !== sel ? ' stale' : ''}`} aria-busy={f.sel !== sel}><Sankey f={f} layout={layout} rename={rename} label={period} /></div> : <div className="empty">No income or spending in this period.</div>)
               : acc ? <div className="flowchart"><AccountFlow data={acc} rename={rename} /></div> : <Skeleton h={420} r={12} />}
             {f.gaps?.length > 0 && (
               <div className="gapnote small">

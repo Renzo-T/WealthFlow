@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import Tip, { useTip } from './Tip.jsx';
 import { sankey, sankeyJustify, sankeyLinkHorizontal } from 'd3-sankey';
-import { usd2, INCOME, SPENDING, SERIES, NEUTRAL, NEUTRAL_LIGHT } from './format.js';
+import { usd, INCOME, SPENDING, SERIES, NEUTRAL, NEUTRAL_LIGHT } from './format.js';
 
 const W = 900, PAD = 4;
 const COLOR = {
-  income: INCOME, account: SERIES[0], group: SPENDING, saving: SERIES[2], credit: SERIES[2], external: NEUTRAL, balance: NEUTRAL_LIGHT,
+  income: INCOME, account: SERIES[0], group: SPENDING, saving: INCOME, credit: SERIES[2], external: NEUTRAL, balance: NEUTRAL_LIGHT,
 };
 const color = (n) => COLOR[n.kind];
 const short = (s, n = 26) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
@@ -34,12 +34,12 @@ export default function AccountFlow({ data, rename }) {
   if (!g) return <div className="empty">No money moved in this period.</div>;
   const lit = (l) => !hl || hl.link === l || hl.node === l.source || hl.node === l.target;
   const sum = (ls) => ls.reduce((s, l) => s + l.value, 0);
-  const linkTip = (l) => <><b>{l.source.name} → {l.target.name}</b><div>{usd2(l.value)}</div></>;
+  const linkTip = (l) => <><b>{l.source.name} → {l.target.name}</b><div>{usd(l.value)}</div></>;
   const nodeTip = (n) => {
-    const top = (ls, side) => [...ls].sort((a, b) => b.value - a.value).slice(0, 4).map((l) => <li key={l[side].id}><span>{l[side].name}</span><span>{usd2(l.value)}</span></li>);
+    const top = (ls, side) => [...ls].sort((a, b) => b.value - a.value).slice(0, 4).map((l) => <li key={l[side].id}><span>{l[side].name}</span><span>{usd(l.value)}</span></li>);
     return <><b>{n.name}</b>{n.institution && <span className="muted"> · {n.institution}</span>}
-      {n.targetLinks.length > 0 && <><div className="muted">In {usd2(sum(n.targetLinks))} from</div><ul>{top(n.targetLinks, 'source')}</ul></>}
-      {n.sourceLinks.length > 0 && <><div className="muted">Out {usd2(sum(n.sourceLinks))} to</div><ul>{top(n.sourceLinks, 'target')}</ul></>}</>;
+      {n.targetLinks.length > 0 && <><div className="muted">In {usd(sum(n.targetLinks))} from</div><ul>{top(n.targetLinks, 'source')}</ul></>}
+      {n.sourceLinks.length > 0 && <><div className="muted">Out {usd(sum(n.sourceLinks))} to</div><ul>{top(n.sourceLinks, 'target')}</ul></>}</>;
   };
 
   return (
@@ -65,12 +65,12 @@ export default function AccountFlow({ data, rename }) {
                 onClick={clickable ? () => rename(n.key, n.name) : undefined}>
                 <title>{clickable ? 'Click to rename' : n.name}</title>{short(n.name)}
               </text>
-              <text x={x} y={y + 11} textAnchor={right ? 'start' : 'end'}>{usd2(n.value)}</text>
+              <text x={x} y={y + 11} textAnchor={right ? 'start' : 'end'}>{usd(n.value)}</text>
             </> : (
               <text x={x} y={y + 4} textAnchor={right ? 'start' : 'end'} className={clickable ? 'click' : undefined}
                 onClick={clickable ? () => rename(n.key, n.name) : undefined}>
                 <title>{clickable ? 'Click to rename' : n.name}</title>
-                <tspan className="fl">{short(n.name, 22)}</tspan> {usd2(n.value)}
+                <tspan className="fl">{short(n.name, 22)}</tspan> {usd(n.value)}
               </text>
             )}
           </g>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usd, shortDate } from './format.js';
-import { Hover, TipList, Trend } from './ui.jsx';
+import { Hover, TipList, Trend, Standing, Stand } from './ui.jsx';
 import { api } from './api.js';
 
 // "Changed since your last visit": each figure remembers what it was when you last looked (this browser only). When it
@@ -96,32 +96,28 @@ export default function Cards({ s, safe, budgets }) {
   const evenPace = flex.reduce((t, b) => t + b.amount * b.pace, 0), flexSpent = flex.reduce((t, b) => t + b.spent, 0), ahead = flexSpent - evenPace;
   const nwChanged = was('nw') != null && Math.abs(values.nw - was('nw')) >= 1;
   return (
-    <section className="standing" aria-label="Where you stand">
-      <div className="stand lead">
-        <span className="slabel">Net worth</span>
-        <span className="sfig big">{s.netWorth.ago == null ? <Counter value={s.netWorth.value} from={was('nw')} />
+    <Standing label="Where you stand">
+      <Stand lead label="Net worth" note={nwChanged ? <Since from={was('nw')} value={values.nw} at={base.at} upIsGood />
+        : <Delta v={s.netWorth.change} vs="vs. 30 days ago" hint="Net worth now compared with 30 days ago" />}>
+        {s.netWorth.ago == null ? <Counter value={s.netWorth.value} from={was('nw')} />
           : <Hover className="quiet" tip={<TipList title="Net worth" rows={[['30 days ago', usd(s.netWorth.ago)], ['Today', usd(s.netWorth.value)],
-            ['Change', `${s.netWorth.value >= s.netWorth.ago ? '+' : '−'}${usd(Math.abs(s.netWorth.value - s.netWorth.ago))}`]]} />}><Counter value={s.netWorth.value} from={was('nw')} /></Hover>}</span>
-        {nwChanged ? <Since from={was('nw')} value={values.nw} at={base.at} upIsGood />
-          : <Delta v={s.netWorth.change} vs="vs. 30 days ago" hint="Net worth now compared with 30 days ago" />}
-      </div>
-      <div className="stand">
-        <span className="slabel">Free to spend</span>
-        <span className="sfig big">{free == null ? '—' : <Hover className="quiet" tip={<TipList title="Free to spend" rows={[['Cash in everyday accounts', usd(safe.cash)],
+            ['Change', `${s.netWorth.value >= s.netWorth.ago ? '+' : '−'}${usd(Math.abs(s.netWorth.value - s.netWorth.ago))}`]]} />}><Counter value={s.netWorth.value} from={was('nw')} /></Hover>}
+      </Stand>
+      <Stand label="Free to spend" note={free == null ? <span className="small muted">left this month after bills</span>
+        : free < 1 ? <span className="small muted">Nothing left to spend this month</span>
+          : <span className="small muted"><span className="amt">{usd(free / daysLeft)}</span> a day for the next {daysLeft === 1 ? 'day' : `${daysLeft} days`}</span>}>
+        {free == null ? '—' : <Hover className="quiet" tip={<TipList title="Free to spend" rows={[['Cash in everyday accounts', usd(safe.cash)],
           ['Income still coming', `+${usd(safe.incomeTotal ?? 0)}`], ['Bills still due', `−${usd(safe.dueTotal ?? 0)}`], ['Card balances', `−${usd(safe.owed ?? 0)}`],
-          ['Cushion', `−${usd(safe.cushion ?? 0)}`]]} note="Through the end of the month. Bills shows each one still due." />}><Counter value={free} from={was('free')} /></Hover>}</span>
-        {free == null ? <span className="small muted">left this month after bills</span>
-          : free < 1 ? <span className="small muted">Nothing left to spend this month</span>
-            : <span className="small muted"><span className="amt">{usd(free / daysLeft)}</span> a day for the next {daysLeft === 1 ? 'day' : `${daysLeft} days`}</span>}
-      </div>
-      <div className="stand">
-        <span className="slabel">Spent this month</span>
-        <span className="sfig big"><Hover className="quiet" tip={monthTip(s, s.spending, 'Spending')}><Counter value={s.spending.value} from={was('spent')} /></Hover></span>
+          ['Cushion', `−${usd(safe.cushion ?? 0)}`]]} note="Through the end of the month. Bills shows each one still due." />}><Counter value={free} from={was('free')} /></Hover>}
+      </Stand>
+      <Stand label="Spent this month" note={<>
         {flex.length > 0 && Math.abs(ahead) >= 1 ? <span className="small muted" title="Flexible spending against an even pace of its budget for today"><span className={`amt ${ahead > 0 ? 'bad' : 'good'}`}>{usd(Math.abs(ahead))}</span> {ahead > 0 ? 'ahead of' : 'under'} an even pace</span>
           : flex.length > 0 ? <span className="small muted">On an even pace</span> : null}
         {budgeted > 0 && <span className="small muted">of <span className="amt">{usd(budgeted)}</span> budgeted</span>}
-      </div>
-    </section>
+      </>}>
+        <Hover className="quiet" tip={monthTip(s, s.spending, 'Spending')}><Counter value={s.spending.value} from={was('spent')} /></Hover>
+      </Stand>
+    </Standing>
   );
 }
 

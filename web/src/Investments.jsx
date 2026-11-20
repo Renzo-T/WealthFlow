@@ -2,9 +2,9 @@ import { Fragment, useEffect, useState } from 'react';
 import { api } from './api.js';
 import { usd2, usd as usd0 } from './format.js';
 import { kindColor } from './AssetAllocation.jsx';
-import { Panel, PageHeader, PageSkeleton, Hover, TipList, tipText } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, Hover, TipList, tipText, Standing, Stand } from './ui.jsx';
 const pct = (n, d = 1) => `${n.toFixed(d)}%`;
-const signed = (n) => `${n >= 0 ? '+' : '-'}${usd0(Math.abs(n))}`;
+const signed = (n) => `${n >= 0 ? '+' : '−'}${usd0(Math.abs(n))}`;
 // 401(k) plan funds come with internal codes ("SP.500.INDEX.PL.CL.C"), not tickers; only show real-looking ones.
 const ticker = (h) => (h.ticker && /^[A-Z]{1,5}(\.[A-Z])?$/.test(h.ticker) ? h.ticker : null);
 
@@ -168,16 +168,21 @@ export default function Investments() {
         The first download can take a few hours after connecting; Mizo Money checks again automatically.</div>}
       {rows.length === 0 && pending.length === 0 && <div className="card empty mt">No holdings yet. Connect a brokerage or retirement account to see them here.</div>}
       {rows.length > 0 && <>
-        <div className="cards ruled">
-          <div className="card"><h3>Total value</h3><div className="big">{usd0(total)}</div><div className="small muted"><Hover tip={<TipList title="By account" rows={byAccountAll.map((g) => [g.name, usd0(g.value), g.institution])} />}>{accounts} account{accounts === 1 ? "" : "s"}</Hover> · {positions.length} positions</div></div>
-          <div className="card"><h3>Unrealized gain</h3>
-            <div className={`big ${cost && knownValue - cost < 0 ? 'bad' : 'good'}`}>{cost ? signed(knownValue - cost) : '—'}</div>
-            <div className="small muted">{cost ? <>{pct(((knownValue - cost) / cost) * 100)} on the <Hover tip={<TipList title="Left out: no cost basis reported"
-              rows={noCost.map((g) => [g.name, usd0(g.value), g.institution])} note="401(k) and similar plans usually don't report what you paid, so their gain is unknown." />}>{usd0(knownValue)} with a known cost</Hover></> : 'No cost basis reported'}</div></div>
-          {retirement > 0 && <div className="card"><h3>Retirement & HSA</h3><div className="big">{pct((retirement / total) * 100, 0)}</div><div className="small muted"><Hover tip={<TipList title="Tax-advantaged" rows={byAccountAll.filter((g) => g.kind !== 'Taxable').map((g) => [g.name, usd0(g.value), g.kind])} />}>{usd0(retirement)} tax-advantaged</Hover>
-              {' · '}<Hover tip={<TipList title="Taxable" rows={byAccountAll.filter((g) => g.kind === 'Taxable').map((g) => [g.name, usd0(g.value), g.institution])} />}>{usd0(total - retirement)} taxable</Hover></div></div>}
-          <div className="card"><h3>Cash</h3><div className="big">{usd0(cash)}</div><div className="small muted">{pct((cash / total) * 100)} in money market and sweep</div></div>
-        </div>
+        <Standing label="Investments" className="mt">
+          <Stand lead label="Total value" note={<span className="small muted"><Hover tip={<TipList title="By account" rows={byAccountAll.map((g) => [g.name, usd0(g.value), g.institution])} />}>{accounts} account{accounts === 1 ? '' : 's'}</Hover> · {positions.length} positions</span>}>
+            {usd0(total)}
+          </Stand>
+          <Stand label="Unrealized gain" tone={cost ? (knownValue - cost < 0 ? 'bad' : 'good') : undefined}
+            note={<span className="small muted">{cost ? <>{pct(((knownValue - cost) / cost) * 100)} on <Hover tip={<TipList title="Left out: no cost basis reported"
+              rows={noCost.map((g) => [g.name, usd0(g.value), g.institution])} note="401(k) and similar plans usually don't report what you paid, so their gain is unknown." />}><span className="amt">{usd0(knownValue)}</span> with a known cost</Hover></> : 'No cost basis reported'}</span>}>
+            {cost ? signed(knownValue - cost) : '—'}
+          </Stand>
+          {retirement > 0 && <Stand label="Retirement & HSA"
+            note={<span className="small muted"><Hover tip={<TipList title="Tax-advantaged" rows={byAccountAll.filter((g) => g.kind !== 'Taxable').map((g) => [g.name, usd0(g.value), g.kind])} />}><span className="amt">{usd0(retirement)}</span> tax-advantaged</Hover></span>}>
+            {pct((retirement / total) * 100, 0)}
+          </Stand>}
+          <Stand label="Cash" note={<span className="small muted">{pct((cash / total) * 100)} in money market and sweep</span>}>{usd0(cash)}</Stand>
+        </Standing>
 
         <Panel title="Allocation">
           <div className={`splits${holdingParts.length > 1 && accountParts.length > 1 ? '' : ' one'}`}>
