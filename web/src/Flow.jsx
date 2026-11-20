@@ -67,11 +67,25 @@ function useMorph(layout) {
 
 // Where everything sits, from the period's figures.
 function layoutOf(f) {
-  const left = f.sources.map((s) => ({ ...s, color: s.saved ? AMBER : s.credit ? TEAL : GREEN }));
+  // Income-only: money that came from balances you already had isn't "your pay", so that source goes, and what's put
+  // into savings or debt shrinks by the same amount (the full figure stays in the hover). "Through accounts" shows the rest.
+  let cats = f.categories;
+  if (f.sources.some((s) => s.saved)) {
+    const gone = f.sources.filter((s) => s.saved).reduce((s, x) => s + x.value, 0);
+    let over = gone;
+    const isSave = (c) => /Savings|Debt/.test(c.name);
+    const trimmed = new Map();
+    for (const c of [...cats.filter(isSave), ...cats.filter((c) => !isSave(c) && !c.saved)]) {
+      const cut = Math.min(over, c.value);
+      if (cut > 0) { trimmed.set(c, cut); over -= cut; }
+    }
+    cats = cats.map((c) => (trimmed.has(c) ? { ...c, value: c.value - trimmed.get(c), full: c.value } : c)).filter((c) => c.value > 0.005);
+  }
+  const left = f.sources.filter((s) => !s.saved).map((s) => ({ ...s, color: s.credit ? TEAL : GREEN }));
   const total = left.reduce((s, x) => s + x.value, 0);
   const role = (c) => (c.saved ? GREEN : /Savings|Debt/.test(c.name) ? NEUTRAL : INK);
-  const big = f.categories.filter((c) => c.saved || /Savings|Debt/.test(c.name) || c.value >= total * SMALL);
-  const small = f.categories.filter((c) => !big.includes(c));
+  const big = cats.filter((c) => c.saved || /Savings|Debt/.test(c.name) || c.value >= total * SMALL);
+  const small = cats.filter((c) => !big.includes(c));
   const rest = small.length > 1 ? [{ name: 'Everything else', value: small.reduce((s, c) => s + c.value, 0), rest: small }] : small;
   const spend = [...big.filter((c) => !c.saved && role(c) === INK), ...rest];
   const right = [...spend, ...big.filter((c) => !spend.includes(c))].map((c) => ({ ...c, color: c.rest ? NEUTRAL : role(c) }));
@@ -114,6 +128,7 @@ function Sankey({ f, rename, label }) {
         <div className="muted">{x.saved ? "Money you already had: spent or put into savings beyond this period's income" : x.credit ? "Refunds beyond this group's spending: money in, but not income" : `${pctOf(x.value, income)} of income`}</div>
       </> : <>
         <b>{x.name}</b><div>{usd2(x.value)} <span className="muted">· {pctOf(x.value, income)} of income</span></div>
+        {x.full && <div className="muted">{usd2(x.full)} in all; the rest came from balances you already had</div>}
         {x.rest && <ul>{x.rest.map((s) => <li key={s.name}><span>{s.name}</span><span>{usd2(s.value)}</span></li>)}</ul>}
         {x.subs?.length > 0 && <ul>{x.subs.map((s) => <li key={s.name}><span>{s.name}</span><span>{usd2(s.value)}</span></li>)}</ul>}
         {!x.saved && !x.rest && <div className="muted">Click to see these transactions</div>}
@@ -182,13 +197,11 @@ export default function Flow() {
   const period = f ? `${day(f.from)} – ${day(new Date(Date.parse(f.to + 'T00:00') - 864e5).toLocaleDateString('en-CA'))}` : '';
   return (
     <>
-      <PageHeader title="Money flow" sub={view === 'groups'
-        ? 'Income and spending by budget group, leaving out transfers between your accounts.'
-        : 'How money moved from income, through your accounts, to spending and savings.'} />
+      <PageHeader title="Money flow" />
       <Panel className="mt" actions={<>
         <div className="ranges">
-          <button className={view === 'groups' ? 'on' : ''} onClick={() => pick('groups')}>By budget group</button>
-          <button className={view === 'accounts' ? 'on' : ''} onClick={() => pick('accounts')}>Through accounts</button>
+          <button className={view === 'groups' ? 'on' : ''} onClick={() => pick('groups')} title="Your income and where it went, by budget group. Transfers between your accounts are left out.">Your pay</button>
+          <button className={view === 'accounts' ? 'on' : ''} onClick={() => pick('accounts')} title='How money moved from income, through your accounts, to spending and savings. Transfers both ways between two accounts show as the net amount; "Kept in accounts" and "From account balances" are the difference between what came into and went out of each account, such as paying off last month&apos;s card.'>Through accounts</button>
         </div>
         <div className="ranges">
           <button className={sel === 'days=30' ? 'on' : ''} onClick={() => setSel('days=30')}>Last 30 days</button>
@@ -212,9 +225,6 @@ export default function Flow() {
             {view === 'groups'
               ? (f.income + f.spending > 0 ? <div className={`flowchart${f.sel !== sel ? ' stale' : ''}`} aria-busy={f.sel !== sel}><Sankey f={f} rename={rename} label={period} /></div> : <div className="empty">No income or spending in this period.</div>)
               : acc ? <div className="flowchart"><AccountFlow data={acc} rename={rename} /></div> : <Skeleton h={420} r={12} />}
-            {view === 'accounts' && <p className="small muted foot">
-              Transfers going both ways between two accounts are shown as the net amount. "Kept in accounts" and "From account balances"
-              are the difference between what came into and went out of each account, such as paying off last month's card.</p>}
             {f.gaps?.length > 0 && (
               <div className="gapnote small">
                 <b>Incomplete for {period}.</b> Some accounts have no history for the start of this period, so their income and spending before then is missing:

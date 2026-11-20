@@ -19,6 +19,7 @@ const KINDS = [
 const srcLine = (b) => [b.pinned ? 'Your schedule' : b.source === 'detected' ? null : SOURCE[b.source], b.edited && !b.pinned ? 'edited' : null,
   b.account ? `${b.direction === 'in' ? 'into' : 'from'} ${b.account}` : null].filter(Boolean).join(' · ');
 const BillCols = () => <colgroup><col /><col className="c-sched" /><col className="c-next" /><col className="c-amt" /></colgroup>;
+const SHOWN = 6;
 const today = () => new Date().toLocaleDateString('en-CA');
 // The date of a bill's latest charge once it has posted: a dated fact that has happened, so it gets a stamp.
 const paidOn = (b) => { const d = b.recent?.[0]?.date ?? b.last_date; return d && d <= today() ? d : null; };
@@ -208,6 +209,7 @@ export default function Bills() {
   const [editing, setEditing] = useState(null);
   const [adding, setAdding] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
+  const [allEnded, setAllEnded] = useState(false), [allHidden, setAllHidden] = useState(false); // secondary lists show 6 rows, then "Show all"
   const load = useCallback(async () => setList(await api('/bills')), []);
   useEffect(() => { load(); }, [load]);
   // The month shown on the calendar, with each day's bills and paydays written in; a picked day lists them in full under it.
@@ -256,16 +258,17 @@ export default function Bills() {
         <td><span className="rowicon"><CategoryIcon group={b.can_card ? 'Debt repayment' : b.direction === 'in' ? 'Income' : b.grp} sub={b.category} kind={b.can_card ? 'card' : undefined} />
           <span className="bname1"><b title={b.name}>{b.name}</b>{srcLine(b) && <div className="small muted" title={srcLine(b)}>{srcLine(b)}</div>}</span></span>
 </td>
-        <td title={b.schedule ? b.schedule[0].toUpperCase() + b.schedule.slice(1) : undefined}>{b.schedule_short || '—'}
-          {b.card && <div className="small muted">Due {shortDate(b.card.due)}{b.card.paid ? ' · paid' : ''}</div>}</td>
-        <td>{b.ended ? <span className="muted" title={b.next_date ? `Expected ${shortDate(b.next_date)} and nothing came` : undefined}>Missed{b.next_date ? ` ${shortDate(b.next_date)}` : ''}</span> : b.unscheduled
+        <td className="cut" title={[b.schedule ? b.schedule[0].toUpperCase() + b.schedule.slice(1) : null,
+          b.card ? `Due ${shortDate(b.card.due)}${b.card.paid ? ' · paid' : ''}` : null].filter(Boolean).join('. ') || undefined}>{b.schedule_short || '—'}</td>
+        <td className="cut">{b.ended ? <span className="muted" title={b.next_date ? `Expected ${shortDate(b.next_date)} and nothing came` : undefined}>Missed{b.next_date ? ` ${shortDate(b.next_date)}` : ''}</span> : b.unscheduled
           ? <span className="muted" title="This card's last statement is paid. The next bill appears when the next statement is issued; set the amount to Current balance to pay from usage instead.">Next statement</span>
           : b.next_date ? shortDate(b.next_date) : '—'}</td>
-        <td className="r"><Hover tip={b.recent?.length ? <TipList title="Recent payments" rows={b.recent.map((r) => [shortDate(r.date), usd2(r.amount)])}
-          note={b.card ? `Statement ${usd2(b.card.statement ?? 0)} · current balance ${usd2(b.card.current ?? 0)}` : null} /> : null}>
-          <span className={`tamt${b.direction === 'in' ? ' good' : ''}`}>{billAmount(b)}</span></Hover>
-          {paidOn(b) && <div className="small muted paidline"><Stamp kind={b.direction === 'in' ? 'in' : 'out'} done icon={markIcon(b)} className="mini" />{b.direction === 'in' ? 'Received' : 'Paid'} {shortDate(paidOn(b))}</div>}
-          {(b.amount_mode !== 'last' || !paidOn(b)) && <div className="small muted">{MODE[b.amount_mode]}</div>}</td>
+        <td className="r"><Hover tip={<TipList title={`${MODE[b.amount_mode] ?? 'Amount'}${paidOn(b) ? ` · ${b.direction === 'in' ? 'received' : 'paid'} ${shortDate(paidOn(b))}` : ''}`}
+          rows={(b.recent ?? []).map((r) => [shortDate(r.date), usd2(r.amount)])}
+          note={b.card ? `Statement ${usd2(b.card.statement ?? 0)} · current balance ${usd2(b.card.current ?? 0)}` : null} />}>
+          <span className={`tamt${b.direction === 'in' ? ' good' : ''}`}>{billAmount(b)}</span>
+          {paidOn(b) ? <div className="small muted paidline"><Stamp kind={b.direction === 'in' ? 'in' : 'out'} done icon={markIcon(b)} className="mini" />{b.direction === 'in' ? 'Received' : 'Paid'} {shortDate(paidOn(b))}</div>
+            : <div className="small muted paidline">{MODE[b.amount_mode]}</div>}</Hover></td>
       </tr>
       {editing === b.key && <tr className="billedit"><td colSpan="4"><Editor bill={b} card={b.source === 'card'} onSave={saveEdit(b)} onCancel={() => setEditing(null)}
         extra={<>
@@ -281,14 +284,14 @@ export default function Bills() {
 
   return (
     <>
-      <PageHeader title="Bills" sub="From your transactions, statements, Plaid or your own entries; your edits always win.">
+      <PageHeader title="Bills">
         <button className="btn primary" onClick={() => setAdding(!adding)}>Add a bill</button></PageHeader>
       <div className="mt"><MonthSpread month={month} onMonth={setMonth} dots={false} list label="Bills this month" selected={day}
         onPick={(d) => setDay(day === d ? null : d)} below={day ? (days) => <DayList days={days} day={day} onClear={() => setDay(null)} /> : null} /></div>
       {adding && <Panel className="mt" title="Add a bill or recurring income">
         <AddBill addManual={add} onAdded={() => { setAdding(false); load(); }} onCancel={() => setAdding(false)} /></Panel>}
       <PaycheckPrompt onDone={load} />
-      <p className="small muted billcount">{active.length} active · <b className="amt">{usd2(monthOut)}</b> going out in the next 30 days</p>
+      <p className="small muted billcount" title="Click a bill to change its schedule or amount. Schedules account for weekends and bank holidays; your edits always win.">{active.length} active · <b className="amt">{usd2(monthOut)}</b> going out in the next 30 days</p>
       <section className="card scroll sticky-head mt-sm">
         <table className="t billtable">
           <BillCols />
@@ -303,13 +306,13 @@ export default function Bills() {
           <button className="linkbtn" onClick={() => different(b)}>They're two different things</button></p>)}
       </section>
       {ended.length > 0 && <section className="card mt scroll">
-        <table className="t billtable"><BillCols />{head('Possibly ended')}<tbody>{ended.map(row)}</tbody></table>
-        <p className="small muted foot">An expected payment didn't come, so these are left out of Upcoming and Free to spend. One that charges again comes back on its own.</p></section>}
+        <table className="t billtable"><BillCols />{head(<Hover tip="An expected payment didn't come, so these are left out of Upcoming and Free to spend. One that charges again comes back on its own.">
+          <span>Possibly ended</span></Hover>)}<tbody>{(allEnded ? ended : ended.slice(0, SHOWN)).map(row)}</tbody></table>
+        {ended.length > SHOWN && <p className="small foot"><button className="linkbtn" onClick={() => setAllEnded(!allEnded)}>{allEnded ? 'Show fewer' : `Show all ${ended.length}`}</button></p>}</section>}
       {hidden.length > 0 && <p className="small mt">
         <button className="linkbtn" onClick={() => setShowHidden(!showHidden)}>{showHidden ? 'Hide' : 'Show'} {hidden.length} marked "not a bill"</button></p>}
-      {showHidden && <section className="card scroll"><table className="t billtable"><BillCols /><tbody>{hidden.map(row)}</tbody></table></section>}
-      <p className="small muted mt">
-        Click a bill to change its schedule or amount, or to mark it not a bill. Schedules account for weekends and bank holidays.</p>
+      {showHidden && <section className="card scroll"><table className="t billtable"><BillCols /><tbody>{(allHidden ? hidden : hidden.slice(0, SHOWN)).map(row)}</tbody></table>
+        {hidden.length > SHOWN && <p className="small foot"><button className="linkbtn" onClick={() => setAllHidden(!allHidden)}>{allHidden ? 'Show fewer' : `Show all ${hidden.length}`}</button></p>}</section>}
     </>
   );
 }

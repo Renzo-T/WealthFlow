@@ -35,22 +35,44 @@ const recall = (k, d) => { try { return JSON.parse(localStorage.getItem(`wf.budg
 
 // Remaining as plain text: ink while there is room, red only when over, muted "met" for saving above its budget
 // (saving more than planned isn't overspending).
-function Remaining({ value, income, saving }) {
+// How far over counts as an alarm: more than $25 and 10% of the budget. A few dollars over is a muted note.
+const bigOver = (over, budget) => over > Math.max(25, 0.1 * (budget || 0));
+function Remaining({ value, income, saving, of }) {
   const v = Math.round(value);
   if (saving && v < 0) return <span className="rem muted" title={amountsHidden() ? 'Saved more than planned' : `${usd(-v)} more than planned`}>met</span>;
   if (income && v < 0) return <span className="rem amt" title={amountsHidden() ? 'Received more than budgeted' : `${usd(-v)} more than budgeted`}>+{usd(-v)}</span>; // income above budget is good news, not "over"
-  return <span className={`rem amt${v < 0 ? ' over' : ''}`}>{v < 0 ? '−' : ''}{usd(Math.abs(v))}</span>;
+  const alarm = v < 0 && bigOver(-v, of);
+  return <span className={`rem amt${alarm ? ' over' : v < 0 ? ' slight' : ''}`}>{v < 0 ? '−' : ''}{usd(Math.abs(v))}</span>;
 }
 
-// Budget amount, edited in place: saves on Enter or when you leave the field. Empty (or 0) removes the budget.
+// Budget amount: formatted text ($1,200) that becomes a field on click or focus (Tab lands on it). Enter or leaving
+// saves, Escape cancels. Empty (or 0) removes the budget.
 function BudgetInput({ c, save }) {
   const [v, setV] = useState(c.budget ?? '');
+  const [editing, setEditing] = useState(false);
+  const ref = useRef(null);
+  const cancelled = useRef(false);
   useEffect(() => setV(c.budget ?? ''), [c.budget]);
-  const commit = () => { const n = v === '' ? null : Math.round(Number(v)); if (n !== (c.budget ?? null)) save(c, n); };
+  useEffect(() => { if (editing) { ref.current?.focus(); ref.current?.select(); } }, [editing]);
+  const commit = () => {
+    setEditing(false);
+    if (cancelled.current) { cancelled.current = false; setV(c.budget ?? ''); return; }
+    const n = v === '' ? null : Math.round(Number(v));
+    if (n !== (c.budget ?? null)) save(c, n);
+  };
+  const tip = c.suggested ? `Suggested${amountsHidden() ? '' : ` ${usd(c.suggested)}`} from ${c.basis}` : undefined;
+  if (!editing) {
+    return (
+      <button type="button" className={`bval amt${c.budget == null ? ' empty' : ''}${c.budget == null && c.suggested ? ' sugg' : ''}`} title={tip}
+        aria-label={`Budget for ${c.category}`} onClick={() => setEditing(true)} onFocus={() => setEditing(true)}>
+        {c.budget != null ? usd(c.budget) : c.suggested ? `≈ ${usd(c.suggested)}` : '—'}</button>
+    );
+  }
   return (
-    <input className={`binput${v === '' && c.suggested ? ' sugg' : ''}`} type="number" min="0" step="1" value={v} placeholder={c.suggested ? `≈ ${c.suggested}` : '—'}
-      title={c.suggested ? `Suggested${amountsHidden() ? '' : ` ${usd(c.suggested)}`} from ${c.basis}` : undefined}
-      onChange={(e) => setV(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} aria-label={`Budget for ${c.category}`} />
+    <input ref={ref} className="binput" type="number" min="0" step="1" value={v} placeholder={c.suggested ? `≈ ${c.suggested}` : '—'} title={tip}
+      onChange={(e) => setV(e.target.value)} onBlur={commit}
+      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); else if (e.key === 'Escape') { cancelled.current = true; e.currentTarget.blur(); } }}
+      aria-label={`Budget for ${c.category}`} />
   );
 }
 
@@ -59,7 +81,7 @@ function BudgetInput({ c, save }) {
 function Meter({ actual, budget, income, pace, saving }) {
   if (!budget) return <div className="meter blank" />;
   const p = Math.min(100, (Math.max(0, actual) / budget) * 100);
-  const state = income || saving ? 'ok' : actual > budget + 0.5 ? 'over' : pace != null && pace < 1 && p > pace * 100 + 10 ? 'ahead' : 'ok';
+  const state = income || saving ? 'ok' : bigOver(actual - budget, budget) ? 'over' : actual > budget + 0.5 ? 'ahead' : pace != null && pace < 1 && p > pace * 100 + 10 ? 'ahead' : 'ok';
   return (
     <div className="meter"><i className={state} style={{ width: `${p}%` }} />
       {pace != null && pace > 0 && pace < 1 && <b style={{ left: `${pace * 100}%` }} title="An even pace for today" />}</div>
@@ -90,7 +112,7 @@ function Row({ c, income, progress, save, tags = true, inGroup = false, month, r
       <span className="r amt">{c.count ? <Hover tip={<TipList title={`${c.category}: ${c.count} transaction${c.count > 1 ? 's' : ''}`}
         rows={c.top.map((t) => [t.name, `${t.amount < 0 ? '−' : ''}${usd2(Math.abs(t.amount))}`, new Date(`${t.date}T00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })])}
         note={c.count > c.top.length ? `and ${c.count - c.top.length} more` : null} />}>{usd(c.actual)}</Hover> : usd(c.actual)}</span>
-      <span className="r">{inGroup ? null : avail != null ? <Remaining value={avail - c.actual} income={income} saving={c.saving} />
+      <span className="r">{inGroup ? null : avail != null ? <Remaining value={avail - c.actual} income={income} saving={c.saving} of={avail} />
         : c.saving && c.actual > 0.5 ? <Remaining value={-c.actual} saving /> : <span className="muted" title="No budget">—</span>}</span>
       {!inGroup && <span className="bmeter"><Meter actual={c.actual} budget={avail} income={income} saving={c.saving} pace={!income && c.kind === 'flexible' ? progress : null} /></span>}
     </div>
@@ -143,8 +165,8 @@ function GroupBlock({ id, title, rows, income, progress, save, tags, clear, grou
         <span className="r amt bheadin">{self?.overridden && <span className="ftag mtag">{monthShort(month)} only<button className="tagx" onClick={() => resetMonth(self)} aria-label="Back to the usual amount"><Close /></button></span>}
           {whole ? <BudgetInput c={self} save={save} /> : budget ? usd(budget) : '—'}</span>
         <span className="r amt">{usd(actual)}</span>
-        <span className="r">{whole ? (group.groupBudget != null ? <Remaining value={left} income={income} saving={saving} /> : <span className="muted" title="No budget">—</span>)
-          : budget ? <Remaining value={left} income={income} saving={saving} /> : null}</span>
+        <span className="r">{whole ? (group.groupBudget != null ? <Remaining value={left} income={income} saving={saving} of={group.groupBudget} /> : <span className="muted" title="No budget">—</span>)
+          : budget ? <Remaining value={left} income={income} saving={saving} of={budget} /> : null}</span>
         {whole && <span className="bmeter"><Meter actual={actual} budget={group.groupBudget} income={income} saving={saving} pace={!income && group.kind === 'flexible' ? progress : null} /></span>}
       </div>
       {open && shown.map((c) => <Row key={c.category} c={c} income={income} progress={progress} save={save} tags={tags} inGroup={whole} month={month} resetMonth={resetMonth} setRollover={setRollover} />)}
@@ -177,7 +199,7 @@ const Total = ({ title, budget, actual, income, extra = 0, refunds = 0 }) => {
   return (
     <div className="btot">
       <span>{title}</span><span className="r amt">{usd(budget)}</span><span className="r amt">{usd(actual)}</span>
-      <span className="r">{extra > 0.5 ? <span className="small muted nowrap" title="Saved beyond plan: not counted as over"><span className="amt">+{usd(extra)}</span> extra</span> : budget ? <Remaining value={left} income={income} /> : null}</span>
+      <span className="r">{extra > 0.5 ? <span className="small muted nowrap" title="Saved beyond plan: not counted as over"><span className="amt">+{usd(extra)}</span> extra</span> : budget ? <Remaining value={left} income={income} of={budget} /> : null}</span>
       {refunds > 0.5 && <span className="btotnote small muted">Leaves out <span className="amt">{usd(refunds)}</span> of refunds beyond a group's own spending: a refund only offsets its own group.</span>}
     </div>
   );
@@ -199,7 +221,7 @@ function Unassigned({ b }) {
     <section className={`card bassign ${left < 0 ? 'neg' : none ? 'none' : ''}`}>
       <span><b><Hover tip={<TipList title="Not yet assigned" rows={[['Income budgeted', usd(t.income)], ['Spending & saving budgeted', `−${usd(t.expenses)}`]]}
         note="Give every dollar of expected income a job: aim for $0. This is a planning number, not money to spend." />}>{left < 0 ? 'Over assigned' : none ? 'Nothing budgeted yet' : 'Not yet assigned'}</Hover></b>
-        {left < 0 && <span className="small muted">More is budgeted than your income.</span>}</span>
+        {left < 0 && <span className="small muted">More than your income.</span>}</span>
       <span className="big amt">{left < 0 ? '−' : ''}{usd(Math.abs(left))}</span>
     </section>
   );
@@ -215,8 +237,8 @@ function Split({ title, t, income, pace, sub, verb }) {
       <div className="row"><span>{title}</span><span className="small muted amt">{usd(t.budget)} budget</span></div>
       <Meter actual={t.actual - extra} budget={t.budget} income={income} pace={pace} />
       <div className="row small"><b className="amt">{usd(t.actual - extra)} {verb ?? (income ? 'received' : 'spent')}</b>
-        <span className={`amt ${left < -0.5 && !income ? 'bad' : left > 0.5 && !income && pace != null && (t.actual - extra) / t.budget > pace + 0.1 ? 'warn' : 'good'}`}>
-          {usd(Math.abs(left))} {left < -0.5 ? (income ? 'extra' : 'over') : income ? 'to come' : 'remaining'}</span></div>
+        <span className={`amt ${-left > 0.5 && !income && bigOver(-left, t.budget) ? 'bad' : -left > 0.5 && !income ? 'warn' : left > 0.5 && !income && pace != null && (t.actual - extra) / t.budget > pace + 0.1 ? 'warn' : 'good'}`}>
+          {usd(Math.abs(left))} {left < -0.5 ? (income ? 'extra' : 'over budget') : income ? 'to come' : 'remaining'}</span></div>
       {extra > 0.5 && <div className="small muted">Plus <span className="amt">{usd(extra)}</span> saved beyond plan, not counted against it.</div>}
     </div>
   );
@@ -313,13 +335,13 @@ export default function Budget() {
 
   return (
     <>
-      <PageHeader title="Budget" sub="Amounts repeat every month unless you set one for a single month.">
+      <PageHeader title="Budget">
         <div className="monthnav">
           <button className="iconbtn" onClick={() => setMonth(b.prev)} aria-label="Previous month"><Chevron dir="left" /></button>
           <b>{monthName(month)}</b>
           <button className="iconbtn" onClick={() => setMonth(b.next)} aria-label="Next month"><Chevron /></button>
-          <button className="btn" onClick={() => setMonth(thisMonth())} disabled={month === thisMonth()}>Today</button>
-          <span className="ranges bscope" title="Where your edits go">
+          {month !== thisMonth() && <button className="btn" onClick={() => setMonth(thisMonth())}>Today</button>}
+          <span className="ranges bscope" title="Where your edits go: amounts repeat every month unless you set one for a single month">
             <button className={scope === 'all' ? 'on' : ''} onClick={() => setScope('all')}>Every month</button>
             <button className={scope === 'month' ? 'on' : ''} onClick={() => setScope('month')}>Only {monthShort(month)}</button>
           </span>
@@ -363,7 +385,7 @@ export default function Budget() {
           {!none && <button className="linkbtn bclearall" onClick={() => clear(null)}>Clear the whole budget</button>}
           </div>
           {todo.length > 0 && <Panel title="Suggestions">
-            <p className="small muted mt-0">{todo.length} {todo.length === 1 ? 'line has' : 'lines have'} no budget yet. Suggestions come from your recurring bills and your average spending ({b.suggestedFrom.map((m) => monthName(m).split(' ')[0]).join(', ')}). They show as ≈ amounts in dashed boxes until you set them.</p>
+            <p className="small muted mt-0"><Hover tip={<TipList title="Where suggestions come from" note={`Your recurring bills and your average spending (${b.suggestedFrom.map((m) => monthName(m).split(' ')[0]).join(', ')}). They show as ≈ amounts until you set them.`} />}>{todo.length} {todo.length === 1 ? 'line has' : 'lines have'} no budget yet.</Hover></p>
             <button className="btn primary" onClick={suggest}>Fill in suggestions</button>
           </Panel>}
         </aside>

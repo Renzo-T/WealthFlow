@@ -2,6 +2,8 @@ import { usd } from './Cards.jsx';
 import { allocColor } from './format.js';
 import { Panel } from './ui.jsx';
 
+export const kindColor = allocColor; // one map (format.js ALLOC_COLORS), shared with the dashboard
+
 const R = 54, C = 2 * Math.PI * R;
 
 export default function AssetAllocation({ a }) {
@@ -14,7 +16,7 @@ export default function AssetAllocation({ a }) {
             <circle cx="70" cy="70" r={R} fill="none" style={{ stroke: 'var(--soft)' }} strokeWidth="18" />
             {a.items.map((i) => {
               const len = (C * i.share) / 100;
-              const el = <circle key={i.name} className="seg" cx="70" cy="70" r={R} fill="none" stroke={allocColor(i.name)} strokeWidth="18"
+              const el = <circle key={i.name} className="seg" cx="70" cy="70" r={R} fill="none" stroke={kindColor(i.name)} strokeWidth="18"
                 strokeDasharray={`${Math.max(len - 1.5, 0)} ${C}`} strokeDashoffset={-offset} transform="rotate(-90 70 70)" />;
               offset += len;
               return el;
@@ -24,7 +26,7 @@ export default function AssetAllocation({ a }) {
           </svg>
           <ul className="legend2">
             {a.items.map((i) => (
-              <li key={i.name}><span><i className="dot" style={{ background: allocColor(i.name) }} />{i.name}</span><b>{i.share.toFixed(1)}%</b></li>
+              <li key={i.name}><span><i className="dot" style={{ background: kindColor(i.name) }} />{i.name}</span><b>{i.share.toFixed(1)}%</b></li>
             ))}
           </ul>
         </div>

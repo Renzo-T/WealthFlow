@@ -33,6 +33,10 @@ export const tint = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transp
 export const ALLOC_COLORS = {
   ETFs: SERIES[0], 'Employer plan funds': SERIES[1], Stocks: SERIES[2], 'Mutual funds': SERIES[3], Cash: NEUTRAL,
   Taxable: SERIES[0], Retirement: SERIES[1], HSA: SERIES[3],
+  // Classes named from a fund's name (insights.js holdingKind): darker steps of the four hues, and an "Other" grey that
+  // stays visible, so a large slice is never the pale grey.
+  'Index funds': 'color-mix(in srgb, var(--s1) 55%, var(--ink))', 'Target date funds': 'color-mix(in srgb, var(--s2) 55%, var(--ink))',
+  Bonds: 'color-mix(in srgb, var(--s3) 55%, var(--ink))', Other: 'color-mix(in srgb, var(--neutral) 60%, var(--ink))',
 };
 export const allocColor = (name) => ALLOC_COLORS[name] ?? NEUTRAL_LIGHT;
 export const PALETTE = [...SERIES, NEUTRAL]; // legacy: prefer the named colours above

@@ -136,23 +136,14 @@ export default function App() {
   const failing = meta.items.filter((i) => i.state === 'error'); // the bank, Plaid or the connection: tried again automatically
   const attention = meta.items.filter((i) => i.status !== 'ok' || missing(i).products).length;
 
-  // The app's tools sit at the right of every page header's title row (HeaderTools in ui.jsx), not on a row of their own.
+  // Notices (banks needing attention, what a Refresh found) show at the right of the page header's title row (HeaderTools in
+  // ui.jsx). The theme and Hide amounts buttons and the update notice live in the rail's foot, and in Jump (Ctrl+K).
   const tools = (
     <span className="hdtools">
-      {update?.available && <a className="chip-link info" href="#/settings" title={`You have version ${update.version}. See Settings › Updates.`}>Version {update.latest} is available</a>}
       {attention > 0 && <a className="chip-link" href="#/networth" title="See your banks on Net worth">
         {attention} bank{attention > 1 ? 's' : ''} need{attention > 1 ? '' : 's'} attention</a>}
       {/* What the last Refresh found shows here for a few seconds; the sync time itself lives at the rail's foot. */}
       {synced && <span className="small muted" role="status">{synced}</span>}
-      <button className="iconbtn" onClick={toggleTheme} title={`Switch to ${dark ? 'light' : 'dark'} mode${theme ? '' : ' (now following your system setting)'}`} aria-label="Toggle dark mode">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-          {dark ? <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>
-            : <path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" />}</svg>
-      </button>
-      <button className={`iconbtn${hide ? ' on' : ''}`} onClick={() => setHide(!hide)} title={hide ? 'Show amounts' : 'Hide amounts (for screen sharing)'} aria-label={hide ? 'Show amounts' : 'Hide amounts'} aria-pressed={hide}>
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />{hide && <path d="M4 4l16 16" />}</svg>
-      </button>
     </span>
   );
 
@@ -162,7 +153,7 @@ export default function App() {
     <div className={`shell${railOpen ? ' railopen' : ' slim'}`}>
       <InkDefs />
       <DialogHost />
-      <Jump pages={NAV} />
+      <Jump pages={NAV} commands={[{ label: dark ? 'Switch to light mode' : 'Switch to dark mode', run: toggleTheme }, { label: hide ? 'Show amounts' : 'Hide amounts', run: () => setHide(!hide) }]} />
       <aside className="side" onMouseEnter={() => railTo(true, 120)} onMouseLeave={() => railTo(false, 200)}
         onFocus={() => railTo(true, 0)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) railTo(false, 0); }}>
         <div className="logo"><Seal size={30} /><span className="wordmark">Mizo Money</span></div>
@@ -174,6 +165,22 @@ export default function App() {
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 11-2.3-5.7M20 4v5h-5" /></svg>
                 <span className="synclabel" role="status">{syncLine(meta.lastSync, busy)}</span>
               </button>)}
+            {g.foot && <>
+              {update?.available && <a className="railtool update" href="#/settings" title={`Version ${update.latest} is available (you have ${update.version}). See Settings › Updates.`}>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>
+                <span className="synclabel">Version {update.latest} is available</span></a>}
+              <button className="railtool" onClick={toggleTheme} title={`Switch to ${dark ? 'light' : 'dark'} mode${theme ? '' : ' (now following your system setting)'}`} aria-label="Toggle dark mode">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  {dark ? <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>
+                    : <path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" />}</svg>
+                <span className="synclabel">{dark ? 'Light mode' : 'Dark mode'}</span>
+              </button>
+              <button className={`railtool${hide ? ' on' : ''}`} onClick={() => setHide(!hide)} title={hide ? 'Show amounts' : 'Hide amounts (for screen sharing)'} aria-label={hide ? 'Show amounts' : 'Hide amounts'} aria-pressed={hide}>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />{hide && <path d="M4 4l16 16" />}</svg>
+                <span className="synclabel">{hide ? 'Show amounts' : 'Hide amounts'}</span>
+              </button>
+            </>}
             {g.rule && <div className={`navrule${g.foot ? ' foot' : ''}`} />}
             {g.ids.map((id) => NAV.find((n) => n.id === id)).map((n) => (
               <button key={n.label} className={`nav${n.id === page ? ' on' : ''}`}

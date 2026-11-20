@@ -78,7 +78,7 @@ export function PlaidKeys({ banks = 0, onChange }) {
           confirmEnvChange={banks ? `Banks connected under ${env} only work with ${env} keys; they will stop updating until you switch back. Continue?` : null} />
       </> : <p className="small muted">
         {env} keys{s.client_id ? ` (client ID ${s.client_id})` : ''}{s.fromEnv ? ', set in the .env file. Change them there and restart Mizo Money.' : '.'}
-        {s.env === 'sandbox' && ' Sandbox shows test data only; switch to Production keys to connect your real banks.'}
+        {s.env === 'sandbox' && ' Sandbox shows test data only.'}
       </p>}
     </Panel>
   );

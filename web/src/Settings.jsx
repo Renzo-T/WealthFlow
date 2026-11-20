@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from './api.js';
-import { Panel, PageHeader, confirmDialog } from './ui.jsx';
+import { Panel, PageHeader, Hover, confirmDialog } from './ui.jsx';
 import { PlaidKeys } from './PlaidSetup.jsx';
 import { JOURNALS, RULING_NAME, tapeBackground } from './journals.js';
 import { currentJournal, setJournal, decorationOn, setDecoration } from './journal.js';
@@ -22,7 +22,7 @@ function JournalSetting() {
           </button>
         ))}
       </div>
-      <p className="small muted">{JOURNALS[id].desc} Green and red, the chart colours and the seal are the same in every journal.</p>
+      <p className="small muted">{JOURNALS[id].desc}</p>
       <label className="check"><input type="checkbox" checked={deco} onChange={(e) => { setDecoration(e.target.checked); setDeco(e.target.checked); }} />
         Show washi tape and margin doodles</label>
     </Panel>
@@ -39,10 +39,9 @@ function HistorySetting() {
   return (
     <Panel className="mt" title="History">
       <label className="check"><input type="checkbox" checked={h.capped} onChange={(e) => set(e.target.checked)} />
-        Start charts and reports {day ? `on ${day}` : '3 months before your first bank connection'}</label>
-      <p className="small muted">Banks share very different amounts of history (some two years, some about 90 days), so totals across your banks
-        only compare fairly from about 3 months before you connected. Older history stays saved, shows in Transactions, and is still used to spot
-        bills, subscriptions and yearly charges. Turn this off to show everything in charts and reports, with incomplete months marked.</p>
+        <Hover tip="Banks share very different amounts of history, so totals only compare fairly from about 3 months before you connected. Older history stays saved and still helps spot bills. Turn this off to chart everything, with incomplete months marked." tabbable={false}>
+          Start charts and reports {day ? `on ${day}` : '3 months before your first bank connection'}</Hover></label>
+      <p className="small muted">Older history stays saved and still helps spot bills.</p>
     </Panel>
   );
 }
@@ -62,8 +61,7 @@ function NotifySetting() {
   return <>
     <label className="check mt"><input type="checkbox" checked={n.enabled} onChange={(e) => save({ enabled: e.target.checked })} />
       Tell me when something needs me</label>
-    <p className="small muted">After it checks your banks, Mizo Money can show a Windows notification for these, once each. The notification
-      never shows an amount, a balance or an account number, because it can appear on your lock screen.</p>
+    <p className="small muted">Windows notifications, once each, never with an amount or account number.</p>
     {n.enabled && <>
       <label className="check"><input {...kind('signin')} /> A bank needs me to sign in again</label>
       <div className="row wraprow mid">
@@ -104,26 +102,14 @@ function AppSetting() {
           : canInstall ? <button className="btn primary" onClick={install}>Install Mizo Money</button>
             : <span className="small muted">To install it, use Chrome or Edge's Install button at the right of the address bar.</span>}
       </div>
-      <p className="small muted">Installed, Mizo Money opens in its own window from the Start menu or taskbar, like any other app. Your data stays in
-        Mizo Money's folder on this computer either way.</p>
       {a.startup.supported ? <>
         <label className="check mt"><input type="checkbox" checked={a.startup.enabled} onChange={(e) => change('startup', e.target.checked)} />
-          Start Mizo Money when I sign in</label>
-        <p className="small muted">Optional. Mizo Money runs quietly in the background (no window; about 90 MB of memory) and checks your
-          banks every 6 hours. What that adds:</p>
-        <ul className="small muted benefits">
-          <li><b>A complete balance history.</b> Mizo Money notes each account's balance once a day while it's running, and Plaid can't
-            supply past days later. Without it, net worth and investment charts have gaps on days you didn't open the app.</li>
-          <li><b>Daily backups</b> of your data, made automatically.</li>
-          <li><b>No wait</b> when you open the app: it's already up to date.</li>
-        </ul>
-        <p className="small muted">Without it, your transactions still catch up whenever you open Mizo Money; only those daily balances and
-          backups are skipped on days it isn't running.</p>
+          <Hover tip="Runs quietly in the background (about 90 MB) and checks your banks every 6 hours. It keeps daily balances complete (Plaid can't supply past days later), makes daily backups, and means no wait on opening. Without it, transactions still catch up when you open the app." tabbable={false}>Start Mizo Money when I sign in</Hover></label>
+        <p className="small muted">Keeps daily balances and backups complete.</p>
         {a.startup.enabled && !a.startup.here && <p className="small muted">It currently starts a copy in another folder; turn this off and on to use this one.</p>}
         <label className="check mt"><input type="checkbox" checked={a.launcher.enabled} onChange={(e) => change('launcher', e.target.checked)} />
           Let the app window start Mizo Money</label>
-        <p className="small muted">When Mizo Money isn't running, the window shows a Start button instead of only saying so. Your browser asks
-          before starting it the first time (you can let it always allow).
+        <p className="small muted">Shows a Start button when it isn't running.
           {a.launcher.enabled && !a.launcher.here && ' It currently starts a copy in another folder; turn this off and on to use this one.'}</p>
         <NotifySetting />
       </> : <p className="small muted">Starting at sign-in is only set up for Windows so far. Run <code>npm run app</code> to start it.</p>}
@@ -156,13 +142,12 @@ function UpdateSetting() {
         </span></div>
         : <p className="small muted">Version {u.version}. {status}</p>}
       {u.available && <p className="small muted">{u.how === 'download'
-        ? <>To update: stop Mizo Money (Settings › App), replace the Mizo Money folder with the one in the new download, and start it again with
-          Mizo Money.cmd. Your data and settings stay: they're kept in your app-data folder, not in the Mizo Money folder.</>
-        : <>To update: in the Mizo Money folder run <code>git pull</code> and <code>npm install</code>, then restart it.</>}</p>}
+        ? <>Stop Mizo Money, replace its folder with the new download, and start it again. Your data stays.</>
+        : <>Run <code>git pull</code> and <code>npm install</code>, then restart.</>}</p>}
       {u.repo ? <>
         <label className="check mt"><input type="checkbox" checked={u.enabled} onChange={(e) => toggle(e.target.checked)} /> Check for new versions</label>
-        <p className="small muted">About once a day Mizo Money asks GitHub for the newest release of {u.repo}. Nothing about you or your data is sent.</p>
-      </> : <p className="small muted">This copy doesn't say where its releases are published, so it can't check for new versions.</p>}
+        <p className="small muted">Asks GitHub about once a day. Nothing about you is sent.</p>
+      </> : <p className="small muted">This copy can't check for new versions.</p>}
     </Panel>
   );
 }
@@ -181,12 +166,11 @@ export default function Settings({ onChange }) {
 
   return (
     <>
-      <PageHeader title="Settings" sub="Connections, backups and the look of this copy of Mizo Money." />
+      <PageHeader title="Settings" />
       {/* One ruled sheet, a section per setting. */}
       <div className="ledger mt">
       <Panel className="mt" title={<>Banks <span className="badge">{sys?.plaidEnv ?? '…'}</span></>} actions={<a className="btn" href="#/networth">Open Net worth</a>}>
-        <p className="small muted">{meta ? `${meta.items.length} of ${meta.max} Plaid connections used. ` : ''}Connecting, reconnecting and removing banks, and renaming or hiding
-          accounts, are on the Net worth page.</p>
+        <p className="small muted">{meta ? `${meta.items.length} of ${meta.max} Plaid connections used. ` : ''}Manage banks on Net worth.</p>
       </Panel>
       <PlaidKeys banks={meta?.items.length ?? 0} onChange={() => api('/system').then(setSys)} />
       <AppSetting />
@@ -194,8 +178,7 @@ export default function Settings({ onChange }) {
       <UpdateSetting />
       <HistorySetting />
       <Panel className="mt" title="Category rules">
-        <p className="small muted">Created when you change a category for every transaction with the same description, or choose "Always for" a person. Newer rules win.</p>
-        {rules.length === 0 && <p className="small muted">No rules yet. Change a category on the Transactions page to add one.</p>}
+        {rules.length === 0 && <p className="small muted">None yet. Changing a category on Transactions can add one; newer rules win.</p>}
         {rules.map((r) => {
           // A person rule matches `Name "` (every Venmo-style payment with them).
           const person = /^(.+) "$/.exec(r.pattern)?.[1];
@@ -215,12 +198,10 @@ export default function Settings({ onChange }) {
         })}
       </Panel>
       <Panel className="mt" title="Backup">
-        <p className="small muted">Mizo Money saves a copy of your database automatically once a day, after the first sync, and keeps the last 14 in <code>data/backups</code>.
-          {(() => { const last = backups.find((b) => b.auto); return last ? ` Latest: ${last.name.slice(5, 15)}.` : ' The first one is saved after the next sync.'; })()}
-          {' '}Your daily net worth history can't be re-downloaded from Plaid later, so these are worth keeping.</p>
-        <p className="small muted">Download backup saves a copy now, to your computer (the five newest downloads are also kept in <code>data/backups</code>).</p>
-        <p className="small muted">Bank connections are stored encrypted, and the key is {sys?.keyInEnv ? <>in your <code>.env</code> file</> : <>in <code>config.json</code> in Mizo Money's data folder{sys?.dataDir && <> (<code>{sys.dataDir}</code>)</>}</>}.
-          Keep a copy of it with your backups: restoring a backup without that key means connecting every bank again. Forecast assumptions live in your browser and aren't included.</p>
+        <p className="small muted">
+          <Hover tip={<>A copy is saved automatically once a day after the first sync (the last 14 are kept in <code>data/backups</code>). Your daily net worth history can't be re-downloaded from Plaid. Bank connections are stored encrypted with a key {sys?.keyInEnv ? <>in your <code>.env</code> file</> : <>in <code>config.json</code> in the data folder{sys?.dataDir && <> (<code>{sys.dataDir}</code>)</>}</>}; keep a copy with your backups, or you'll need to connect every bank again. Forecast assumptions live in your browser and aren't included.</>} tabbable={false}>
+            Saved automatically every day, last 14 kept.</Hover>
+          {(() => { const last = backups.find((b) => b.auto); return last ? ` Latest: ${last.name.slice(5, 15)}.` : ''; })()}</p>
         <a className="btn primary linkbtn-solid" href="/api/backup/download">Download backup</a>
       </Panel>
       </div>

@@ -6,7 +6,7 @@ import { signed } from './format.js';
 // Ctrl+K, or / when focus isn't in a field: one small dialog to go to a page or find a transaction.
 const typing = (el) => !!el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
 
-export default function Jump({ pages }) {
+export default function Jump({ pages, commands = [] }) {
   const dlg = useRef(null), input = useRef(null), from = useRef(null);
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
@@ -54,13 +54,15 @@ export default function Jump({ pages }) {
 
   const low = term.toLowerCase();
   const hits = pages.filter((p) => p.label.toLowerCase().includes(low));
+  const cmds = commands.filter((c) => c.label.toLowerCase().includes(low));
   const found = term.length >= 2 ? places.filter((x) => x.name.toLowerCase().includes(low)).slice(0, 5) : [];
-  const items = [...hits.map((p) => ({ kind: 'page', key: `p-${p.id}`, page: p })), ...found.map((x) => ({ kind: 'place', key: `l-${x.kind}-${x.id}`, place: x })), ...txs.map((t) => ({ kind: 'tx', key: `t-${t.id}`, tx: t }))];
+  const items = [...hits.map((p) => ({ kind: 'page', key: `p-${p.id}`, page: p })), ...cmds.map((c) => ({ kind: 'cmd', key: `c-${c.label}`, cmd: c })), ...found.map((x) => ({ kind: 'place', key: `l-${x.kind}-${x.id}`, place: x })), ...txs.map((t) => ({ kind: 'tx', key: `t-${t.id}`, tx: t }))];
   const cur = Math.min(at, Math.max(items.length - 1, 0));
 
   const close = () => dlg.current?.close();
   const go = (item) => {
     if (!item) return;
+    if (item.kind === 'cmd') { close(); item.cmd.run(); return; }
     window.location.hash = item.kind === 'page' ? `#/${item.page.id}` : item.kind === 'place' ? item.place.to : `#/transactions?${new URLSearchParams({ q: term, open: item.tx.id })}`;
     close();
   };
@@ -85,6 +87,7 @@ export default function Jump({ pages }) {
               onMouseMove={() => setAt(i)} onClick={() => go(it)}>
               {it.kind === 'page'
                 ? <><span>{it.page.label}</span><span className="muted small">Page</span></>
+                : it.kind === 'cmd' ? <><span>{it.cmd.label}</span><span className="muted small">Command</span></>
                 : it.kind === 'place' ? <><span>{it.place.name}</span><span className="muted small">{it.place.kind}</span></>
                 : <><span className="jtx"><b>{it.tx.merchant || it.tx.name}</b> <span className="muted small">{it.tx.date}</span></span>
                   <Amt>{signed(-it.tx.amount)}</Amt></>}

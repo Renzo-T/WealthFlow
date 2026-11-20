@@ -6,11 +6,13 @@ import { Stamp, markIcon, initialOf } from './Stamp.jsx';
 import useWidth from './useWidth.js';
 import { unit } from './grid.js';
 
-// The month as a wall calendar: Sunday to Saturday, its lines on the page's dot grid (each day is 3 × 2 grid units,
-// 66 × 44). Each past day with spending shows the amount with a highlighter stroke under it, its length on one fixed
-// scale for every month (so a $200 day always looks the same); bills and paydays are stamped in the day's top-right
-// corner in ink (Stamp.jsx: square for bills, round for money in, the category's drawn icon knocked out once it has
-// happened, a dashed pencil box while still to come). Days before the 1st and after the last day are hatched blanks.
+// The month as a wall calendar: Sunday to Saturday, its lines on the page's dot grid (each day whole units wide and 2
+// tall). Each past day with spending shows the amount with a highlighter stroke under it, its length on one fixed scale
+// for every month (so a $200 day always looks the same); a day's bills and paydays share one stamp in its top-right
+// corner (Stamp.jsx: square for bills, round when money comes in, the category's drawn icon knocked out once it has
+// happened, a dashed pencil box while something is still to come, a count when there are several). It reads without a
+// legend: the figures are written out and the hover names each item. Days before the 1st and after the last day are
+// hatched blanks.
 export const SIZES = [0, 5, 7, 10, 13, 16, 20, 24]; // dot diameter per step of the fixed ramp (server/spread.js): Reports' year at a glance
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const monthName = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -19,9 +21,10 @@ const shift = (m, n) => { const d = new Date(`${m}-01T00:00`); d.setMonth(d.getM
 const firstWeekday = (m) => new Date(`${m}-01T00:00`).getDay();
 const daysIn = (m) => { const [y, mo] = m.split('-').map(Number); return new Date(y, mo, 0).getDate(); };
 
-// One stamp per direction per day: the category's icon, or how many when several fall on the same day.
-const DayStamp = ({ kind, list, i }) => (
-  <Stamp kind={kind} done={list.every((x) => x.done)} icon={markIcon(list[0])} count={list.length} ink={i} />
+// One stamp per day: round when money comes in that day (a payday is the day's news), square for bills only; inked once
+// everything on it has happened; the category's icon for one item, how many for several.
+const DayStamp = ({ list, i }) => (
+  <Stamp kind={list.some((x) => x.direction === 'in') ? 'in' : 'out'} done={list.every((x) => x.done)} icon={markIcon(list[0])} count={list.length} ink={i} />
 );
 // In the hover, each bill or payday is named beside a small stamp with the payee's initial.
 const tipName = (x) => (
@@ -47,7 +50,6 @@ function DayLines({ marks }) {
 }
 
 function Day({ d, i, selected, onPick, dots, list }) {
-  const outs = d.marks.filter((x) => x.direction !== 'in'), ins = d.marks.filter((x) => x.direction === 'in');
   const rows = [
     ...(dots && d.spent != null ? [['Spent', usd2(d.spent)]] : []),
     ...d.marks.map((x) => [tipName(x), `${x.direction === 'in' ? '+' : ''}${usd2(x.amount)}${x.estimate ? ' est' : ''}`]),
@@ -64,10 +66,7 @@ function Day({ d, i, selected, onPick, dots, list }) {
         {/* What was spent, written in the day, with a highlighter stroke under it whose length follows the fixed ramp
             (server/spread.js), so a big day looks the same in every month. Days ahead show nothing here. */}
         {dots && d.step > 0 && <><span className="cspent amt">{usd(d.spent)}</span><i className="cstroke" style={{ '--s': d.step }} aria-hidden="true" /></>}
-        {list ? d.marks.length > 0 && <DayLines marks={d.marks} /> : d.marks.length > 0 && <span className="cstamps">
-          {outs.length > 0 && <DayStamp kind="out" list={outs} i={i} />}
-          {ins.length > 0 && <DayStamp kind="in" list={ins} i={i + 1} />}
-        </span>}
+        {list ? d.marks.length > 0 && <DayLines marks={d.marks} /> : d.marks.length > 0 && <span className="cstamps"><DayStamp list={d.marks} i={i} /></span>}
       </Tag>
     </Hover>
   );
@@ -91,7 +90,7 @@ function Calendar({ month, days, selected, onPick, dots, list, cols }) {
 
 // `month` makes it follow a page's own month (no arrows of its own, unless `onMonth` is given: then the arrows hand the
 // new month back to the page); `onPick(date)` makes the days clickable and `selected` marks the chosen one. Same data
-// (/month-spread) and the same dot scale either way. `dots={false}` renders it stamps-only (the Bills page).
+// (/month-spread) and the same spending scale either way. `dots={false}` renders it stamps-only (the Bills page).
 // `aside` is a section beside the calendar (a node, or a function of the month's days), `below` full-width sections
 // under both (each a node, or a function of the month's days); together they make one panel, ruled into sections.
 // `list` writes the bills and paydays into the days and runs the calendar the full width of the panel (Bills).
@@ -130,10 +129,6 @@ export default function MonthSpread({ month: fixed, onMonth, selected, onPick, d
           </div>
           {d?.failed && d.month === month ? <p className="small muted spreadfail">The month's days couldn't be loaded. Refresh the page to try again.</p>
             : <div ref={list ? fitRef : undefined}><Calendar key={month} month={month} days={days} selected={selected} onPick={onPick} dots={dots} list={list} cols={cols} /></div>}
-          <div className="legend calkey">
-            {dots && <Hover tip="The stroke under each day's amount uses one length scale for every month, so busy days compare at a glance."><span><i className="lgstroke" />Spent that day</span></Hover>}
-            <span><Stamp kind="out" done icon="receipt" />Bill paid</span><span><Stamp kind="out" />Bill due</span><span><Stamp kind="in" done icon="arrowin" />Money in</span>
-          </div>
         </div></div>
         {side && <div className="msec mside"><div className="mside-in">{side}</div></div>}
       </div>

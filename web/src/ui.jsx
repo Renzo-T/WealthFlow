@@ -43,8 +43,8 @@ export function Panel({ title, actions, className = '', children, ...rest }) {
   );
 }
 
-// The app's own tools (notice chips, the theme and Hide amounts buttons), set by App.jsx: every page header shows them at
-// the right of its title row, after the page's own actions, so no page needs a row above its title.
+// The app's notices (banks needing attention, what a Refresh found), set by App.jsx: every page header shows them at
+// the right of its title row, after the page's own actions. The theme and Hide amounts buttons live in the rail's foot.
 export const HeaderTools = createContext(null);
 
 // Page title and subtitle, with the page's actions and the app's tools on the right.

@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import { api } from './api.js';
-import { usd2, usd as usd0, allocColor } from './format.js';
+import { usd2, usd as usd0 } from './format.js';
+import { kindColor } from './AssetAllocation.jsx';
 import { Panel, PageHeader, PageSkeleton, Hover, TipList, tipText } from './ui.jsx';
 const pct = (n, d = 1) => `${n.toFixed(d)}%`;
 const signed = (n) => `${n >= 0 ? '+' : '-'}${usd0(Math.abs(n))}`;
@@ -11,8 +12,8 @@ const kindOf = (h) => h.kind; // classified on the server (insights.js holdingKi
 const RETIREMENT = /401|403|457|ira|roth|pension|keogh|retirement|sarsep|profit sharing/i;
 const accountKind = (h) => (h.account_subtype === 'hsa' ? 'HSA' : RETIREMENT.test(h.account_subtype ?? '') ? 'Retirement' : 'Taxable');
 
-const COLORS = new Proxy({}, { get: (_, k) => allocColor(k) }); // shared colours (format.js)
-const ORDER = ['ETFs', 'Employer plan funds', 'Stocks', 'Mutual funds', 'Bonds', 'Cash', 'Other', 'Taxable', 'Retirement', 'HSA'];
+const COLORS = new Proxy({}, { get: (_, k) => kindColor(k) }); // shared with the dashboard's allocation donut
+const ORDER = ['ETFs', 'Index funds', 'Target date funds', 'Employer plan funds', 'Stocks', 'Mutual funds', 'Bonds', 'Cash', 'Other', 'Taxable', 'Retirement', 'HSA'];
 
 function sumBy(rows, key) {
   const m = new Map();
@@ -66,16 +67,14 @@ function Range({ low, high, price, since }) {
 function HoldingRow({ h, share, held, indent }) {
   const cash = h.kind === 'Cash';
   const change = h.prev_price != null && h.price > 0 ? h.price - h.prev_price : null;
-  const stale = h.price_as_of && h.price_as_of.slice(0, 10) < new Date().toLocaleDateString('en-CA');
   return (
     <tr>
       <td className="wrap" style={indent ? { paddingLeft: '1.5rem' } : undefined}>
         <i className="dot" style={{ background: COLORS[h.kind] }} title={h.kind} />{h.name}{h.ticker && <span className="badge">{h.ticker}</span>}
         {held && <div className="small muted">{held}</div>}</td>
       <td className="r">{cash || !(h.price > 0) ? '' : <>{usd2(h.price)}
-        {change != null && <div className={`small ${tone(change)}`} title={`Since ${day(h.prev_date)}`}>{signed2(change)}</div>}
-        {stale ? <div className="small muted">as of {day(h.price_as_of)}</div> : null}</>}</td>
-      <td className="r">{cash ? '' : change == null ? <span className="muted" title={NO_CHANGE}>—</span>
+        {change != null && Math.abs(change) >= 0.005 && <div className={`small ${tone(change)}`} title={`Since ${day(h.prev_date)}`}>{signed2(change)}</div>}</>}</td>
+      <td className="r">{cash ? '' : change == null || Math.abs(change) < 0.005 ? <span className="muted" title={NO_CHANGE}>—</span>
         : <span className={tone(change)} title={`Since ${day(h.prev_date)}`}>{signed2(change * h.quantity)}<div className="small">{pct((change / h.prev_price) * 100, 2)}</div></span>}</td>
       <td className="r">{cash ? '' : <Gain value={h.value} cost={h.cost} />}</td>
       <td className="r"><b>{usd2(h.value)}</b><div className="small muted">{pct(share)}</div></td>
@@ -136,11 +135,12 @@ export default function Investments() {
     return m.set(h.account_id, g);
   }, new Map()).values()].sort((a, b) => b.value - a.value);
 
+  const asOf = rows.map((h) => h.price_as_of?.slice(0, 10)).filter(Boolean).sort().at(-1);
   const holdingParts = sumBy(rows, kindOf), accountParts = sumBy(rows, accountKind);
 
   return (
     <>
-      <PageHeader title="Investments" sub="What you hold, across brokerage, retirement and HSA accounts." />
+      <PageHeader title="Investments" />
       {pending.length > 0 && <div className="note">
         {pending.join(', ')} {pending.length > 1 ? 'are' : 'is'} connected with investment access, but Plaid hasn't sent holdings yet.
         The first download can take a few hours after connecting; Mizo Money checks again automatically.</div>}
@@ -168,11 +168,12 @@ export default function Investments() {
           </div>
         </Panel>
 
-        <Panel className="mt scroll" title="Holdings" actions={
+        <Panel className="mt scroll" title="Holdings" actions={<>
+          {asOf && <span className="small muted">Prices as of {day(asOf)}</span>}
           <div className="ranges">
             <button className={view === 'position' ? 'on' : ''} onClick={() => setView('position')}>By position</button>
             <button className={view === 'account' ? 'on' : ''} onClick={() => setView('account')}>By account</button>
-          </div>}>
+          </div></>}>
           <table className="t holdings">
             <thead><tr><th>Security</th><th className="r">Last price<div className="small muted">change</div></th><th className="r">Today<div className="small muted">gain/loss</div></th>
               <th className="r">Total gain/loss</th><th className="r">Value<div className="small muted">{view === 'position' ? '% of total' : '% of account'}</div></th>

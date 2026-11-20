@@ -3,7 +3,7 @@ import { api } from './api.js';
 import Progress from './Progress.jsx';
 import { usd } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
-import { Panel, PageHeader, EmptyState, PageSkeleton, Hover, TipList, Est, confirmDialog } from './ui.jsx';
+import { Panel, PageHeader, EmptyState, PageSkeleton, Hover, TipList, confirmDialog } from './ui.jsx';
 import { TextStamp } from './Stamp.jsx';
 import { statusText } from './goalStatus.js';
 
@@ -133,13 +133,12 @@ function GoalCard({ g, accounts, reload }) {
       <div className="small">{statusText(g) && <span className={`amt ${done ? 'good' : 'muted'}`}>{statusText(g)}</span>}</div>
       <div className="goalplan small">
         {g.target_date && !done && <div><span className="muted">By {monthYear(g.target_date)}</span><b className="amt">{usd(p.monthly)} a month</b></div>}
-        {g.account_id && g.pace != null && <div><span className="muted">
+        {g.account_id && g.pace != null && !g.everyday && <div><span className="muted">
           <Hover className="quiet" tip={<TipList title="Recent pace" rows={[['Change per month', `${g.pace >= 0 ? '+' : '−'}${usd(Math.abs(g.pace))}`]]}
             note={`${g.account}'s balance over the last 3 months${g.estimated ? ', partly estimated from transactions' : ''}.`} />}>Recent pace</Hover></span>
           <b className={`amt ${g.pace > 1 ? 'good' : ''}`}>{(() => { const t = Math.abs(g.pace) < 1 ? 'no change' : `${g.pace > 0 ? '+' : '−'}${usd(Math.abs(g.pace))} a month`;
-            return g.everyday ? <Est why="Follows a checking account, so bills and paydays move it">{t}</Est> : t; })()}</b></div>}
-        {g.account_id && g.pace != null && g.everyday && <p className="goalpen small muted">Follows a checking account, so bills and paydays move it. Link a savings account, or track it by hand.</p>}
-        {p.eta && <div><span className="muted">At that pace</span><b>{monthYear(p.eta)}</b></div>}
+            return t; })()}</b></div>}
+        {p.eta && !g.everyday && <div><span className="muted">At that pace</span><b>{monthYear(p.eta)}</b></div>}
         {!g.target_date && !done && <button className="linkbtn" onClick={() => setEdit(true)}>Add a date to see what it takes each month</button>}
       </div>
       <div className="goalsparkslot"><Spark data={g.spark} /></div>
@@ -257,14 +256,14 @@ export default function Goals() {
 
   return (
     <>
-      <PageHeader title="Plan" sub="Savings goals, and where your net worth is heading.">
+      <PageHeader title="Plan">
         <button className="btn primary" onClick={() => setAdding(adding ? null : {})}>{adding ? 'Cancel' : 'Add a goal'}</button>
       </PageHeader>
       {goals.length > 0 && <div className="cards ruled goalcards">
         <div className="card"><h3>Saved toward goals</h3><div className="big amt">{usd(saved)}</div><div className="small muted">of <span className="amt">{usd(target)}</span> across {goals.length} goal{goals.length > 1 ? 's' : ''}</div></div>
-        <div className="card"><h3>Reached</h3><div className="big">{reached} of {goals.length}</div><div className="small muted">{reached === goals.length ? 'All done. Time for a new one?' : `${goals.length - reached} in progress`}</div></div>
-        <div className="card"><h3>Needed each month</h3><div className="big amt">{monthly ? usd(monthly) : '—'}</div>
-          <div className="small muted">{monthly ? 'To reach goals with a date on time' : 'Add a date to a goal to see this'}</div></div>
+        {reached > 0 && <div className="card"><h3>Reached</h3><div className="big">{reached} of {goals.length}</div><div className="small muted">{reached === goals.length ? 'All done. Time for a new one?' : `${goals.length - reached} in progress`}</div></div>}
+        {monthly > 0 && <div className="card"><h3>Needed each month</h3><div className="big amt">{usd(monthly)}</div>
+          <div className="small muted">To reach goals with a date on time</div></div>}
       </div>}
       {adding && <Panel className="mt" title="New goal">
         <GoalForm key={JSON.stringify(adding)} initial={adding} accounts={accounts} onSave={add} submit="Add goal" />

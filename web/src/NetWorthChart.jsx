@@ -2,7 +2,7 @@ import { usdCompact, niceTicks } from './format.js';
 import { useState } from 'react';
 import { usd } from './Cards.jsx';
 import useWidth from './useWidth.js';
-import { Panel } from './ui.jsx';
+import { Panel, Hover } from './ui.jsx';
 
 // Drawn at its real width (useWidth), so text stays the same size at any window size.
 const H = 230, L = 58, R = 14, T = 12, B = 26;
@@ -79,12 +79,11 @@ export default function NetWorthChart({ history }) {
 
   return (
     <Panel title="Net worth overview" actions={<>
-      {hasEst && <span className="legend"><span><i className="lkey" />Actual</span><span><i className="lkey dash" />Estimated</span></span>}
+      {hasEst && <span className="legend"><span><i className="lkey" />Actual</span><Hover className="quiet" tip="Dashed = estimated: balances rewound from transactions, investments held at today's value. Each sync adds a real point."><span><i className="lkey dash" />est</span></Hover></span>}
       <div className="ranges">{Object.keys(RANGES).map((r) => <button key={r} className={r === range ? 'on' : ''} onClick={() => setRange(r)}>{r}</button>)}</div>
     </>}>
       <div ref={ref} />
       {body}
-      {hasEst && <p className="small muted foot">Dashed = estimated: bank and card balances rewound from transactions, investments held at today's value (Plaid doesn't provide their history). Each day Mizo Money syncs adds a real point.</p>}
     </Panel>
   );
 }

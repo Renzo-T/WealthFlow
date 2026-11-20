@@ -137,7 +137,6 @@ function HomeAndAway({ home, settings, reload }) {
   }
   return (
     <Panel className="mt" title="Home & away" actions={<button className="linkbtn" onClick={() => { setOpen(false); setEdit(false); }}>Done</button>}>
-      <p className="small muted mt-0">Purchases count as away from home when they're made in person far enough from where home was at the time.</p>
       <div className="awayrow">
         <span>Away means</span>
         <select value={s.mode} onChange={(e) => saveSettings({ ...s, mode: e.target.value })} aria-label="What counts as away">
@@ -145,8 +144,7 @@ function HomeAndAway({ home, settings, reload }) {
         {s.mode === 'distance' && <><input className="mini" type="number" min="10" max="2000" step="10" value={s.miles} onChange={(e) => setS({ ...s, miles: e.target.value })}
           onBlur={() => saveSettings(s)} aria-label="Miles from home" /><span>miles from home</span></>}
       </div>
-      <h3 className="subhead">Home {inferred && <span className="asof">worked out from your spending</span>}</h3>
-      <p className="small muted mt-0">Add more than one if you split your time between places: purchases near any home you had that day aren't away.</p>
+      <h3 className="subhead" title="Add more than one if you split your time between places: purchases near any home you had that day aren't away.">Home {inferred && <span className="asof">worked out from your spending</span>}</h3>
       {!edit && <>
         {home.map((b) => <div className="trow small" key={b.since + b.city}><span>{b.city}{b.region ? `, ${b.region}` : ''}</span>
           <span className="muted">{b.until ? `${monthYear(b.since)} – ${monthYear(b.until)}` : `since ${monthYear(b.since)}`}</span></div>)}
@@ -195,9 +193,9 @@ export default function Trips({ embedded = false }) {
   return (
     <>
       {embedded
-        ? <div className="tabhead"><p className="sub">Spending away from home; confirmed trips are left out of month-to-month comparisons.</p>
-          <button className="btn primary" onClick={() => setAdding(!adding)}>{adding ? 'Cancel' : 'Add a trip'}</button></div>
-        : <PageHeader title="Trips" sub="Spending away from home; confirmed trips are left out of month-to-month comparisons.">
+        ? <div className="tabhead"><span />
+          <button className="btn primary" title="Confirmed trips are left out of month-to-month comparisons." onClick={() => setAdding(!adding)}>{adding ? 'Cancel' : 'Add a trip'}</button></div>
+        : <PageHeader title="Trips">
           <button className="btn primary" onClick={() => setAdding(!adding)}>{adding ? 'Cancel' : 'Add a trip'}</button>
         </PageHeader>}
       {adding && <Panel className="mt" title="New trip">
@@ -210,7 +208,6 @@ export default function Trips({ embedded = false }) {
         {err && <p className="bad small">{err}</p>}
       </Panel>}
       {suggested.length > 0 && <Panel className="mt" title={<>Were these trips? <span className="asof">{suggested.length} found</span></>}>
-        <p className="small muted mt-0">Runs of purchases made in person away from home. Confirm to group them; rename first if you like.</p>
         {suggested.map((t) => <Suggestion key={t.id} trip={t} reload={load} />)}
       </Panel>}
       {trips.length > 0 && <p className="small muted tripsum">{trips.length} trip{trips.length > 1 ? 's' : ''}{thisYear > 0 ? <> · <b className="amt">{usd(thisYear)}</b> on trips in {year}</> : null}</p>}

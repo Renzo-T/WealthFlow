@@ -225,13 +225,23 @@ export function topCategories(limit = 5) {
 
 // What kind of holding, shared by the dashboard and the Investments page. Plaid calls both single stocks and
 // 401(k) collective trusts "equity"; only real stocks carry a subtype. Brokerage deposit programs are cash.
+// Index funds in a workplace plan often arrive as type "mutual fund", "other" or with no type at all, so for those the
+// name decides: target-date, bond or index/collective-trust funds get their own class instead of "Other".
+const NAME_TARGET = /target\s*(date|retire)|lifecycle|life\s*path|\b(retirement|freedom)\s*(income|20[2-6]0)|\b20[2-6]0\b/i;
+const NAME_BOND = /\bbonds?\b|fixed[\s-]*income|treasur|aggregate|\btips\b|stable value/i;
+const NAME_INDEX = /\bindex\b|\bidx\b|s&p|\bsp\.?\s*500\b|\b500\b|total (stock )?market|large[\s-]*cap|mid[\s-]*cap|small[\s-]*cap|russell|nasdaq|international|\bintl\b|emerging|ex[\s-]*us|\bglobal\b|collective (investment )?trust|\bcit\b|commingled/i;
 export function holdingKind(h) {
-  if (h.type === 'cash' || (h.type === 'other' && /deposit|money market|cash/i.test(h.name ?? ''))) return 'Cash';
+  const name = h.name ?? '';
+  if (h.type === 'cash' || (h.type === 'other' && /deposit|money market|cash/i.test(name))) return 'Cash';
   if (h.type === 'etf') return 'ETFs';
-  if (h.type === 'mutual fund') return 'Mutual funds';
   if (h.type === 'equity') return h.subtype ? 'Stocks' : 'Employer plan funds';
   if (h.type === 'fixed income') return 'Bonds';
-  return 'Other';
+  if (!h.type || h.type === 'mutual fund' || h.type === 'other') {
+    if (NAME_TARGET.test(name)) return 'Target date funds';
+    if (NAME_BOND.test(name)) return 'Bonds';
+    if (NAME_INDEX.test(name)) return 'Index funds';
+  }
+  return h.type === 'mutual fund' ? 'Mutual funds' : 'Other';
 }
 
 // Assets only (no cards or loans). Accounts with holdings are split by holding kind; others by account type.

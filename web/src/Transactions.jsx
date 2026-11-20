@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { api } from './api.js';
 import { usd2, usd, signed, label, shortDate, SERIES, tint } from './format.js';
-import AccountOptions from './AccountOptions.jsx';
+import Select from './Select.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 import { RowStamp, useStampedExit } from './Stamp.jsx';
 import { RepeatPick } from './Bills.jsx';
@@ -231,10 +231,21 @@ const CONF = { VERY_HIGH: 'very sure', HIGH: 'sure', MEDIUM: 'fairly sure', LOW:
 const why = (t) => (t.cat_source === 'plaid' ? `Plaid's category${CONF[t.pfc_confidence] ? ` (${CONF[t.pfc_confidence]})` : ''}` : WHY[t.cat_source] ?? '—');
 
 // Merchant logo from Plaid when there is one; the category icon otherwise (or if the image fails to load).
+// Always the category icon, in one box, so every merchant name starts at the same x; brand logos are often
+// unreadable at this size.
 function Logo({ t }) {
-  const [failed, setFailed] = useState(false);
-  if (t.logo_url && !failed && !t.to_account) return <img className="mlogo" src={t.logo_url} alt="" loading="lazy" onError={() => setFailed(true)} />;
   return <CategoryIcon {...txIcon(t)} size={24} />;
+}
+
+// Account choices for the filter, grouped under each bank.
+function accountGroups(accts) {
+  const banks = new Map();
+  for (const a of accts) {
+    const k = a.institution ?? 'Other';
+    if (!banks.has(k)) banks.set(k, []);
+    banks.get(k).push({ value: String(a.id), label: `${a.name}${a.mask ? ` ••${a.mask}` : ''}` });
+  }
+  return [...banks].sort(([a], [b]) => a.localeCompare(b)).map(([group, options]) => ({ group, options }));
 }
 
 // Date presets resolve to inclusive YYYY-MM-DD bounds in local time.
@@ -349,33 +360,24 @@ export default function Transactions() {
   const cols = editing ? 5 : 4;
   return (
     <>
-      <PageHeader title="Transactions" sub="Transfers between your own accounts show as one row.">
-        <a className="btn" href={`/api/transactions.csv?${filterQs}`}>Download CSV</a>
-        <button className={`btn${editing ? ' primary' : ''}`} onClick={() => { setEditing(!editing); setSel(new Set()); }}>{editing ? 'Done' : 'Edit multiple'}</button>
+      <PageHeader title="Transactions">
+        <a className="btn quiet" href={`/api/transactions.csv?${filterQs}`}>Download CSV</a>
+        <button className={`btn quiet${editing ? ' on' : ''}`} onClick={() => { setEditing(!editing); setSel(new Set()); }}>{editing ? 'Done' : 'Edit multiple'}</button>
       </PageHeader>
       <Review dir="in" items={review.in} decide={decide} cats={cats} />
       <Review dir="out" items={review.out} decide={decide} cats={cats} />
       <PeoplePanel data={people} cats={cats} reload={load} />
       <div className="filters filterbar">
         <input type="search" placeholder="Search merchant or description" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search transactions" />
-        <select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">
-          <option value="">All categories</option>
-          <option value="unsure">Plaid wasn't sure (worth a look)</option>
-          {cats.map(({ group, subs }) => (
-            <optgroup key={group} label={group}>
-              <option value={`g:${group}`}>All {group}</option>
-              {subs.length > 1 && subs.map((c) => <option key={c} value={c}>{c}</option>)}
-            </optgroup>
-          ))}
-        </select>
-        <select value={account} onChange={(e) => setAccount(e.target.value)} aria-label="Account">
-          <option value="">All accounts</option>
-          <AccountOptions accounts={accts} />
-        </select>
-        <select value={preset} onChange={(e) => setPreset(e.target.value)} aria-label="Dates">
-          <option value="all">All dates</option><option value="this">This month</option><option value="last">Last month</option>
-          <option value="30">Last 30 days</option><option value="custom">Custom…</option>
-        </select>
+        <Select value={category} onChange={setCategory} label="Category" options={[
+          { value: '', label: 'All categories' }, { value: 'unsure', label: "Plaid wasn't sure (worth a look)" },
+          ...cats.map(({ group, subs }) => ({ group, options: [{ value: `g:${group}`, label: `All ${group}` }, ...(subs.length > 1 ? subs.map((c) => ({ value: c, label: c })) : [])] })),
+        ]} />
+        <Select value={account} onChange={setAccount} label="Account" options={[{ value: '', label: 'All accounts' }, ...accountGroups(accts)]} />
+        <Select value={preset} onChange={setPreset} label="Dates" options={[
+          { value: 'all', label: 'All dates' }, { value: 'this', label: 'This month' }, { value: 'last', label: 'Last month' },
+          { value: '30', label: 'Last 30 days' }, { value: 'custom', label: 'Custom…' },
+        ]} />
         {preset === 'custom' && <>
           <input type="date" value={custom.from} onChange={(e) => setCustom({ ...custom, from: e.target.value })} aria-label="From" />
           <input type="date" value={custom.to} onChange={(e) => setCustom({ ...custom, to: e.target.value })} aria-label="To" />
@@ -388,10 +390,8 @@ export default function Transactions() {
         <div className="note bulkbar">
           <span>{sel.size ? `${sel.size} selected` : 'Tick the transactions to change.'}{' '}
             {rows.length > 0 && <button className="linkbtn" onClick={() => setSel(sel.size === rows.length ? new Set() : new Set(rows.map((t) => t.id)))}>{sel.size === rows.length ? 'Clear' : `Select all ${rows.length}`}</button>}</span>
-          <select disabled={!sel.size} defaultValue="" key={sel.size} onChange={(e) => e.target.value && applyBulk(e.target.value)} aria-label="Category for selected">
-            <option value="" disabled>Set category…</option>
-            {cats.map(({ group, subs }) => <optgroup key={group} label={group}>{subs.map((c) => <option key={c} value={c}>{c}</option>)}</optgroup>)}
-          </select>
+          <Select disabled={!sel.size} value="" onChange={applyBulk} label="Category for selected" placeholder="Set category…" wide
+            options={cats.map(({ group, subs }) => ({ group, options: subs.map((c) => ({ value: c, label: c })) }))} />
         </div>
       )}
       <div className="ledger mt-sm">
@@ -441,8 +441,8 @@ export default function Transactions() {
                             e.stopPropagation(); setOpen(t.id);
                             setTimeout(() => document.querySelector(`[data-trip-for="${t.id}"]`)?.focus(), 50);
                           }}>✈ {t.trip_name}</button>}</span></span></td>
-                        <td>{t.is_split ? <span className="splitchip">Split · {t.parts?.length ?? 0} parts</span> : t.to_account || editing ? <><span className="grp">{t.shown_grp} ›</span>{t.shown}</> : (<>
-                          <span className="grp">{t.grp} ›</span>
+                        <td>{t.is_split ? <span className="splitchip">Split · {t.parts?.length ?? 0} parts</span> : t.to_account || editing ? <>{t.shown_grp !== t.shown && <span className="grp">{t.shown_grp} ›</span>}{t.shown}</> : (<>
+                          {t.grp !== t.category && <span className="grp">{t.grp} ›</span>}
                           <span className="catpick">
                             <span className="catname">{label(t.category)}</span>
                             <select className="catsel" value={t.category ?? ''} onChange={(e) => change(t, e.target.value)} aria-label={`Category for ${title(t)}`}>
@@ -456,7 +456,7 @@ export default function Transactions() {
                       {t.parts?.map((p) => (
                         <tr className="txpart" key={p.id}>{editing && <td />}
                           <td className="merch"><span className="merchcell"><span className="partarrow" aria-hidden="true">↳</span><CategoryIcon group={p.grp} sub={p.category} size={20} /></span></td>
-                          <td><span className="grp">{p.grp} ›</span>{p.category}</td><td />
+                          <td>{p.grp !== p.category && <span className="grp">{p.grp} ›</span>}{p.category}</td><td />
                           <td className="r"><span className={`tamt small${p.amount > 0 ? '' : ' good'}`}>{signed(-p.amount)}</span></td>
                         </tr>))}
                       {open === t.id && !editing && (

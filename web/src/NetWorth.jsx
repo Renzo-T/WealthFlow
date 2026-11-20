@@ -166,7 +166,6 @@ function YourAssets({ manual, candidates, open, setOpen, saved }) {
   const total = manual.reduce((s, m) => s + (m.kind === 'liability' ? -m.value : m.value), 0);
   return (
     <Panel className="mt-lg" title="Assets and debts you added" actions={manual.length ? <b className="amt">{total < -0.005 ? '−' : ''}{usd(Math.abs(total))}</b> : null}>
-      <p className="small muted mt-0">Things Plaid can't see, like a house, a car, a loan you made or one you owe. Each value counts from its date, so net worth history keeps the earlier value.</p>
       {manual.map((m) => <AssetRow key={m.id} a={m} candidates={candidates} open={open === `m${m.id}`} setOpen={setOpen} saved={saved} />)}
       <form className="form" onSubmit={add}>
         <label className="lbl">Name<input value={f.name} onChange={on('name')} placeholder="Home" required /></label>
@@ -305,7 +304,7 @@ const PERIODS = [['month', 'This month'], ['30d', 'Last 30 days'], ['all', 'Sinc
 const signedUsd = (v) => `${v < 0 ? '−' : '+'}${usd(Math.abs(v))}`;
 // `stamp` changes whenever the page reloads its data (a new value or a linked transfer), so this refetches too.
 function WhatMoved({ stamp }) {
-  const [period, setPeriod] = useState('month');
+  const [period, setPeriod] = useState('30d');
   const [b, setB] = useState(null);
   useEffect(() => { api(`/networth/breakdown?period=${period}`).then(setB); }, [period, stamp]);
   if (!b) return null;
@@ -419,7 +418,7 @@ export default function NetWorth({ onChange }) {
 
   return (
     <>
-      <PageHeader title="Net worth" sub="Your accounts grouped by type, with anything Plaid can't see, like a house or a loan.">
+      <PageHeader title="Net worth">
         {meta.items.length < meta.max && <ConnectBank />}
       </PageHeader>
       {meta.items.length === 0 && <div className="card empty mt"><EmptyState art="banks" title="No banks yet">Connect a bank to see its accounts here.</EmptyState></div>}
@@ -428,7 +427,12 @@ export default function NetWorth({ onChange }) {
           <div className="stand lead">
             <span className="slabel">Net worth today</span>
             <span className="sfig big"><Hover className="quiet" tip={nw.ago == null ? null : <TipList title="Net worth" rows={[['30 days ago', usd(nw.ago)], ['Today', usd(nw.value)]]} />}>{usd(nw.value)}</Hover></span>
-            {nw.ago != null && <span className="small muted"><span className="amt">{signedUsd(nw.value - nw.ago)}</span> in the last 30 days</span>}
+            {nw.ago != null && (() => {
+              const diff = nw.value - nw.ago, pct = nw.ago ? (diff / Math.abs(nw.ago)) * 100 : null;
+              return <span className="delta small" title={`${signedUsd(diff)} since 30 days ago`}>
+                <span className={diff >= 0 ? 'good' : 'bad'}><Trend up={diff >= 0} /> {pct == null ? signedUsd(diff) : `${Math.abs(pct).toFixed(1)}%`}</span>{' '}
+                <span className="muted">vs. 30 days ago</span></span>;
+            })()}
             <BandParts accounts={d.accounts} manual={d.manual} />
           </div>
         </section>
@@ -455,7 +459,6 @@ export default function NetWorth({ onChange }) {
           </Panel>
         );
       })}</div>}
-      {d.accounts.some((a) => a.estimated) && <p className="small muted mt-sm">Dashed trend lines are estimated from transactions; investments are held at today's value until daily history builds up.</p>}
       <YourAssets manual={d.manual} candidates={d.candidates ?? []} open={open} setOpen={setOpen} saved={saved} />
       <Banks meta={meta} accounts={d.accounts} saved={saved} />
     </>

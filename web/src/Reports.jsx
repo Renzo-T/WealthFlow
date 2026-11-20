@@ -49,13 +49,16 @@ function MonthTable({ focus }) {
   useEffect(() => { setD(null); api(`/reports/months?months=${n}`).then(setD); }, [n]);
   useEffect(() => { if (d && focus) document.querySelector('.rtable .rfocus')?.scrollIntoView({ block: 'nearest', inline: 'center' }); }, [d, focus]);
   if (!d) return <PageSkeleton panels={1} />;
+  // A month with nothing in any row (before any history) is left out rather than shown as a column of dashes.
+  const used = d.months.map((_, i) => i).filter((i) => d.groups.some((g) => Math.abs(g.values[i]) >= 0.5) || Math.abs(d.totals.spending.values[i]) >= 0.5);
+  const cols = used.length ? used : d.months.map((_, i) => i);
   const toggle = (g) => { const o = { ...open, [g]: !open[g] }; setOpen(o); remember('open', o); };
   const row = (r, opts = {}) => {
     const max = Math.max(...r.values.map(Math.abs), 1);
     return (
       <tr key={opts.key ?? r.name} className={opts.cls}>
         <td>{opts.label ?? r.name}</td>
-        {r.values.map((v, i) => <Cell key={d.months[i]} v={v} max={max} partial={d.partial[i]} current={d.months[i] === d.current}
+        {cols.map((i) => <Cell key={d.months[i]} v={r.values[i]} max={max} partial={d.partial[i]} current={d.months[i] === d.current}
           behind={r.behind?.[i]} avg={r.avg} title={typeof opts.label === 'string' ? opts.label : r.name} month={d.months[i]} focus={d.months[i] === focus} />)}
         <td className="r amt ravg">{r.avg == null ? '—' : <Hover className="quiet" tip={<TipList title="Average" rows={d.averaged.map((m) => [monYear(m), usd(r.values[d.months.indexOf(m)])])}
           note="Finished months with history from every bank." />}>{usd(r.avg)}</Hover>}</td>
@@ -76,22 +79,19 @@ function MonthTable({ focus }) {
     <Panel className="scroll" title="Month by month" actions={
       <div className="ranges">{[6, 12].map((k) => <button key={k} className={n === k ? 'on' : ''} onClick={() => { setN(k); remember('months', k); }}>{k} months</button>)}</div>}>
       <table className="t rtable">
-        <thead><tr><th />{d.months.map((m, i) => <th key={m} className={`r${d.partial[i] ? ' partial' : ''}${m === focus ? ' rfocus' : ''}`}>
+        <thead><tr><th />{cols.map((i) => [d.months[i], i]).map(([m, i]) => <th key={m} className={`r${d.partial[i] ? ' partial' : ''}${m === focus ? ' rfocus' : ''}`}>
           {d.partial[i] && d.missing[i]?.length ? <Hover className="quiet" tip={<TipList title={`${monYear(m)} is incomplete`}
             rows={d.missing[i].map((x) => [x.bank, `from ${shortDate(x.from)}`])} note="These banks' history starts later, so their activity this month is missing." />}>
             {mon(m)}{m === d.current ? ' so far' : ''}</Hover> : <>{mon(m)}{m === d.current ? ' so far' : ''}</>}</th>)}
           <th className="r"><Hover className="quiet" tip={<TipList rows={[]} note="Average of finished months with history from every bank." />}>Average</Hover></th></tr></thead>
         <tbody>
           {income && <>{row(income, { cls: 'rgroup rincome', label: <><CategoryIcon group="Income" size={22} />Income</> })}</>}
-          <tr className="rsep"><td colSpan={d.months.length + 2}>Spending</td></tr>
+          <tr className="rsep"><td colSpan={cols.length + 2}>Spending</td></tr>
           {section(spend)}
           {row(d.totals.spending, { cls: 'rtotal', label: 'Total spending' })}
-          {other.length > 0 && <><tr className="rsep"><td colSpan={d.months.length + 2}>Saving & debt</td></tr>{section(other)}</>}
+          {other.length > 0 && <><tr className="rsep"><td colSpan={cols.length + 2}>Saving & debt</td></tr>{section(other)}</>}
         </tbody>
       </table>
-      {(d.partial.some(Boolean) || d.months.includes(d.current)) && <p className="small muted foot">Grey dashed figures aren't final.
-        {d.partial.some(Boolean) ? " Months with faded headings are missing history from at least one bank, so they're incomplete and left out of the average." : ''}
-        {d.months.includes(d.current) ? ` ${mon(d.current)} isn't over yet, so it's left out of the average too.` : ''}</p>}
     </Panel>
   );
 }
@@ -111,7 +111,6 @@ function Subscriptions() {
         <div className="card"><h3>Price changes</h3><div className="big">{changed.length}</div><div className="small muted">{changed.length ? changed.map((s) => s.name).slice(0, 3).join(', ') : 'None lately'}</div></div>
       </div>
       <Panel title="Subscriptions" actions={<a href="#/bills">Bills</a>}>
-        <p className="small muted mt-0">Everything recurring that isn't rent, utilities, insurance or a card payment. Not a subscription? Mark it "Not a bill" on the Bills page.</p>
         {d.items.map((s) => (
           <div className="trow sub" key={s.key}>
             <span className="rowicon"><CategoryIcon group={s.grp} sub={s.category} />
@@ -238,7 +237,7 @@ export default function Reports() {
   const openMonth = useCallback((m) => { setTab('months'); setFocus(m); remember('tab', 'months'); window.scrollTo({ top: 0 }); }, []);
   return (
     <>
-      <PageHeader title="Reports" sub="Spending month by month, what you pay on repeat, how the year went, and your trips.">
+      <PageHeader title="Reports">
         <div className="ranges">{TABS.map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => pick(k)}>{l}</button>)}</div>
       </PageHeader>
       <div className="mt">{tab === 'months' ? <MonthTable key={focus ?? ''} focus={focus} /> : tab === 'subscriptions' ? <Subscriptions /> : tab === 'trips' ? <Trips embedded /> : <YearInReview onOpen={openMonth} />}</div>

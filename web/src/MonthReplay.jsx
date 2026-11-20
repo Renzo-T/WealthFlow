@@ -11,7 +11,7 @@ import { Stamp, StampArt, markIcon } from './Stamp.jsx';
 // arrives drawn, so the readout shows today at once; Replay draws it through day by day on demand, with the readout
 // counting along. Hovering a day reads it out. Days ahead are
 // dashed: only scheduled paydays and bills, never guessed day-to-day spending.
-const H = 300, L = 58, R = 16, T = 30, B = 30, PB = H - B;
+const H = 300, L = 58, R = 52, T = 30, B = 30, PB = H - B;
 const DUR = 3200; // ms for a whole month
 const monthName = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 const dayName = (d) => new Date(`${d}T00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -114,10 +114,17 @@ function Chart({ r, p, hover, setHover, playing }) {
   // "Cushion" sits over its line at the right end, or wherever along it (left end, or under the line) no stamp is.
   let cushAt = null;
   if (r.cushion > 0) {
-    const cy = y(r.cushion) - 5, wd = 52;
+    const cy = y(r.cushion) - 5, wd = 52 + 6.6 * usd(r.cushion).length;
     const opts = [{ a: 'end', x: W - R, x0: W - R - wd, y: cy }, { a: 'start', x: L + 4, x0: L + 4, y: cy },
       { a: 'end', x: W - R, x0: W - R - wd, y: cy + 17 }, { a: 'start', x: L + 4, x0: L + 4, y: cy + 17 }];
     cushAt = opts.find((o) => !stamps.some((s) => hits({ x0: o.x0, x1: o.x0 + wd, y0: o.y - 11, y1: o.y + 3 }, s))) ?? opts[0];
+  }
+  // With days ahead, "Cash" is written over the solid line's end, clear of stamps.
+  let cashAt = null;
+  if (ahead && todayI >= 0 && r.days[todayI].cash != null) {
+    const tx = cx(todayI), ty = y(r.days[todayI].cash) - 7, wd = 30;
+    const opts = [{ x: tx - 4, y: ty }, { x: tx - 4, y: ty + 20 }];
+    cashAt = opts.find((o) => !stamps.some((s) => hits({ x0: o.x - wd, x1: o.x, y0: o.y - 11, y1: o.y + 3 }, s))) ?? null;
   }
   const head = Math.min(W - R, L + p * colw);
   const ticks = niceTicks(lo, hi, 4, { expand: false }).ticks;
@@ -138,13 +145,17 @@ function Chart({ r, p, hover, setHover, playing }) {
         {ticks.map((v) => <g key={v}><line className="grid" x1={L} x2={W - R} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{usdCompact(v, 1)}</text></g>)}
         {lo < 0 && <line className="rp-zero" x1={L} x2={W - R} y1={y(0)} y2={y(0)} />}
         {r.cushion > 0 && <g><line className="rp-cushion" x1={L} x2={W - R} y1={y(r.cushion)} y2={y(r.cushion)} />
-          <text x={cushAt.x} y={cushAt.y} textAnchor={cushAt.a}>Cushion</text></g>}
+          <text x={cushAt.x} y={cushAt.y} textAnchor={cushAt.a}>Cushion {usd(r.cushion)}</text></g>}
         {hover != null && <rect className="rp-hover" x={L + hover * colw} y={T - 14} width={colw} height={PB - T + 14} />}
         <g clipPath="url(#replay-head)">
           {past && <path className="rp-line" d={past} />}
           {ahead && <path className="rp-line ahead" d={ahead} />}
           {under.map(({ d, i }) => <line key={d.date} className={`rp-line neg${d.future ? ' ahead' : ''}`} x1={cx(i)} x2={i === n - 1 ? W - R : cx(i + 1)} y1={y(d.cash)} y2={y(d.cash)} />)}
         </g>
+        {/* The lines are named where they end (the right margin), so the legend can keep to the stamps. */}
+        {(ahead || past) && <text className="rp-end" x={W - R + 6} y={y(r.days.at(-1).cash ?? r.days[pastEnd].cash) + 4}>{ahead ? 'Ahead' : 'Cash'}</text>}
+        {ahead && cashAt && <text className="rp-end" x={cashAt.x} y={cashAt.y} textAnchor="end">Cash</text>}
+        {under.length > 0 && <text className="rp-end neg" x={W - R + 6} y={y(under.at(-1).d.cash) + (ahead && under.at(-1).i > todayI ? 4 : 18)}>Below $0</text>}
         {p < n && p > 0 && <line className="rp-head" x1={head} x2={head} y1={T - 14} y2={PB} />}
         {low >= 0 && revealed(low) && <g className="rp-low">
           <circle cx={cx(low)} cy={y(r.low.cash)} r="4.5" />
@@ -213,10 +224,6 @@ export default function MonthReplay({ month: wanted }) {
   const nav = (
     <span className="spreadnav">
       <span className="legend">
-        <span><i className="lkey" />Cash</span>{r?.days.some((d) => d.future) && <span><i className="lkey dash" />Ahead (scheduled only)</span>}
-        {r?.cushion > 0 && <span><i className="lkey cushion" />Cushion <span className="amt">{usd(r.cushion)}</span></span>}
-        {r && range(r)[0] < 0 && <span><i className="lkey zero" /><span className="amt">$0</span></span>}
-        {r?.days.some((d) => d.cash != null && d.cash < 0) && <span><i className="lkey neg" />Below $0</span>}
         <span><Stamp kind="in" done icon="arrowin" />Money in</span><span><Stamp kind="out" done icon="receipt" />Bill paid</span>
         {r?.days.some((d) => d.marks.some((m) => !m.done && m.direction !== 'in')) && <span><Stamp kind="out" />Bill due</span>}
         {r?.days.some((d) => d.parts && savedOf(d) >= bigAt(r)) && <span><Stamp kind="save" done />Moved to savings</span>}
@@ -263,11 +270,11 @@ export default function MonthReplay({ month: wanted }) {
         </div>
       </div>
       <Chart r={r} p={p} hover={hover} setHover={setHover} playing={playing} />
-      <p className="small muted foot">Cash in your <Hover tip={<>
+      <p className="small muted foot"><Hover tip={<>
         <div className="hovtitle">Everyday accounts</div>
         <ul>{r.accounts.map((a) => <li key={a}>{a}</li>)}</ul>
-      </>}><span>{r.accounts.length} everyday account{r.accounts.length === 1 ? '' : 's'}</span></Hover> at the end of each day.{r.days.some((x) => x.future) && <> Dashed days
-        ahead add only scheduled paydays and bills; everyday spending isn't guessed, so the real line will run lower.</>}</p>
+        <div className="muted">Cash at the end of each day.{r.days.some((x) => x.future) && " Days ahead add only scheduled paydays and bills; everyday spending isn't guessed, so the real line will run lower."}</div>
+      </>}><span>{r.accounts.length} everyday account{r.accounts.length === 1 ? '' : 's'}</span></Hover></p>
     </Panel>
   );
 }

@@ -14,7 +14,7 @@ const inDays = (d) => {
 // after them. With nothing to sort, Coming up takes the room Needs you would have used.
 export const comingCount = (todo = []) => (todo.length ? 3 : 5);
 
-// Beside the calendar: Needs you (only while something waits to be sorted) above Coming up.
+// Beside the calendar: Needs you (only while something waits to be sorted; nothing at all otherwise) above Coming up.
 export function GlanceSide({ todo = [], upcoming = [] }) {
   const rows = useStampedExit(todo, (t) => t.key); // a kind of thing that got sorted holds its place for a stamp
   return (
@@ -38,7 +38,6 @@ export function GlanceSide({ todo = [], upcoming = [] }) {
             </div>
           ))}
         </div>}
-        {rows.length === 0 && <p className="gquiet small"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" /></svg>Nothing to sort.</p>}
       </div>
     </>
   );
@@ -48,13 +47,15 @@ export function GlanceSide({ todo = [], upcoming = [] }) {
 export function GlanceBudget({ budgets }) {
   const groups = (budgets?.items ?? []).filter((b) => b.amount > 0);
   const over = groups.filter((b) => b.spent > b.amount + 0.5), list = (a) => (a.length < 3 ? a.join(' and ') : `${a.slice(0, -1).join(', ')} and ${a.at(-1)}`);
+  // Same rule as the Budget page: red only when well over (more than $25 and 10%); a few dollars over is amber.
+  const bigOver = (b) => b.spent - b.amount > Math.max(25, 0.1 * b.amount), alarm = over.some(bigOver);
   // The four groups closest to (or past) their budget; one that hasn't started yet says nothing at a glance.
   const watch = [...groups].sort((a, b) => b.spent / b.amount - a.spent / a.amount).slice(0, 4);
   return (
     <div className="msec gbudget">
       {/* Which groups are over sits in the head, beside the title, so the rows start right under it. */}
       <div className="head"><h2>Budget</h2>
-        {groups.length > 0 && <span className="gtotal small">{over.length > 0 ? <span className="bad">{list(over.map((b) => b.category))} {over.length === 1 ? 'is' : 'are'} over</span> : <span className="muted">Everything is within budget</span>}</span>}
+        {groups.length > 0 && <span className="gtotal small">{over.length > 0 ? <span className={alarm ? 'bad' : 'muted'}>Over budget: {list(over.map((b) => b.category))}</span> : <span className="muted">Everything is within budget</span>}</span>}
         <a className="small" href="#/budget">Budget</a></div>
       {groups.length === 0 ? <p className="gquiet small">No budget yet. <a href="#/budget">Set one up</a> and this shows how each group is tracking.</p> : <>
         <div className="gbuds">
@@ -64,7 +65,7 @@ export function GlanceBudget({ budgets }) {
             return (
               <div className="gbud" key={b.category} title={tipText(`${b.category}: ${usd2(b.spent)} of ${usd2(b.amount)}`)}>
                 <span className="gname">{b.category}</span><span className="small muted amt">{usd(b.spent)} of {usd(b.amount)}</span>
-                <span className="meter"><i className={p > 100 ? 'over' : ''} style={{ width: `${Math.min(100, p)}%` }} />
+                <span className="meter"><i className={bigOver(b) ? 'over' : p > 100 ? 'ahead' : ''}style={{ width: `${Math.min(100, p)}%` }} />
                   {pace != null && <b style={{ left: `${pace * 100}%` }} title="An even pace for today" />}</span>
               </div>
             );

@@ -1,19 +1,36 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useId, useState } from 'react';
 import { api } from './api.js';
-import { usd, usd2, allocColor } from './format.js';
-import { Panel, EmptyState, Hover, TipList, tipText, Trend, Close } from './ui.jsx';
+import { usd, usd2, signed, allocColor } from './format.js';
+import { Panel, EmptyState, Hover, TipList, tipText, Chevron, Close } from './ui.jsx';
 const Clock = () => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="6" cy="6" r="4.8" /><path d="M6 3.4V6l1.8 1.2" /></svg>;
-const Level = () => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M2.5 4.5h7M2.5 7.5h7" /></svg>;
 const monthName = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'long' });
 import CategoryIcon from './CategoryIcon.jsx';
 
 // "A, B and C" from strings or elements (so amounts inside can carry the amt class that Hide amounts blurs).
 const list = (xs) => xs.map((x, i) => <Fragment key={i}>{i === 0 ? '' : i === xs.length - 1 ? ' and ' : ', '}{x}</Fragment>);
 
-// One line at the top of the dashboard: how this month compares with last (everyday spending, bills excluded),
-// plus anything waiting for a decision in Transactions.
-// What changed this month, and the to-do: one link per kind of thing waiting for you (/todo).
+// The figures behind the comparison line: both months' everyday spending so far, then each category that moved it.
+function Comparison({ c, id }) {
+  const rows = [['Everyday spending', c.cur, c.prev], ...(c.drivers ?? []).map((d) => [d.category, d.cur, d.prev])];
+  return (
+    <div className="insight-more" id={id}>
+      <div className="imrow imhead"><span /><span>This month</span><span>Same days last month</span><span>Change</span></div>
+      {rows.map(([name, cur, prev], i) => (
+        <div className={`imrow${i === 0 ? ' imtotal' : ''}`} key={name}>
+          <span className="imname">{name}</span><span className="amt">{usd(cur)}</span><span className="amt">{usd(prev)}</span>
+          <span className={`amt ${cur > prev ? 'bad' : 'good'}`}>{signed(cur - prev, usd)}</span>
+        </div>))}
+      <p className="small muted imnote">Recurring bills and trips are left out, and so are banks without history for last month.</p>
+    </div>
+  );
+}
+
+// One line at the top of the dashboard: how this month compares with last (everyday spending, bills excluded), plus
+// one link per kind of thing waiting for you (/todo). Once there's a comparison the whole line is a button that opens
+// the figures behind it (its drawn chevron turns down while open).
 export function InsightStrip({ changed, todo = [] }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
   const waiting = todo.length;
   let text = null;
   if (changed?.ready && !changed.flat) {
@@ -29,11 +46,15 @@ export function InsightStrip({ changed, todo = [] }) {
       <span className="muted"> This month's comparison starts on the 5th.</span></>;
   }
   if (!text && !waiting) return null;
+  const toggle = text && changed.ready;
   return (
-    <div className="insight">
-      {text && <span title="Same days of last month, everyday spending only: recurring bills are left out, and banks without history for last month aren't compared.">
-        <span className="insight-ic" aria-hidden="true">{changed.reason === 'early' ? <Clock /> : changed.flat ? <Level /> : <Trend up={changed.diff > 0} />}</span>{text}</span>}
+    <div className={`insight${open && toggle ? ' open' : ''}`}>
+      {text && (toggle
+        ? <button type="button" className="insight-line" aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => setOpen(!open)}>
+          <span className="insight-ic chev" aria-hidden="true"><Chevron /></span><span>{text}</span></button>
+        : <span className="insight-line"><span className="insight-ic" aria-hidden="true"><Clock /></span><span>{text}</span></span>)}
       {waiting > 0 && <span className="todo">{todo.map((t) => <a key={t.key} href={t.href} className="chip-link">{t.label}</a>)}</span>}
+      {toggle && open && <Comparison c={changed} id={id} />}
     </div>
   );
 }
