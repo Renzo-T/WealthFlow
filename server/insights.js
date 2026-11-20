@@ -1,6 +1,6 @@
 import db from './db.js';
 import { iso } from './summary.js';
-import { SPEND_SQL, NOT_SPENDING, historyStart } from './categories.js';
+import { SPEND_SQL, NOT_SPENDING, ON, historyStart } from './categories.js';
 import { bills } from './recurring.js';
 import { payContributionsIn } from './contributions.js';
 
@@ -31,10 +31,10 @@ export function coverage() {
 export function cashFlow(n = 6) {
   const shownFrom = historyStart()?.slice(0, 7);
   const keys = monthKeys(n).filter((k, i, all) => !shownFrom || k >= shownFrom || i === all.length - 1); // not before charts start
-  const rows = db.prepare(`SELECT substr(date,1,7) m,
+  const rows = db.prepare(`SELECT substr(${ON},1,7) m,
       SUM(CASE WHEN grp = 'Income' THEN -amount ELSE 0 END) income,
       SUM(CASE WHEN ${SPEND_SQL} THEN amount ELSE 0 END) spending
-    FROM transactions WHERE date >= ? GROUP BY m`).all(keys[0] + '-01');
+    FROM transactions WHERE ${ON} >= ? GROUP BY m`).all(keys[0] + '-01');
   const by = Object.fromEntries(rows.map((r) => [r.m, r]));
   const start = coverageStart();
   return keys.map((k) => ({ month: k, income: Math.max(0, by[k]?.income ?? 0), spending: Math.max(0, by[k]?.spending ?? 0),
@@ -79,7 +79,7 @@ export function flow(from, to) {
   };
   const sources = incomeSources(from, to).list;
   const net = db.prepare(`SELECT COALESCE(grp,'Misc') name, SUM(amount) value, ${SPEND_SQL} spend FROM transactions
-    WHERE COALESCE(grp,'Misc') NOT IN ('Income','Transfer','Split') AND date >= ? AND date < ? GROUP BY 1 ORDER BY spend DESC, value DESC`).all(from, to);
+    WHERE COALESCE(grp,'Misc') NOT IN ('Income','Transfer','Split') AND ${ON} >= ? AND ${ON} < ? GROUP BY 1 ORDER BY spend DESC, value DESC`).all(from, to);
   const cats = net.filter((c) => c.value > 0.005);
   // A refund lowers its own group's spending, never below zero (spendingBetween, the same rule as the dashboard): a group
   // whose refunds beat its spending this period (a trip refunded) adds the rest to one "Refunds" source, money in but not
@@ -94,7 +94,7 @@ export function flow(from, to) {
     WHERE ((transfer_pair IS NOT NULL AND amount > 0) OR (transfer_pair IS NULL AND transfer_account IS NOT NULL))
       AND date >= ? AND date < ?`).get(from, to).v;
   const subs = db.prepare(`SELECT COALESCE(grp,'Misc') g, COALESCE(category,'Other') c, SUM(amount) v FROM transactions
-    WHERE COALESCE(grp,'Misc') NOT IN ('Income','Transfer') AND date >= ? AND date < ? GROUP BY 1, 2 HAVING v > 0.005 ORDER BY v DESC`).all(from, to);
+    WHERE COALESCE(grp,'Misc') NOT IN ('Income','Transfer') AND ${ON} >= ? AND ${ON} < ? GROUP BY 1, 2 HAVING v > 0.005 ORDER BY v DESC`).all(from, to);
   for (const c of cats) c.subs = subs.filter((x) => x.g === c.name).slice(0, 3).map((x) => ({ name: x.c, value: x.v }));
   const left = [...top(sources, 5, 'Other income'), ...credits], right = [...cats];
   if (income > allocated) right.push({ name: 'Left over', value: income - allocated, saved: true });
@@ -235,7 +235,7 @@ export function accountFlow(from, to) {
 // While this month has no spending yet (its first days), show last month instead, labelled as such.
 export function topCategories(limit = 5) {
   const month = (m) => db.prepare(`SELECT COALESCE(grp,'Misc') c, SUM(amount) total FROM transactions
-    WHERE substr(date,1,7) = ? AND ${SPEND_SQL}
+    WHERE substr(${ON},1,7) = ? AND ${SPEND_SQL}
     GROUP BY c HAVING total > 0 ORDER BY total DESC`).all(m);
   const now = new Date(), thisMonth = iso(now).slice(0, 7), lastMonth = iso(new Date(now.getFullYear(), now.getMonth() - 1, 1)).slice(0, 7);
   let rows = month(thisMonth), shown = thisMonth;
@@ -244,7 +244,7 @@ export function topCategories(limit = 5) {
   // Subcategories within each group (refunds net out), shown when hovering a row.
   const subs = {};
   for (const r of db.prepare(`SELECT COALESCE(grp,'Misc') g, COALESCE(category,'Other') c, SUM(amount) total FROM transactions
-    WHERE substr(date,1,7) = ? AND ${SPEND_SQL} GROUP BY g, c HAVING ABS(total) > 0.5 ORDER BY total DESC`).all(shown)) (subs[r.g] ??= []).push({ name: r.c, total: r.total });
+    WHERE substr(${ON},1,7) = ? AND ${SPEND_SQL} GROUP BY g, c HAVING ABS(total) > 0.5 ORDER BY total DESC`).all(shown)) (subs[r.g] ??= []).push({ name: r.c, total: r.total });
   const items = rows.slice(0, limit).map((r) => ({ category: r.c, total: r.total, subs: subs[r.c] ?? [] }));
   const rest = rows.slice(limit);
   if (rest.length) items.push({ category: 'REST', total: rest.reduce((s, r) => s + r.total, 0), subs: rest.map((r) => ({ name: r.c, total: r.total })) });

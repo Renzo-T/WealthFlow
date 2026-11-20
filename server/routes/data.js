@@ -95,12 +95,15 @@ const TX_ROWS = `SELECT t.*,
       CASE WHEN p.id IS NOT NULL AND t.category = 'Transfer' THEN p.category ELSE t.category END AS shown,
       CASE WHEN p.id IS NOT NULL AND t.category = 'Transfer' THEN p.grp ELSE t.grp END AS shown_grp,
       p.name AS pair_name, p.account_id AS pair_account_id, tr.name AS trip_name, tr.status AS trip_status, COALESCE(rb.merchant, rb.name) AS paidback_name, rb.date AS paidback_date, rb.amount AS paidback_amount,
+      COALESCE(rf.merchant, rf.name) AS refund_name, rf.date AS refund_date, rf.amount AS refund_amount, it.institution,
+      (SELECT -SUM(r.amount) FROM transactions r WHERE r.refund_of = t.id) AS refunded, (SELECT MAX(r.date) FROM transactions r WHERE r.refund_of = t.id) AS refunded_on,
+      (SELECT -SUM(r.amount) FROM transactions r WHERE r.reimburses = t.id) AS repaid,
       (SELECT COUNT(*) FROM transactions s WHERE s.name = t.name) AS same_name
     FROM transactions t
     LEFT JOIN accounts a ON a.id = t.account_id
     LEFT JOIN transactions p ON p.id = t.transfer_pair LEFT JOIN accounts pa ON pa.id = p.account_id
     LEFT JOIN accounts na ON na.id = t.transfer_account
-    LEFT JOIN transactions rb ON rb.id = t.reimburses
+    LEFT JOIN transactions rb ON rb.id = t.reimburses LEFT JOIN transactions rf ON rf.id = t.refund_of LEFT JOIN items it ON it.id = a.item_id
     LEFT JOIN trips tr ON tr.id = t.trip_id AND tr.status = 'confirmed'
     WHERE NOT (t.transfer_pair IS NOT NULL AND t.amount < 0)`;
 // @parts: 0 for the list (originals, with their split parts attached), 1 for totals and CSV (the parts, not the originals).
@@ -143,7 +146,8 @@ router.get('/transactions', (req, res) => {
   const names = renamed();
   const rows = db.prepare(`SELECT * FROM (${TX_ROWS}) WHERE ${TX_WHERE} ORDER BY date DESC, id LIMIT @limit`)
     .all({ ...params, limit }).map((r) => ({ ...r, display: shownName(r, names), cleaned: r.merchant || describe(r.name),
-      ...billOf(series.get(seriesKey({ ...r, pair_account: r.pair_account_id }))), parts: r.is_split ? partsOf.all(r.id) : undefined }));
+      ...billOf(series.get(seriesKey({ ...r, pair_account: r.pair_account_id }))), parts: r.is_split ? partsOf.all(r.id) : undefined,
+      peer: r.amount < 0 && !!peerOf(r, r.institution) })); // money from a person: can be linked to the charge it paid back
   if (req.query.summary !== '1') return res.json(rows);
   const summary = db.prepare(`SELECT COUNT(*) count,
       COALESCE(SUM(CASE WHEN shown_grp = 'Income' THEN -amount END), 0) income,
@@ -363,6 +367,35 @@ router.patch('/transactions/:id', (req, res) => {
   res.json({ ok: true, rule }); // rule: the id of the rule made (all=1 or person=1), so it can be undone
 });
 
+// The charges money from a friend most likely paid back: your spending from `before` days before it to `after` days
+// after, best first when the charge splits evenly (e.g. $16.33 × 6 = $97.98), shares a word with the note, or is in
+// the category you gave the payment.
+function paybackCandidates(r, note, { before = 30, after = 3, category = null } = {}) {
+  const words = (s) => new Set((s ?? '').toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 4));
+  const back = -r.amount, nw = words(note);
+  return db.prepare(`SELECT t.id, t.date, COALESCE(t.merchant, t.name) name, t.amount, t.category FROM transactions t
+    WHERE t.amount > 0 AND t.date >= date(?, ?) AND t.date <= date(?, ?) AND ${SPEND_SQL}
+      AND COALESCE(t.cat_source, '') NOT IN ('person', 'note', 'paid back') ORDER BY t.date DESC`).all(r.date, `-${before} days`, r.date, `+${after} days`)
+    .filter((c) => c.amount >= back * 1.2).map((c) => {
+      const k = Math.round(c.amount / back), even = k >= 2 && k <= 12 && Math.abs(c.amount / back - k) < 0.03;
+      const shared = [...words(c.name)].some((w) => nw.has(w)), same = category && c.category === category;
+      return { ...c, split: even ? k : null, likely: shared || even, score: (shared ? 4 : 0) + (even ? 2 : 0) + (same ? 2 : 0) - Math.abs(Date.parse(r.date) - Date.parse(c.date)) / 864e5 / 30 };
+    }).sort((a, b) => b.score - a.score);
+}
+
+// The charges money from a friend could have paid back, for the picker in its details: up to four months before it
+// (a trip's settle-ups trickle in for weeks) and two weeks after. The charge it's linked to now is always listed.
+router.get('/transactions/:id/paidback', (req, res) => {
+  const t = db.prepare(`SELECT t.*, i.institution FROM transactions t JOIN accounts a ON a.id = t.account_id LEFT JOIN items i ON i.id = a.item_id
+    WHERE t.id = ? AND t.amount < 0`).get(req.params.id);
+  if (!t) return res.status(404).json({ error_message: 'Unknown transaction.' });
+  const peer = peerOf(t, t.institution);
+  let list = paybackCandidates(t, peer?.note, { before: 120, after: 14, category: t.category }).slice(0, 8);
+  const now = t.reimburses && db.prepare('SELECT id, date, COALESCE(merchant, name) name, amount, category FROM transactions WHERE id = ?').get(t.reimburses);
+  if (now && !list.some((c) => c.id === now.id)) list = [now, ...list];
+  res.json({ charge: t.reimburses ?? null, candidates: list.map(({ id, date, name, amount, category, split }) => ({ id, date, name, amount, category, split: split ?? null })) });
+});
+
 // ---- Payments with people that still need a category (no keyword in the note, no rule, not chosen by you).
 // Money a friend sent you also gets the likely charges it paid back: your spending in the 30 days before it,
 // best first when the charge splits evenly (e.g. $16.33 × 6 = $97.98) or shares a word with the note.
@@ -370,21 +403,9 @@ router.get('/review/people', (_req, res) => {
   const rows = db.prepare(`SELECT t.id, t.date, t.name, t.amount, t.counterparty, i.institution, ${ACCT} account FROM transactions t
     JOIN accounts a ON a.id = t.account_id LEFT JOIN items i ON i.id = a.item_id
     WHERE t.cat_source = 'person' AND t.date >= ? ORDER BY t.date DESC`).all(reviewSince());
-  const charges = db.prepare(`SELECT t.id, t.date, COALESCE(t.merchant, t.name) name, t.amount, t.category FROM transactions t
-    WHERE t.amount > 0 AND t.date >= date(?, '-30 days') AND t.date <= date(?, '+3 days') AND ${SPEND_SQL}
-      AND COALESCE(t.cat_source, '') NOT IN ('person', 'note') ORDER BY t.date DESC`);
-  const words = (s) => new Set((s ?? '').toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 4));
   const items = rows.map((r) => {
     const peer = peerOf(r, r.institution);
-    let candidates = [];
-    if (r.amount < 0) {
-      const back = -r.amount, nw = words(peer?.note);
-      candidates = charges.all(r.date, r.date).filter((c) => c.amount >= back * 1.2).map((c) => {
-        const k = Math.round(c.amount / back), even = k >= 2 && k <= 12 && Math.abs(c.amount / back - k) < 0.03;
-        const shared = [...words(c.name)].some((w) => nw.has(w));
-        return { ...c, split: even ? k : null, likely: shared || even, score: (shared ? 4 : 0) + (even ? 2 : 0) - Math.abs(Date.parse(r.date) - Date.parse(c.date)) / 864e5 / 30 };
-      }).sort((a, b) => b.score - a.score).slice(0, 4);
-    }
+    const candidates = r.amount < 0 ? paybackCandidates(r, peer?.note).slice(0, 4) : [];
     return { id: r.id, date: r.date, amount: r.amount, account: r.account, person: peer?.person ?? r.name, note: peer?.note ?? '', candidates };
   });
   res.json({ count: items.length, items: items.slice(0, 12) });

@@ -1,7 +1,7 @@
 // The month spread (dashboard): one entry per day of a month with what was spent that day, and the bills and
 // paydays that fell on it, already happened or still expected. Read-only; nothing here changes data.
 import db from './db.js';
-import { SPEND_SQL, spendingBetween } from './categories.js';
+import { SPEND_SQL, ON, spendingBetween } from './categories.js';
 import { bills, calendar, seriesKey, SPENDABLE, occurrences } from './recurring.js';
 import { accountHistory } from './summary.js';
 
@@ -17,9 +17,10 @@ export const kindOf = (b) => ({ grp: b.grp ?? null, category: b.category ?? null
 // What was spent each day between two dates (inclusive): { date: amount }. Split originals aren't spending themselves;
 // their parts are, under their own categories. Shared by the month spread and Reports' year at a glance.
 export function daySpending(from, to) {
-  const spent = Object.fromEntries(db.prepare(`SELECT date, SUM(amount) s FROM transactions
-    WHERE date BETWEEN ? AND ? AND split_of IS NULL AND COALESCE(is_split, 0) = 0 AND ${SPEND_SQL} GROUP BY date`).all(from, to).map((r) => [r.date, r.s]));
-  for (const r of db.prepare(`SELECT date, SUM(amount) s FROM transactions WHERE date BETWEEN ? AND ? AND split_of IS NOT NULL AND ${SPEND_SQL} GROUP BY date`).all(from, to))
+  // A refund or payback counts on its charge's day (ON), as in every spending total.
+  const spent = Object.fromEntries(db.prepare(`SELECT ${ON} date, SUM(amount) s FROM transactions
+    WHERE ${ON} BETWEEN ? AND ? AND split_of IS NULL AND COALESCE(is_split, 0) = 0 AND ${SPEND_SQL} GROUP BY 1`).all(from, to).map((r) => [r.date, r.s]));
+  for (const r of db.prepare(`SELECT ${ON} date, SUM(amount) s FROM transactions WHERE ${ON} BETWEEN ? AND ? AND split_of IS NOT NULL AND ${SPEND_SQL} GROUP BY 1`).all(from, to))
     spent[r.date] = (spent[r.date] ?? 0) + r.s;
   return spent;
 }

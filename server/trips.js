@@ -132,6 +132,10 @@ export function assignTrips() {
         .flatMap((x) => (x ?? '').split(/[ ,]+/)).filter((w) => w.length >= 4 && !/^trip$/i.test(w)).map((w) => w.replace(/[^\p{L}]/gu, '')))].filter(Boolean);
       for (const t of rows) if (!t.trip_override && onTrip(t, trip, bases, s, words)) set.run(trip.id, t.id);
     }
+    // A refund or a payback belongs to its charge's trip (it usually arrives after the trip ends).
+    db.prepare(`UPDATE transactions SET trip_id = (SELECT c.trip_id FROM transactions c WHERE c.id = COALESCE(transactions.refund_of, transactions.reimburses))
+      WHERE trip_override IS NULL AND COALESCE(refund_of, reimburses) IS NOT NULL
+        AND (SELECT c.trip_id FROM transactions c WHERE c.id = COALESCE(transactions.refund_of, transactions.reimburses)) IS NOT NULL`).run();
     for (const o of db.prepare("SELECT id, trip_override FROM transactions WHERE trip_override IS NOT NULL").all())
       set.run(o.trip_override === 'none' || !trips.some((x) => String(x.id) === o.trip_override) ? null : Number(o.trip_override), o.id);
   })();

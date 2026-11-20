@@ -84,6 +84,12 @@ All are gitignored. Bank access tokens in the DB are AES-GCM encrypted with `ENC
    - Not spending: Income, Transfer, Savings & investments, Debt repayment, Split (`NOT_SPENDING`, `SPEND_SQL`).
    - "Spent" totals (standing strip, month spread total, budget totals) all use `spendingBetween()`: a refund reduces
      only its own group, never below zero; what's left out is returned as `refunds` and named in the UI.
+   - **Refunds and paybacks count on the charge's date**: `matchRefunds()` links a merchant's refund to the charge it
+     reverses (`refund_of`: same account and merchant, within 180 days after, the whole amount or 2-3 pieces adding up to
+     it exactly); it takes the charge's category (`cat_source` 'refund'). It and a payback (`reimburses`, linkable from
+     a payment's details, `GET /transactions/:id/paidback`) get `counts_on` = the charge's date, so a booking cancelled
+     next month nets out in its own month. Spending by period (reports, budget, insights, watch, the month spread) uses
+     `ON` / `onOf(alias)` (`COALESCE(counts_on, date)`); cash and balances keep `date`. They follow the charge's trip.
    - **Splits**: each part is a transaction row (`split_of` = the original's id, your category); the original gets
      `is_split` and category/group "Split", so totals count the parts. Raw per-account sums (balance history, bill
      detection, transfer pairing) must skip `split_of IS NOT NULL` rows; the transactions list shows originals with

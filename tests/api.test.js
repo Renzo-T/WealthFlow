@@ -168,6 +168,27 @@ test('money a friend sent back counts against the charge it paid back; undo rest
   assert.equal((await post(`/transactions/${back}/paidback`, { charge: 'nope' })).status, 400);
 });
 
+test('a payback can be linked from its details to a charge months earlier; refunds show what they reverse', async () => {
+  const cabin = tx('card', '2026-06-20', 900, 'ACME CABINS', { primary: 'TRAVEL', merchant: 'Acme Cabins' });
+  const back = tx('ven', '2026-08-30', -150, 'Alex Rivera "Cabin"', { primary: 'OTHER' });
+  const booking = tx('card', '2026-08-01', 310, 'ACME TRAVEL', { primary: 'TRAVEL', merchant: 'Acme Travel' });
+  const refund = tx('card', '2026-09-02', -310, 'ACME TRAVEL', { primary: 'TRAVEL', merchant: 'Acme Travel' });
+  classify();
+  const picks = (await get(`/transactions/${back}/paidback`)).body;
+  assert.equal(picks.charge, null);
+  assert.equal(picks.candidates[0].id, cabin); // splits evenly (÷ 6), 71 days before
+  await post(`/transactions/${back}/paidback`, { charge: cabin });
+  const rows = (await get('/transactions?limit=50')).body;
+  const by = (id) => rows.find((r) => r.id === id);
+  assert.equal(by(back).peer, true);
+  assert.equal(by(back).counts_on, '2026-06-20');
+  assert.equal(by(cabin).repaid, 150);
+  assert.equal(by(refund).refund_name, 'Acme Travel');
+  assert.equal(by(booking).refunded, 310);
+  assert.equal((await get(`/transactions/${back}/paidback`)).body.charge, cabin);
+  assert.equal((await get(`/transactions/${booking}/paidback`)).status, 404); // a charge, not money in
+});
+
 test('review lists skip anything older than 3 months before the first connection', async () => {
   tx('ven', '2026-01-10', 25, 'Alex Rivera "?"', { primary: 'OTHER' });
   tx('ven', '2026-09-10', 25, 'Alex Rivera "!"', { primary: 'OTHER' });

@@ -1,6 +1,6 @@
 import db from './db.js';
 import { payContributions, activitySince } from './contributions.js';
-import { GROUPS, NOT_SPENDING, SPEND_SQL, historyStart, spendingBetween } from './categories.js';
+import { GROUPS, NOT_SPENDING, SPEND_SQL, ON, historyStart, spendingBetween } from './categories.js';
 import { bills } from './recurring.js';
 import { coverageStart } from './insights.js';
 import { daySpending, step } from './spread.js';
@@ -20,8 +20,9 @@ export function monthByMonth(n = 12, today = new Date().toLocaleDateString('en-C
   const start = historyStart()?.slice(0, 7);
   const months = monthsBack(n, today).filter((m, i, all) => !start || m >= start || i === all.length - 1);
 
-  const rows = db.prepare(`SELECT substr(date, 1, 7) m, grp, category, SUM(amount) v FROM transactions
-    WHERE date >= ? AND COALESCE(grp, 'Misc') NOT IN ('Transfer', 'Split') GROUP BY m, grp, category`).all(`${months[0]}-01`);
+  // A refund or a payback counts in the month of the charge it reverses (ON), not the month the money came back.
+  const rows = db.prepare(`SELECT substr(${ON}, 1, 7) m, grp, category, SUM(amount) v FROM transactions
+    WHERE ${ON} >= ? AND COALESCE(grp, 'Misc') NOT IN ('Transfer', 'Split') GROUP BY m, grp, category`).all(`${months[0]}-01`);
   const cell = {};
   for (const r of rows) {
     const sign = r.grp === 'Income' ? -1 : 1;
@@ -29,8 +30,8 @@ export function monthByMonth(n = 12, today = new Date().toLocaleDateString('en-C
   }
   // The largest transactions behind each cell (category and group), for the hover: [{date, name, amount}], plus counts.
   const top = {}, count = {};
-  for (const t of db.prepare(`SELECT substr(date, 1, 7) m, date, COALESCE(merchant, name) name, amount, grp, category FROM transactions
-    WHERE date >= ? AND COALESCE(grp, 'Misc') NOT IN ('Transfer', 'Split') ORDER BY ABS(amount) DESC`).all(`${months[0]}-01`)) {
+  for (const t of db.prepare(`SELECT substr(${ON}, 1, 7) m, date, COALESCE(merchant, name) name, amount, grp, category FROM transactions
+    WHERE ${ON} >= ? AND COALESCE(grp, 'Misc') NOT IN ('Transfer', 'Split') ORDER BY ABS(amount) DESC`).all(`${months[0]}-01`)) {
     for (const k of [`${t.grp}|${t.category}|${t.m}`, `${t.grp}||${t.m}`]) {
       count[k] = (count[k] ?? 0) + 1;
       if ((top[k] ??= []).length < 5) top[k].push({ date: t.date, name: t.name, amount: t.grp === 'Income' ? -t.amount : t.amount });
@@ -88,12 +89,12 @@ export function yearInReview(year = new Date().getFullYear(), today = new Date()
   const income = -q(`SELECT COALESCE(SUM(amount), 0) v FROM transactions WHERE grp = 'Income' AND date BETWEEN ? AND ?`, from, to).v;
   // A refund lowers its own group's spending, never below zero (spendingBetween, the same rule as the dashboard).
   const spending = spendingBetween(from, to).spent;
-  const groups = db.prepare(`SELECT grp name, SUM(amount) v FROM transactions WHERE ${SPEND_SQL} AND date BETWEEN ? AND ? GROUP BY grp HAVING v > 0.5 ORDER BY v DESC`).all(from, to);
+  const groups = db.prepare(`SELECT grp name, SUM(amount) v FROM transactions WHERE ${SPEND_SQL} AND ${ON} BETWEEN ? AND ? GROUP BY grp HAVING v > 0.5 ORDER BY v DESC`).all(from, to);
   // Each month's spending by the same rule (per group, never below zero), biggest first.
-  const months = db.prepare(`SELECT m, SUM(MAX(v, 0)) v FROM (SELECT substr(date, 1, 7) m, COALESCE(grp, 'Misc') g, SUM(amount) v FROM transactions
-    WHERE ${SPEND_SQL} AND date BETWEEN ? AND ? GROUP BY m, g) GROUP BY m HAVING v > 0 ORDER BY v DESC`).all(from, to);
+  const months = db.prepare(`SELECT m, SUM(MAX(v, 0)) v FROM (SELECT substr(${ON}, 1, 7) m, COALESCE(grp, 'Misc') g, SUM(amount) v FROM transactions
+    WHERE ${SPEND_SQL} AND ${ON} BETWEEN ? AND ? GROUP BY m, g) GROUP BY m HAVING v > 0 ORDER BY v DESC`).all(from, to);
   const cats = {};
-  for (const r of db.prepare(`SELECT grp, category, SUM(amount) v FROM transactions WHERE ${SPEND_SQL} AND date BETWEEN ? AND ? GROUP BY grp, category HAVING v > 0.5 ORDER BY v DESC`).all(from, to))
+  for (const r of db.prepare(`SELECT grp, category, SUM(amount) v FROM transactions WHERE ${SPEND_SQL} AND ${ON} BETWEEN ? AND ? GROUP BY grp, category HAVING v > 0.5 ORDER BY v DESC`).all(from, to))
     (cats[r.grp] ??= []).push({ name: r.category, v: r.v });
   // Biggest purchase: not rent, utilities or insurance (bills, not purchases).
   const biggest = q(`SELECT date, COALESCE(merchant, name) name, amount, category FROM transactions WHERE ${SPEND_SQL}

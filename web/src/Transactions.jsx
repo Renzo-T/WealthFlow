@@ -223,11 +223,29 @@ function TripPick({ t, trips, reload }) {
   );
 }
 
+// Money from a friend: which of your charges it paid back. It then counts in that charge's category and month.
+function PaybackPick({ t, reload }) {
+  const [list, setList] = useState(null);
+  useEffect(() => { api(`/transactions/${t.id}/paidback`).then((r) => setList(r.candidates ?? [])); }, [t.id, t.reimburses]);
+  const set = async (charge) => { await api(`/transactions/${t.id}/paidback`, { method: 'POST', body: JSON.stringify({ charge: charge || null }) }); reload(); };
+  if (!list) return <span className="muted">…</span>;
+  if (!list.length && !t.reimburses) return <span className="muted">No charge of yours it could have paid back</span>;
+  return (
+    <select className="catsel" value={t.reimburses ?? ''} onChange={(e) => set(e.target.value)} aria-label="Paid back which charge">
+      <option value="">Not paying back a charge</option>
+      {list.map((c) => <option key={c.id} value={c.id}>{c.name} · {shortDate(c.date)} · {usd2(c.amount)}{c.split ? ` (÷ ${c.split})` : ''}</option>)}
+    </select>
+  );
+}
+// "October 2026": the month a refund or payback counts in, when it isn't the month it arrived.
+const monthName = (d) => new Date(d + 'T00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
 // Why a transaction has its category (classify's cat_source), for the details row.
 const WHY = {
   you: 'You chose it', rule: 'One of your rules', transfer: 'Matched to one of your other accounts', 'cash back': 'Card cash back',
   'fund payout': 'A fund paying a dividend', sweep: 'Cash sweep inside the account', 'known description': 'A description Plaid is known to misread',
   note: 'Read from the note', person: 'A payment with a person (not sorted yet)', 'paid back': 'Pays back one of your charges',
+  refund: 'Refunds one of your charges',
 };
 const CONF = { VERY_HIGH: 'very sure', HIGH: 'sure', MEDIUM: 'fairly sure', LOW: 'unsure' };
 const why = (t) => (t.cat_source === 'plaid' ? `Plaid's category${CONF[t.pfc_confidence] ? ` (${CONF[t.pfc_confidence]})` : ''}` : WHY[t.cat_source] ?? '—');
@@ -509,7 +527,12 @@ export default function Transactions() {
                           {t.pair_name && <div><span className="muted">Other side</span> {t.pair_name}</div>}
                           <div><span className="muted">Why this category</span> {why(t)}</div>
                           <div><span className="muted">Trip</span> <TripPick t={t} trips={trips} reload={load} /></div>
-                          {t.paidback_name && <div><span className="muted">Paid back</span> {t.paidback_name}, {shortDate(t.paidback_date)} ({usd2(t.paidback_amount)})</div>}
+                          {t.peer ? <div><span className="muted">Paid back</span> <PaybackPick t={t} reload={load} /></div>
+                            : t.paidback_name && <div><span className="muted">Paid back</span> {t.paidback_name}, {shortDate(t.paidback_date)} ({usd2(t.paidback_amount)})</div>}
+                          {t.refund_name && <div><span className="muted">Refund of</span> {t.refund_name}, {shortDate(t.refund_date)} ({usd2(t.refund_amount)})</div>}
+                          {t.counts_on && t.counts_on.slice(0, 7) !== t.date.slice(0, 7) && <div><span className="muted">Counts in</span> {monthName(t.counts_on)}, with the charge it {t.refund_name ? 'refunds' : 'paid back'}</div>}
+                          {t.refunded > 0 && <div><span className="muted">Refunded</span> {usd2(t.refunded)}{t.refunded_on ? `, ${shortDate(t.refunded_on)}` : ''}{t.refunded < t.amount - 0.005 ? ` of ${usd2(t.amount)}` : ''}</div>}
+                          {t.repaid > 0 && <div><span className="muted">Paid back to you</span> {usd2(t.repaid)} by friends</div>}
                           <div><span className="muted">Plaid category</span> {label(t.pfc_detailed || t.pfc_primary)}</div>
                           <div><span className="muted">Same description</span> {t.same_name} transaction{t.same_name === 1 ? '' : 's'}</div>
                           <div><span className="muted">Repeats</span> {t.recurring ? <>{t.bill?.name}, {t.bill?.schedule} · <a href="#/bills">Bills</a></> : <RepeatPick t={t} onDone={load} />}</div>

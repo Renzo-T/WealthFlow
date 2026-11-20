@@ -156,6 +156,10 @@ if (!db.prepare('PRAGMA table_info(transactions)').all().some((c) => c.name === 
 // charge's category. cat_source: why classify() chose the category (shown in the transaction details).
 if (!db.prepare('PRAGMA table_info(transactions)').all().some((c) => c.name === 'reimburses'))
   db.exec('ALTER TABLE transactions ADD COLUMN reimburses TEXT; ALTER TABLE transactions ADD COLUMN cat_source TEXT;');
+// refund_of: the charge a merchant's refund reverses (classify() matches them). counts_on: the date a refund or a
+// payback counts on for spending, its charge's date (NULL = its own date; read it as COALESCE(counts_on, date)).
+if (!db.prepare('PRAGMA table_info(transactions)').all().some((c) => c.name === 'counts_on'))
+  db.exec('ALTER TABLE transactions ADD COLUMN refund_of TEXT; ALTER TABLE transactions ADD COLUMN counts_on TEXT;');
 // Trips (trips.js): named date ranges, suggested from purchases away from home or added by you. trip_id is the
 // trip a transaction counts toward (recomputed); trip_override is your choice for one transaction (a trip id or 'none').
 // home_bases: where home was from a date on, when you set it (otherwise inferred).

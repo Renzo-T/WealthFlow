@@ -1,5 +1,5 @@
 import db from './db.js';
-import { SPEND_SQL, CATEGORIES, NOT_SPENDING } from './categories.js';
+import { SPEND_SQL, CATEGORIES, NOT_SPENDING, ON, onOf } from './categories.js';
 import { bills, seriesKey } from './recurring.js';
 
 // Insights that compare this month with last month, and the spending watchlist.
@@ -35,7 +35,7 @@ const inList = (ids) => (ids.length ? `account_id IN (${ids.map(() => '?').join(
 // month, so in a same-days comparison they'd show up as sudden "new" spending (rent paid on the 31st last month).
 function spendRows(range, ids, { noBills = false, today } = {}) {
   const rows = db.prepare(`SELECT t.*, p.account_id pair_account FROM transactions t LEFT JOIN transactions p ON p.id = t.transfer_pair
-    WHERE t.date >= ? AND t.date <= ? AND COALESCE(t.grp, 'Misc') NOT IN (${NOT_SPENDING.map((g) => `'${g}'`).join(',')})
+    WHERE ${onOf('t')} >= ? AND ${onOf('t')} <= ? AND COALESCE(t.grp, 'Misc') NOT IN (${NOT_SPENDING.map((g) => `'${g}'`).join(',')})
       AND ${ids.length ? `t.account_id IN (${ids.map(() => '?').join(',')})` : '0'}
       AND (t.trip_id IS NULL OR t.trip_id NOT IN (SELECT id FROM trips WHERE status = 'confirmed'))`).all(range.from, range.to, ...ids); // trips aren't everyday spending
   if (!noBills) return rows;
@@ -123,7 +123,7 @@ export function watchStats(w, today = new Date().toLocaleDateString('en-CA')) {
   const p = periods(today);
   const [where, args] = match(w);
   const spent = (from, to) => db.prepare(`SELECT COALESCE(SUM(amount), 0) v FROM transactions
-    WHERE date >= ? AND date <= ? AND ${SPEND_SQL} AND ${where}`).get(from, to, ...args).v;
+    WHERE ${ON} >= ? AND ${ON} <= ? AND ${SPEND_SQL} AND ${where}`).get(from, to, ...args).v;
   // Monthly average over up to 6 finished months, counting from the month this item first appears.
   const first = db.prepare(`SELECT MIN(date) d FROM transactions WHERE ${SPEND_SQL} AND ${where}`).get(...args).d;
   const months = [], history = [];

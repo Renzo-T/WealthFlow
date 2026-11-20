@@ -40,12 +40,17 @@ export const CATEGORIES = Object.values(GROUPS).flat();
 // Split: an original transaction whose parts carry the categories (so it isn't counted itself).
 export const NOT_SPENDING = ['Income', 'Transfer', 'Savings & investments', 'Debt repayment', 'Split'];
 export const SPEND_SQL = `COALESCE(grp,'Misc') NOT IN (${NOT_SPENDING.map((g) => `'${g}'`).join(',')})`;
+// The date a transaction counts on for spending: its own, except a refund or a payback from a friend, which counts on
+// the date of the charge it reverses (counts_on, set by classify()), so a booking cancelled next month nets out in the
+// month it was made. Money moving (balances, cash day by day, the transactions list) always uses the real date.
+export const ON = 'COALESCE(counts_on, date)';
+export const onOf = (alias) => `COALESCE(${alias}.counts_on, ${alias}.date)`;
 // Spending between two dates (inclusive), group by group: a refund reduces its own group's spending but never below
 // zero, so a big refund (a cancelled trip) doesn't make the rest of the month look free. refunds: what was left out.
 // The one definition of "spent" for the dashboard, the month spread and the budget's totals.
 export function spendingBetween(from, to) {
   let spent = 0, refunds = 0;
-  for (const g of db.prepare(`SELECT COALESCE(grp, 'Misc') g, SUM(amount) s FROM transactions WHERE date >= ? AND date <= ? AND ${SPEND_SQL} GROUP BY 1`).all(from, to))
+  for (const g of db.prepare(`SELECT COALESCE(grp, 'Misc') g, SUM(amount) s FROM transactions WHERE ${ON} >= ? AND ${ON} <= ? AND ${SPEND_SQL} GROUP BY 1`).all(from, to))
     if (g.s > 0) spent += g.s; else refunds -= g.s;
   return { spent, refunds };
 }
@@ -197,6 +202,48 @@ const day = (d) => Date.parse(d + 'T00:00Z') / 864e5;
 const SAVINGS_SUBTYPES = new Set(['savings', 'money market', 'cd', 'hsa']);
 const savingsKind = (a) => (!a ? null : a.type === 'investment' ? 'Investments' : SAVINGS_SUBTYPES.has(a.subtype) ? 'Savings' : null);
 
+// Refunds: money back from a merchant that reverses one of your charges on the same account, within REFUND_DAYS
+// after it: the whole amount at once, or 2-3 pieces within PIECE_DAYS of each other that add up to it exactly (booking
+// sites refund per traveller or per night). An exact refund reverses the latest charge of that amount before it.
+// `list`: spending transactions (both signs), date order. Returns Map(refund id -> charge id).
+const REFUND_DAYS = 180, PIECE_DAYS = 30, MAX_PIECES = 40;
+const merchantKey = (t) => (t.merchant || t.name || '').toLowerCase().replace(/^(sq|tst|sp|pp|dd|py)\s*\*\s*/, '')
+  .replace(/[^a-z]+/g, ' ').trim().split(' ')[0] ?? '';
+export function matchRefunds(list) {
+  const out = new Map(), cents = (t) => Math.round(Math.abs(t.amount) * 100);
+  const sets = new Map();
+  for (const t of list) {
+    const key = merchantKey(t);
+    if (key.length < 3 || !t.amount) continue;
+    const k = `${t.account_id}|${key}`;
+    if (!sets.has(k)) sets.set(k, { charges: [], refunds: [] });
+    sets.get(k)[t.amount > 0 ? 'charges' : 'refunds'].push(t);
+  }
+  for (const { charges, refunds } of sets.values()) {
+    if (!refunds.length || !charges.length) continue;
+    const done = new Set();
+    const within = (c, r) => day(r.date) >= day(c.date) && day(r.date) - day(c.date) <= REFUND_DAYS;
+    for (const r of refunds) {
+      const c = charges.filter((x) => !done.has(x.id) && cents(x) === cents(r) && within(x, r)).at(-1);
+      if (c) { done.add(c.id); out.set(r.id, c.id); }
+    }
+    for (const c of charges) {
+      if (done.has(c.id)) continue;
+      const open = refunds.filter((r) => !out.has(r.id) && within(c, r) && cents(r) < cents(c)).slice(0, MAX_PIECES);
+      const fits = (ps) => ps.reduce((s, r) => s + cents(r), 0) === cents(c)
+        && day(ps.at(-1).date) - day(ps[0].date) <= PIECE_DAYS;
+      let found = null;
+      for (let i = 0; i < open.length && !found; i++)
+        for (let j = i + 1; j < open.length && !found; j++) {
+          if (fits([open[i], open[j]])) found = [open[i], open[j]];
+          for (let k = j + 1; k < open.length && !found; k++) if (fits([open[i], open[j], open[k]])) found = [open[i], open[j], open[k]];
+        }
+      if (found) { done.add(c.id); for (const r of found) out.set(r.id, c.id); }
+    }
+  }
+  return out;
+}
+
 // Recomputes category, grp and transfer_pair for every transaction. Order of precedence:
 // a one-off manual choice, then your rules (newest first), then a matched transfer, then card cash back,
 // then fund dividends, then sweeps, then Plaid's category.
@@ -207,7 +254,7 @@ export function classify() {
     LEFT JOIN items i ON i.id = a.item_id`).all().map((a) => [a.id, a]));
   // Accounts identifiable by their number ending (Plaid's mask), for transfers whose other side is missing.
   const byMask = Object.values(accounts).filter((a) => a.mask && a.mask.length >= 4);
-  const txns = db.prepare(`SELECT id, account_id, date, name, amount, pending, pfc_primary, pfc_detailed, user_category, counterparty,
+  const txns = db.prepare(`SELECT id, account_id, date, name, merchant, amount, pending, pfc_primary, pfc_detailed, user_category, counterparty,
     reimburses, split_of, is_split FROM transactions ORDER BY date`).all();
   const ruled = new Map();
   for (const t of txns) { const r = rules.find((x) => t.name?.toLowerCase().includes(x.p)); if (r) ruled.set(t.id, r.category); }
@@ -302,15 +349,29 @@ export function classify() {
     const c = chosen.get(t.id);
     if (c[1] === 'paid back') c[0] = chosen.get(t.reimburses)?.[0] ?? 'Payment apps';
   }
+  // A merchant's refund takes the category of the charge it reverses (unless you or a rule chose one), and both a
+  // refund and a payback count on that charge's date.
+  const byId = new Map(txns.map((t) => [t.id, t]));
+  const refundOf = matchRefunds(txns.filter((t) => !t.split_of && !t.is_split && !pair.has(t.id) && !named.has(t.id)
+    && !peerOf(t, accounts[t.account_id]?.institution) && ['plaid', 'known description', 'you', 'rule'].includes(chosen.get(t.id)[1])
+    && chosen.get(t.id)[0] !== 'Split' && !NOT_SPENDING.includes(groupOf(chosen.get(t.id)[0]))));
+  const countsOn = new Map();
+  for (const [id, charge] of refundOf) {
+    const c = chosen.get(id);
+    if (c[1] === 'plaid' || c[1] === 'known description') chosen.set(id, [chosen.get(charge)[0], 'refund']);
+    countsOn.set(id, byId.get(charge).date);
+  }
+  for (const t of txns) if (t.reimburses && byId.has(t.reimburses)) countsOn.set(t.id, byId.get(t.reimburses).date);
   // For a description Plaid misreads, its merchant guess is wrong too ("BPS*BILT RENT" → "BP"), so it's cleared and the
   // bank's description shows instead (syncs restore it; this runs after every sync).
   const upd = db.prepare(`UPDATE transactions SET category = ?, grp = ?, transfer_pair = ?, transfer_account = ?, cat_source = ?,
-    merchant = CASE WHEN ? THEN NULL ELSE merchant END WHERE id = ?`);
+    refund_of = ?, counts_on = ?, merchant = CASE WHEN ? THEN NULL ELSE merchant END WHERE id = ?`);
   db.transaction(() => {
     for (const t of txns) {
       const [category, source] = chosen.get(t.id);
+      const on = countsOn.get(t.id);
       upd.run(category, category === 'Split' ? 'Split' : groupOf(category), pair.get(t.id) ?? null, named.get(t.id) ?? null, source,
-        source === 'known description' ? 1 : 0, t.id);
+        refundOf.get(t.id) ?? null, on && on !== t.date ? on : null, source === 'known description' ? 1 : 0, t.id);
     }
   })();
 }

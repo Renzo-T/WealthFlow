@@ -1,5 +1,5 @@
 import db from './db.js';
-import { GROUPS, NOT_SPENDING, SPEND_SQL } from './categories.js';
+import { GROUPS, NOT_SPENDING, SPEND_SQL, ON, onOf } from './categories.js';
 import { bills } from './recurring.js';
 
 // Monthly budgets, set per subcategory (Groceries, Rent…) and rolled up into budget groups (Food, Housing…), or set
@@ -35,7 +35,7 @@ function averages(month, n = 3) {
   }
   if (!months.length) return { months, avg: {} };
   const rows = db.prepare(`SELECT category, grp, SUM(amount) s FROM transactions
-    WHERE substr(date, 1, 7) IN (${months.map(() => '?').join(',')}) AND grp != 'Transfer' ${NO_TRIPS()} GROUP BY category`).all(...months);
+    WHERE substr(${ON}, 1, 7) IN (${months.map(() => '?').join(',')}) AND grp != 'Transfer' ${NO_TRIPS()} GROUP BY category`).all(...months);
   const avg = Object.fromEntries(rows.map((r) => [r.category, (r.grp === 'Income' ? -r.s : r.s) / months.length]));
   return { months, avg };
 }
@@ -59,7 +59,7 @@ function carries(month, budgets) {
   const first = rolls.reduce((m, r) => (r.since < m ? r.since : m), month);
   const prevEnd = monthEnd(shiftMonth(month, -1));
   const actual = {};
-  for (const r of db.prepare(`SELECT substr(date, 1, 7) m, category, SUM(amount) s FROM transactions WHERE date >= ? AND date <= ? AND grp != 'Transfer'
+  for (const r of db.prepare(`SELECT substr(${ON}, 1, 7) m, category, SUM(amount) s FROM transactions WHERE ${ON} >= ? AND ${ON} <= ? AND grp != 'Transfer'
     AND category IN (${rolls.map(() => '?').join(',')}) ${NO_TRIPS()} GROUP BY m, category`).all(`${first}-01`, prevEnd, ...rolls.map((r) => r.category))) (actual[r.m] ??= {})[r.category] = r.s;
   const over = overridesFor(first, shiftMonth(month, -1));
   const out = {};
@@ -81,14 +81,14 @@ export function budgetMonth(month, today = new Date().toLocaleDateString('en-CA'
   const rolling = new Set(db.prepare('SELECT category FROM budget_rollover').all().map((r) => r.category));
   const carried = carries(month, budgets);
   const actual = Object.fromEntries(db.prepare(`SELECT category, grp, SUM(amount) s FROM transactions
-    WHERE date >= ? AND date <= ? AND grp != 'Transfer' ${NO_TRIPS()} GROUP BY category`).all(`${month}-01`, monthEnd(month))
+    WHERE ${ON} >= ? AND ${ON} <= ? AND grp != 'Transfer' ${NO_TRIPS()} GROUP BY category`).all(`${month}-01`, monthEnd(month))
     .map((r) => [r.category, r.grp === 'Income' ? -r.s : r.s]));
   const fixed = fixedBills(today);
   const { months, avg } = averages(month);
   // The transactions behind each actual (largest first), for the hover on the Actual column.
   const txns = {};
   for (const t of db.prepare(`SELECT date, COALESCE(merchant, name) name, amount, category FROM transactions
-    WHERE date >= ? AND date <= ? AND grp != 'Transfer' ${NO_TRIPS()} ORDER BY ABS(amount) DESC`).all(`${month}-01`, monthEnd(month))) (txns[t.category] ??= []).push(t);
+    WHERE ${ON} >= ? AND ${ON} <= ? AND grp != 'Transfer' ${NO_TRIPS()} ORDER BY ABS(amount) DESC`).all(`${month}-01`, monthEnd(month))) (txns[t.category] ??= []).push(t);
   const round = (v) => Math.max(0, Math.round(v / 5) * 5); // suggestions in $5 steps
 
   const groups = BUDGET_GROUPS.map((group) => {
@@ -150,7 +150,7 @@ export function budgetMonth(month, today = new Date().toLocaleDateString('en-CA'
       nonmonthly: kindTotals('nonmonthly') },
     leftToBudget: income.budget - expenses.reduce((s, g) => s + g.budget, 0),
     trips: { counted: tripsInBudget(), left_out: tripsInBudget() ? 0 : db.prepare(`SELECT COALESCE(SUM(t.amount), 0) v FROM transactions t
-      JOIN trips tr ON tr.id = t.trip_id AND tr.status = 'confirmed' WHERE t.date >= ? AND t.date <= ? AND ${SPEND_SQL.replace('grp', 't.grp')}`).get(`${month}-01`, monthEnd(month)).v },
+      JOIN trips tr ON tr.id = t.trip_id AND tr.status = 'confirmed' WHERE ${onOf('t')} >= ? AND ${onOf('t')} <= ? AND ${SPEND_SQL.replace('grp', 't.grp')}`).get(`${month}-01`, monthEnd(month)).v },
     suggestedFrom: months,
   };
 }
