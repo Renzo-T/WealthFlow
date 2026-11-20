@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState, useCallback } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import Dashboard, { SetupChecklist } from './Dashboard.jsx';
 import { Digest } from './Cards.jsx';
 import { InkDefs } from './Stamp.jsx';
@@ -115,6 +115,20 @@ export default function App() {
   // reflows. A short delay on the way in keeps a pointer passing over it from flashing it open.
   const [railOpen, setRailOpen] = useState(false);
   const railTimer = useRef(0);
+  // The active page's fold: one piece of cloth under the rail's items that slides to the page you pick, instead of each
+  // item drawing its own and the highlight jumping. Placed without sliding the first time (and when the layout changes).
+  const railRef = useRef(null);
+  const [fold, setFold] = useState(null);
+  const placeFold = useCallback((slide) => {
+    const on = railRef.current?.querySelector('.nav.on');
+    setFold(on ? { top: on.offsetTop, height: on.offsetHeight, slide } : null);
+  }, []);
+  useLayoutEffect(() => placeFold(true), [page, update?.available, placeFold]);
+  useEffect(() => { // the window or the type size changed: put it back in place without sliding
+    const again = () => placeFold(false);
+    window.addEventListener('resize', again); document.fonts?.ready.then(again);
+    return () => window.removeEventListener('resize', again);
+  }, [placeFold]);
   const railTo = (open, ms) => { clearTimeout(railTimer.current); railTimer.current = setTimeout(() => setRailOpen(open), ms); };
   // The page snaps its boxes to the dot grid (grid.js), whatever page is showing.
   const mainRef = useRef(null), shown = !resume && !(setup && !setup.configured);
@@ -186,8 +200,9 @@ export default function App() {
       <InkDefs />
       <DialogHost />
       <Jump pages={NAV} commands={[{ label: dark ? 'Switch to light mode' : 'Switch to dark mode', run: toggleTheme }, { label: hide ? 'Show amounts' : 'Hide amounts', run: () => setHide(!hide) }]} />
-      <aside className="side" onMouseEnter={() => railTo(true, 120)} onMouseLeave={() => railTo(false, 200)}
+      <aside className="side" ref={railRef} onMouseEnter={() => railTo(true, 120)} onMouseLeave={() => railTo(false, 200)}
         onFocus={() => railTo(true, 0)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) railTo(false, 0); }}>
+        {fold && <span className={`navfold${fold.slide ? "" : " still"}`} aria-hidden="true" style={{ translate: `0 ${fold.top}px`, height: fold.height }} />}
         <div className="logo"><Seal size={30} /><span className="wordmark">Mizo Money</span></div>
         <button className="nav findnav" title="Find a page, transaction, bill or account (Ctrl+K)" onClick={() => window.dispatchEvent(new Event('mizo:jump'))}>
           <svg className="navicon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5L21 21" /></svg>
@@ -226,7 +241,7 @@ export default function App() {
       </aside>
       {/* Says it out loud when Hide amounts changes, however it was changed (the rail, the chip or Ctrl+K). */}
       <span className="sr-only" role="status">{hide ? 'Amounts hidden' : ''}</span>
-      <main className="main" ref={mainRef} data-quiet={visit.quiet ? '' : undefined} data-settling={settling ? '' : undefined} aria-busy={settling || undefined}>
+      <main className="main" ref={mainRef} data-page={page} data-quiet={visit.quiet ? '' : undefined} data-settling={settling ? '' : undefined} aria-busy={settling || undefined}>
         {/* Signing in again is urgent (that bank's data has stopped), so it stays a banner on every page. Other failures
             aren't yours to fix: say why, and that it's tried again (at the next sync, or now with Try again). */}
         {broken.map((i) => (

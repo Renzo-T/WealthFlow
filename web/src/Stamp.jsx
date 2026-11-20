@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { I, iconKey } from './CategoryIcon.jsx';
 import { exitList, nextGhosts } from './exitList.js';
 import { handRect, handCircle } from './hand.js';
+import { reducedMotion } from './motion.js';
 
 // Money going down into a tray: a big move to savings or investments (the replay).
 const TRAY = <><path d="M12 3.5v10M7.5 9.5l4.5 4.5 4.5-4.5" /><path d="M4.5 15.5v4h15v-4" /></>;
@@ -79,7 +80,6 @@ export function TextStamp({ kind = 'out', ink = 0, tilt = false, children, class
 // back in its old place for STAMP_HOLD ms, marked `leaving`, so the stamp can land before the row goes; nothing around
 // it moves until then. With reduced motion it returns the items as they are (no stamp, the row leaves at once).
 export const STAMP_HOLD = 700;
-const reducedMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 // Rows are { item, key, leaving }. `keyOf` gives an item's stable key.
 export function useStampedExit(items, keyOf) {
   const [st, setSt] = useState({ src: items, ghosts: [] });

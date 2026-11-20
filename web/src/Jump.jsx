@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from './api.js';
 import { Amt } from './ui.jsx';
 import { signed } from './format.js';
+import { duration } from './motion.js';
 
 // Ctrl+K, or / when focus isn't in a field: one small dialog to go to a page or find a transaction.
 const typing = (el) => !!el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
@@ -83,7 +84,7 @@ export default function Jump({ pages, commands = [] }) {
 
   return (
     <dialog ref={dlg} className="jump" aria-label="Go to a page or find a transaction"
-      onClose={() => { setOpen(false); const el = from.current; from.current = null; if (el?.isConnected) el.focus(); }}
+      onClose={() => { /* the list stays while it fades out (styles.css), unless it was opened again */ setTimeout(() => { if (!dlg.current?.open) setOpen(false); }, duration('--t-quick')); const el = from.current; from.current = null; if (el?.isConnected) el.focus(); }}
       onClick={(e) => { if (e.target === dlg.current) close(); }}>
       {open && <>
         <input ref={input} autoFocus type="text" role="combobox" aria-expanded="true" aria-controls="jump-list" aria-autocomplete="list"

@@ -258,7 +258,7 @@ tr.dim td { opacity: .6; }
 .tip ul { list-style: none; margin: .3rem 0; padding: 0; }
 .tip li { display: flex; justify-content: space-between; gap: 1rem; padding: .1rem 0; }
 .tip .muted { font-size: .75rem; }
-.flink { transition: stroke-opacity var(--t-quick); }
+.flink { transition: stroke-opacity var(--t-quick) var(--ease); }
 .btnrow { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: flex-end; }
 .hint { color: var(--note-ink); margin-top: .15rem; }
 
@@ -302,11 +302,9 @@ img, svg { color-scheme: inherit; }
 
 /* ---------- Polish pass ---------- */
 /* Loading placeholders */
-/* Pencil blocks, still: nothing loops. They fade in only after .3s, so a quick load never flashes them. */
-.skel { display: block; background: color-mix(in srgb, var(--line-strong) 40%, transparent); border-radius: 2px;
-  animation: skelin var(--t-base) var(--ease) .3s both; }
+/* Pencil blocks, still: nothing loops. A page only shows them if its data takes longer than 0.7s (App.jsx, whenSettled). */
+.skel { display: block; background: color-mix(in srgb, var(--line-strong) 40%, transparent); border-radius: 2px; }
 .skel-line { margin-top: .6rem; }
-@keyframes skelin { from { opacity: 0; } }
 
 /* Sticky table headers (Transactions, Bills). Sideways scrolling would break sticky, so on normal-width windows the
    container clips instead; narrow windows keep sideways scrolling. */
@@ -320,7 +318,7 @@ img, svg { color-scheme: inherit; }
 .txrow:focus-visible td { background: var(--surface-2); }
 
 /* Small, quiet motion */
-.btn, .iconbtn, .nav, .ranges button, .calday, .catsel, .card { transition: background-color var(--t-quick), border-color var(--t-quick), color var(--t-quick), box-shadow var(--t-quick); }
+.btn, .iconbtn, .nav, .ranges button, .calday, .catsel, .card { transition: background-color var(--t-quick) var(--ease), border-color var(--t-quick) var(--ease), color var(--t-quick) var(--ease), box-shadow var(--t-quick) var(--ease); }
 .btn:active, .iconbtn:active { transform: translateY(1px); }
 
 /* Theme, journal and Hide amounts cross-fade (motion.js): the browser fades the old window into the new one. */
@@ -423,7 +421,6 @@ button.insight-line:hover .insight-ic.chev { color: var(--blue); }
 .imhead { font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .imtotal { font-weight: 700; }
 .imnote { margin: 0; }
-@media (prefers-reduced-motion: reduce) { .insight-ic.chev svg { transition: none; } }
 .watchgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .75rem; }
 .watch { padding: .75rem .85rem; }
 .watchstats, .watchnow { display: grid; grid-template-columns: repeat(2, 1fr); gap: .25rem .75rem; margin-top: .6rem; }
@@ -569,8 +566,7 @@ button.insight-line:hover .insight-ic.chev { color: var(--blue); }
 .hov:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 3px; }
 .hovtip { position: fixed; z-index: 50; pointer-events: none; background: var(--card); color: var(--ink); border: 1px solid var(--line);
   border-radius: 8px; box-shadow: var(--shadow); padding: .6rem .75rem; font-size: .8rem; font-weight: 400; min-width: 13rem; max-width: 22rem;
-  text-align: left; white-space: normal; line-height: 1.35; animation: hovin var(--t-quick) var(--ease); }
-@keyframes hovin { from { opacity: 0; transform: translateY(2px); } }
+  text-align: left; white-space: normal; line-height: 1.35; }
 .hovtip ul { list-style: none; margin: .25rem 0 0; padding: 0; }
 .hovtip li { display: flex; justify-content: space-between; gap: 1.25rem; padding: .12rem 0; }
 .hovtip li b { font-weight: 600; white-space: nowrap; }
@@ -601,7 +597,7 @@ button.insight-line:hover .insight-ic.chev { color: var(--blue); }
   padding-block: .7rem .45rem; font-size: 1rem; font-weight: 600; border-bottom: 1px solid var(--ink); }
 .bhead:hover { background: var(--surface-2); }
 .btitle { display: flex; align-items: center; gap: .45rem; }
-.bhead .chev { width: 16px; height: 16px; fill: none; stroke: var(--muted); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--t-quick); }
+.bhead .chev { width: 16px; height: 16px; fill: none; stroke: var(--muted); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--t-quick) var(--ease); }
 .bhead .chev.open { transform: rotate(90deg); }
 .bhead .good { color: var(--green); } .bhead .bad { color: var(--red); }
 .brow { padding-block: .55rem 0; row-gap: .45rem; border-bottom: 1px solid var(--line); }
@@ -780,7 +776,7 @@ p.btrips { display: block; text-align: center; margin-top: .25rem; }
 .rtable tr.rsep td { font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--ink); }
 .rtable tr.rincome td:first-child, .rtoggle { display: flex; align-items: center; gap: .45rem; }
 .rtoggle { border: 0; background: none; font: inherit; color: inherit; cursor: pointer; padding: 0; }
-.rtoggle .chev { width: 14px; height: 14px; fill: none; stroke: var(--muted); stroke-width: 2.2; transition: transform var(--t-quick); }
+.rtoggle .chev { width: 14px; height: 14px; fill: none; stroke: var(--muted); stroke-width: 2.2; transition: transform var(--t-quick) var(--ease); }
 .rtoggle .chev.open { transform: rotate(90deg); }
 .subcards, .yearcards { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 .trow.sub { display: grid; grid-template-columns: minmax(0, 1fr) auto 9rem; gap: 1rem; align-items: center; }
@@ -856,7 +852,14 @@ a { color: var(--blue); text-underline-offset: 3px; }
 .wordmark { color: var(--paper-white); font-weight: 800; font-size: 1.15rem; letter-spacing: .01em; display: inline-flex; align-items: baseline; }
 .side .nav { color: var(--rail-ink); border-radius: 6px; padding: .5rem .65rem; font-size: .9rem; margin-bottom: 1px; }
 .side .nav:hover { background: rgba(255, 255, 255, .06); color: var(--paper-white); }
-.side .nav.on { background: var(--rail-2); color: var(--paper-white); font-weight: 700; }
+.side .nav { position: relative; z-index: 1; } /* above the fold */
+.side .nav.on { color: var(--paper-white); font-weight: 700; }
+/* The active page's fold: one piece of cloth that slides to the page you pick (App.jsx sets its place). */
+.side .navfold { position: absolute; z-index: 0; top: 0; left: .5rem; right: .5rem; border-radius: 6px; pointer-events: none;
+  background: var(--cloth), linear-gradient(90deg, color-mix(in srgb, var(--rail-2) 86%, white), var(--rail-2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 1px 3px var(--shade-3);
+  transition: translate var(--t-base) var(--ease), height var(--t-base) var(--ease); }
+.side .navfold.still { transition: none; }
 .side .navicon, .side .nav.on .navicon { color: currentColor; opacity: .85; }
 .side .nav:focus-visible { outline-color: var(--paper-white); }
 
@@ -1013,9 +1016,10 @@ input:hover, select:hover { border-color: var(--hub); }
 .slabel, .panel h2, .card h3, .t th { letter-spacing: .08em; }
 
 /* Money flow: hairline gaps between streams, smooth focus on hover, and the streams drawing in once, left to right. */
-.sankey .ribbon { stroke: var(--card); stroke-width: 1.25; transition: opacity var(--t-base) cubic-bezier(.16, 1, .3, 1); }
+.sankey .ribbon { stroke: var(--card); stroke-width: 1.25; transition: opacity var(--t-base) var(--ease); }
 .sankey.moving .ribbon { transition: none; } /* the period morph sets opacity every frame; a transition would lag it */
-.flowchart.stale { opacity: .55; transition: opacity var(--t-base); }
+.flowchart { transition: opacity var(--t-base) var(--ease); }
+.flowchart.stale { opacity: .55; }
 .chart text.hubname { font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted); }
 .chart text.amtsvg { font-size: .8rem; font-weight: 700; fill: var(--ink); }
 
@@ -1108,10 +1112,6 @@ input:hover, select:hover { border-color: var(--hub); }
   z-index: 4;
 }
 .side::after { content: ''; position: absolute; top: 0; bottom: 0; right: 5px; border-right: 1.5px dashed rgba(255, 255, 255, .17); pointer-events: none; }
-.side .nav.on {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--rail-2) 86%, white), var(--rail-2));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 1px 3px var(--shade-3);
-}
 .seal { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35)); rotate: -7deg; }
 
 /* ---------- Richer planner: paper and sheets ---------- */
@@ -1179,8 +1179,8 @@ h1 {
 .bar i, .meter i, .bbar i, .wmbar i, .setupbar i, .sharebar i { transform-origin: left center; animation: fill var(--t-draw) var(--ease) both;
   transition: width var(--t-arrive) var(--ease); }
 /* Small transitions */
-.ranges button { transition: background-color var(--t-quick), border-color var(--t-quick), color var(--t-quick); }
-.txrow td, .arow, .acctrow, .trow, .grow { transition: background-color var(--t-quick); }
+.ranges button { transition: background-color var(--t-quick) var(--ease), border-color var(--t-quick) var(--ease), color var(--t-quick) var(--ease); }
+.txrow td, .arow, .acctrow, .trow, .grow { transition: background-color var(--t-quick) var(--ease); }
 .linkbtn:hover { color: var(--blue); }
 
 /* ---------- Richer planner: showpiece charts ---------- */
@@ -1188,10 +1188,10 @@ h1 {
 @keyframes rise { from { transform: scaleY(0); } }
 @keyframes sweep { from { stroke-dasharray: 0 400; } }
 @keyframes halo { from { scale: 0; opacity: 0; } }
-.chart .draw { animation: draw calc(var(--t-draw) * 1.4) var(--ease) both; }
+.chart .draw { animation: draw var(--t-draw) var(--ease) both; }
 /* Net worth: a faint solid wash under real data (hatching is kept for estimates and blanks elsewhere), ringed last point */
 .chart .nw-wash { opacity: .14; }
-.chart .nw-halo { opacity: .16; transform-box: fill-box; transform-origin: center; animation: halo var(--t-arrive) var(--ease) calc(var(--t-draw) * 1.2) both; }
+.chart .nw-halo { opacity: .16; transform-box: fill-box; transform-origin: center; animation: halo var(--t-arrive) var(--ease) calc(var(--t-draw) * .6) both; }
 /* Cash flow: bars rise from the baseline */
 .chart .cf-bar { transform-box: fill-box; transform-origin: center bottom; animation: rise var(--t-draw) var(--ease) calc(var(--i, 0) * 45ms) both; }
 /* Asset allocation: thicker ring, swept in */
@@ -1204,6 +1204,21 @@ h1 {
 /* While a page's data loads (App.jsx sets data-settling on .main, for at most 0.7s), its body waits unseen with its arrival
    paused at the start, then shows whole in one short fade, so sections that load one after another never push each other
    down while you watch. The header (the page's real title, even while loading) and bank banners show at once. */
+/* One arrival per page, on its lead visual. Dashboard: the month inks in (its charts and meters simply appear). Net
+   worth: the chart line draws. Plan: goals fill. Budget: meters fill. Bills: the calendar's stamps press, as on the
+   dashboard. Reports: the months' bars rise, like cash flow. Investments: the allocation bar fills. Money flow's moment is
+   its morph between periods; Transactions and Settings are still. */
+.main[data-page="dashboard"] :is(.bar i, .meter i, .bbar i, .wmbar i, .setupbar i, .sharebar i, .chart .draw, .chart .nw-halo,
+  .chart .cf-bar, .donutsvg .seg) { animation: none; }
+.main[data-page="networth"] :is(.bar i, .meter i, .bbar i, .wmbar i, .sharebar i) { animation: none; }
+.main[data-page="plan"] :is(.chart .draw, .chart .nw-halo) { animation: none; }
+.listdays .clist .stamp { animation: stamp var(--t-arrive) var(--ease) both; animation-delay: calc(var(--i, 0) * 18ms + 120ms); }
+.rshape-col rect { transform-box: view-box; transform-origin: 0 var(--base, 100%); animation: rise var(--t-draw) var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 45ms); }
+.rshape-col .rshape-tot { animation: fadein var(--t-arrive) var(--ease) calc(var(--t-draw) * .5 + var(--i, 0) * 45ms) both; }
+.main[data-page="investments"] .splitbar { animation: draw var(--t-draw) var(--ease) both; }
+@keyframes fadein { from { opacity: 0; } }
+.main[data-quiet] :is(.clist .stamp, .rshape-col rect, .rshape-col .rshape-tot, .splitbar) { animation: none; }
 .main > * { transition: opacity var(--t-base) var(--ease); }
 .main[data-settling] > :not(.top, .alert) { opacity: 0; transition: none; }
 .main[data-settling] *, .main[data-settling] *::before { animation-play-state: paused; }
@@ -1233,7 +1248,7 @@ h1 {
 /* ---------- Feature check: Find anything from the keyboard ---------- */
 dialog.jump { width: min(560px, calc(100vw - 2rem)); margin: 12vh auto 0; padding: 0; border: 1px solid var(--line-strong); border-radius: 8px;
   background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
-dialog.jump::backdrop { background: rgba(10, 14, 26, .45); }
+dialog.jump::backdrop { background: var(--scrim); }
 dialog.jump input { display: block; width: 100%; font: inherit; font-size: 1rem; padding: .85rem 1rem; border: 0; border-bottom: 1px solid var(--line);
   background: transparent; color: var(--ink); border-radius: 8px 8px 0 0; }
 dialog.jump input:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
@@ -1305,7 +1320,6 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
   mix-blend-mode: var(--hi-blend); rotate: -1.2deg; animation: hiswipe var(--t-draw) var(--ease) .2s both;
 }
 @keyframes hiswipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
-@media (prefers-reduced-motion: reduce) { .head.needs h2::before { animation: none; } }
 :root {
   --hi-swipe: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M7 9C40 5 110 4 193 7L197 11 193 15 199 20 194 25 198 30 192 34C130 36 60 37 9 34L4 30 8 25 2 20 7 15 3 11Z'/%3E%3C/svg%3E");
 }
@@ -1471,11 +1485,6 @@ p.small.foot { margin-top: .9rem; }
    (no scroll clipping) except in short windows, where the rail scrolls and the tab is cut at the edge. */
 .side { overflow: visible; }
 @media (max-height: 760px) { .side { overflow-y: auto; } }
-.side .nav.on {
-  position: relative; z-index: 1; border-radius: 6px; /* stays inside the rail: it no longer overhangs onto the paper */
-  background: var(--cloth), linear-gradient(90deg, color-mix(in srgb, var(--rail-2) 86%, white), var(--rail-2));
-}
-.side .nav.on::after { display: none; }
 
 /* ---------- Round 2: Saved beyond plan ---------- */
 .btot .btotnote { grid-column: 1 / -1; font-weight: 400; font-size: .8rem; margin-top: .2rem; }
@@ -1504,7 +1513,6 @@ p.small.foot { margin-top: .9rem; }
 .side .railtool svg { flex: none; opacity: .85; }
 .side .railtool.on, .side .railtool.update { color: var(--paper-white); }
 .side .railtool.update svg { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .side .syncfoot.spin svg { animation-duration: 3s; } }
 
 /* ---------- Round 2: Stitched dividers ---------- */
 /* Every named group starts with the stitch used above Plan and Settings (.navrule: same dash, colour and opacity), with
@@ -1516,8 +1524,8 @@ p.small.foot { margin-top: .9rem; }
 
 /* ---------- In-app dialogs and the undo toast (ui.jsx: confirmDialog, notice, askText, toast) ---------- */
 .dlg { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow);
-  padding: 1.25rem 1.35rem 1.1rem; width: min(26rem, calc(100vw - 2rem)); animation: dlgin var(--t-base) var(--ease) both; }
-.dlg::backdrop { background: var(--scrim); animation: dlgfade var(--t-base) var(--ease) both; }
+  padding: 1.25rem 1.35rem 1.1rem; width: min(26rem, calc(100vw - 2rem)); }
+.dlg::backdrop { background: var(--scrim); }
 .dlg-title { margin: 0 0 .5rem; font-size: 1rem; font-weight: 600; letter-spacing: 0; text-transform: none; }
 .dlg-body { margin: 0 0 .6rem; font-size: .9rem; line-height: 1.45; color: var(--muted); }
 .dlg-field { display: block; margin: .4rem 0 .2rem; font-size: .8rem; color: var(--muted); }
@@ -1530,13 +1538,30 @@ p.small.foot { margin-top: .9rem; }
   max-width: min(32rem, calc(100vw - 2rem)); padding: .65rem .9rem; border-radius: 6px; font-size: .9rem; color: var(--paper-white, #fff);
   background: var(--cloth), linear-gradient(180deg, color-mix(in srgb, var(--btn) 84%, white), var(--btn));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 2px 4px var(--scrim-soft), 0 14px 30px -10px var(--scrim-strong);
-  animation: toastin var(--t-base) var(--ease) both; }
+}
 .toast-undo { background: none; border: 0; padding: .1rem .3rem; font: inherit; font-weight: 700; color: inherit; text-decoration: underline; cursor: pointer; border-radius: 4px; }
 .toast-undo:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-@keyframes dlgin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@keyframes dlgfade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes toastin { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
-@media (prefers-reduced-motion: reduce) { .dlg, .dlg::backdrop, .toast { animation: none; } }
+/* ---------- Things that float: one way in, one way out ----------
+   Hover tips, menus, dropdowns, dialogs, Ctrl+K and the toast all arrive the same way: a fade and a 4px rise (--t-quick for
+   tips and menus, --t-base for dialogs and the toast, over a fading scrim). Dialogs, Ctrl+K and the toast leave with a
+   quicker fade (--t-quick; ui.jsx keeps them a moment with .leaving). Tips and menus close at once: dismissing is instant. */
+@keyframes floatin { from { opacity: 0; translate: 0 4px; } }
+@keyframes floatout { to { opacity: 0; translate: 0 4px; } }
+@keyframes scrimin { from { opacity: 0; } }
+@keyframes scrimout { to { opacity: 0; } }
+.hovtip, .rowmenu-pop, .selmenu { animation: floatin var(--t-quick) var(--ease); }
+.dlg, .toast { animation: floatin var(--t-base) var(--ease) both; }
+.dlg::backdrop { animation: scrimin var(--t-base) var(--ease) both; }
+.dlg.leaving, .toast.leaving { animation: floatout var(--t-quick) var(--ease) both; pointer-events: none; }
+.dlg.leaving::backdrop { animation: scrimout var(--t-quick) var(--ease) both; }
+/* Ctrl+K is one <dialog> opened and closed in place, so it comes and goes with transitions. */
+dialog.jump { opacity: 0; translate: 0 4px; transition: opacity var(--t-quick) var(--ease), translate var(--t-quick) var(--ease),
+  display var(--t-quick) var(--ease) allow-discrete, overlay var(--t-quick) var(--ease) allow-discrete; }
+dialog.jump[open] { opacity: 1; translate: 0; transition-duration: var(--t-base); }
+@starting-style { dialog.jump[open] { opacity: 0; translate: 0 4px; } }
+dialog.jump::backdrop { opacity: 0; transition: opacity var(--t-quick) var(--ease), display var(--t-quick) var(--ease) allow-discrete, overlay var(--t-quick) var(--ease) allow-discrete; }
+dialog.jump[open]::backdrop { opacity: 1; transition-duration: var(--t-base); }
+@starting-style { dialog.jump[open]::backdrop { opacity: 0; } }
 
 /* Transactions: long merchant names truncate to one line (full name in the title); badges stay beside it. */
 .txtable td.merch { white-space: nowrap; max-width: 22rem; overflow: hidden; }
@@ -1557,7 +1582,7 @@ p.small.foot { margin-top: .9rem; }
 .assump > summary { cursor: pointer; font-size: .9rem; color: var(--muted); list-style: none; display: flex; gap: .5rem; align-items: baseline; }
 .assump > summary::-webkit-details-marker { display: none; }
 .assump > summary b { color: var(--ink); font-weight: 700; }
-.assump > summary::before { content: ""; width: .45rem; height: .45rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform var(--t-quick); flex: none; align-self: center; }
+.assump > summary::before { content: ""; width: .45rem; height: .45rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform var(--t-quick) var(--ease); flex: none; align-self: center; }
 .assump[open] > summary::before { transform: rotate(45deg); }
 .assump > summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .assump .form { margin: .8rem 0 0; }
@@ -1569,7 +1594,7 @@ p.small.foot { margin-top: .9rem; }
 .catpick { position: relative; display: inline-flex; align-items: center; gap: .3rem; max-width: 100%; padding: .1rem .35rem; margin-left: -.35rem; border: 1px solid transparent; border-radius: 6px; vertical-align: middle; }
 .catpick .catname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .catpick .catsel { position: absolute; inset: 0; width: 100%; max-width: none; opacity: 0; cursor: pointer; }
-.catpick .catchev { flex: none; color: var(--muted); opacity: 0; transition: opacity var(--t-quick); }
+.catpick .catchev { flex: none; color: var(--muted); opacity: 0; transition: opacity var(--t-quick) var(--ease); }
 .txrow:hover .catpick, .catpick:focus-within { border-color: var(--line); background: var(--card); }
 .txrow:hover .catpick .catchev, .catpick:focus-within .catchev { opacity: 1; }
 .catpick:has(.catsel:focus-visible) { outline: 2px solid var(--blue); outline-offset: 1px; }
@@ -1658,7 +1683,7 @@ p.small.foot { margin-top: .9rem; }
 /* Settings › Journal: each journal as a small book (cover, page edge, a strip of its tape, its highlighter). */
 .jpicker { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .6rem; margin: .2rem 0 .7rem; }
 .jpick { display: flex; align-items: center; gap: .6rem; padding: .45rem .55rem; border: 1px solid var(--line-strong); border-radius: 6px;
-  background: var(--card); color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: border-color var(--t-quick), box-shadow var(--t-quick); min-width: 0; }
+  background: var(--card); color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: border-color var(--t-quick) var(--ease), box-shadow var(--t-quick) var(--ease); min-width: 0; }
 .jpick:hover { border-color: var(--pencil); }
 .jpick.on { border-color: var(--blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--blue) 30%, transparent); }
 .jname { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
@@ -1690,7 +1715,7 @@ p.small.foot { margin-top: .9rem; }
 .ledger > *, .ledger > .dcell > *, .ledger > .grid2 > *, .cards.ruled > * { outline: 0; }
 /* A panel inside a panel is drawn on the same wash, not a second layer of it. */
 :is(.card, .ledger, .cards.ruled, .insight, .bstrip, .explain, .watch) :is(.card, .insight, .bstrip, .explain, .cards.ruled, .watch) { background: transparent; }
-.goalgrid > .card, .tripgrid > .card, .watch { transition: outline-color var(--t-quick); }
+.goalgrid > .card, .tripgrid > .card, .watch { transition: outline-color var(--t-quick) var(--ease); }
 .goalgrid > .card:hover, .tripgrid > .card:hover, .watch:hover { outline-color: var(--pencil); }
 .sticky-head .t thead th { background: var(--sheet-head); }
 /* Solid: the first-run screen's panels sit on plain paper, outside the page. */
@@ -1762,7 +1787,8 @@ html { scrollbar-gutter: stable; }
 .cal > :nth-child(3n) { --tilt: 4deg; }
 .cal > :nth-child(4n + 1) { --tilt: -2deg; }
 .cday .stamp.done { rotate: var(--tilt, -5deg); }
-.cday:hover .stamp { scale: 1.12; transition: scale var(--t-base) var(--ease); }
+.cday .stamp { transition: scale var(--t-base) var(--ease), rotate var(--t-base) var(--ease); } /* in and back out alike */
+.cday:hover .stamp { scale: 1.12; }
 .cday:hover .stamp.done { rotate: none; }
 /* Clickable days (Bills): the picked day takes the indigo wash and a 2px indigo foot. */
 button.cday { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; border: 0; margin: 0; border-radius: 0; background: none; cursor: pointer; }
@@ -1907,13 +1933,11 @@ button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 .side .logo { flex-direction: row; justify-content: flex-start; gap: .7rem; padding: 0 0 1.2rem 9px; } /* the seal's centre on the icons' axis */
 .side .nav { justify-content: flex-start; gap: .75rem; padding: .55rem 0 .55rem 15px; } /* 8px rail padding + 15px: an 18px icon centred in 64px */
 .side .syncfoot { justify-content: flex-start; gap: .75rem; padding: .45rem 0 .45rem 15px; }
-.side .nav.on::after { width: calc(.5rem + 5px); }
 .side :is(.navlabel, .wordmark, .synclabel), .side .navgroup { white-space: nowrap; overflow: hidden; }
-.side :is(.navlabel, .wordmark, .synclabel) { display: inline; transition: opacity var(--t-base) var(--ease) .06s, visibility 0s; }
-.slim .side :is(.navlabel, .wordmark, .synclabel) { opacity: 0; visibility: hidden; transition: opacity var(--t-quick), visibility 0s linear var(--t-quick); }
+.side :is(.navlabel, .wordmark, .synclabel) { display: inline; transition: opacity var(--t-base) var(--ease) .06s, visibility 0s var(--ease); }
+.slim .side :is(.navlabel, .wordmark, .synclabel) { opacity: 0; visibility: hidden; transition: opacity var(--t-quick) var(--ease), visibility 0s linear var(--t-quick); }
 .side .navgroup { color: var(--rail-ink-2); transition: color var(--t-base) var(--ease) .06s; }
-.slim .side .navgroup { color: transparent; transition: color var(--t-quick); } /* the heading's stitch stays; only its words go */
-@media (prefers-reduced-motion: reduce) { .shell .side { transition: none; } }
+.slim .side .navgroup { color: transparent; transition: color var(--t-quick) var(--ease); } /* the heading's stitch stays; only its words go */
 
 /* ---------- Page header: the app's tools on the title row ----------
    The notice chips, the theme toggle and Hide amounts sit at the right of each page's title row, after the page's own
@@ -1983,7 +2007,6 @@ button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 .cstroke { position: absolute; left: 4px; bottom: 4px; height: 6px; width: calc(10px + (var(--s) - 1) * (min(100%, 3 * var(--u)) - 18px) / 6);
   background: var(--hi); mix-blend-mode: var(--hi-blend); border-radius: 2px 4px 3px 4px; rotate: -1.2deg; pointer-events: none;
   animation: hiswipe var(--t-arrive) var(--ease) both; animation-delay: calc(var(--i) * 18ms); }
-@media (prefers-reduced-motion: reduce) { .cstroke { animation: none; } }
 
 /* ---------- Bills: the bills written into the calendar ----------
    On Bills the calendar runs the full width of its panel (days of whole units, at least 3 wide) and 4 units tall, and
@@ -2075,7 +2098,7 @@ button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 .billtable tr.quiet .tamt { font-weight: 400; }
 /* Budget: a group's menu sits after its title, shown while the row is hovered or focused (and while open). */
 .btitlecell { display: flex; align-items: center; gap: .35rem; min-width: 0; }
-.bhead .groupmenu { opacity: 0; transition: opacity var(--t-quick); }
+.bhead .groupmenu { opacity: 0; transition: opacity var(--t-quick) var(--ease); }
 .bhead:is(:hover, :focus-within) .groupmenu, .bhead .groupmenu:has([aria-expanded="true"]) { opacity: 1; }
 .bhead .groupmenu .rowmenu-btn { margin: 0; width: var(--u); height: var(--u); }
 .bhead .groupmenu .rowmenu-pop { left: 0; right: auto; white-space: nowrap; }

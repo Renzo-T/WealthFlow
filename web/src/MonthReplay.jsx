@@ -5,6 +5,7 @@ import useWidth from './useWidth.js';
 import { Panel, Skeleton, EmptyState, Chevron, Est, Hover, tipText } from './ui.jsx';
 import { Stamp, StampArt, markIcon } from './Stamp.jsx';
 import { replayRange } from './replayScale.js';
+import { reducedMotion } from './motion.js';
 
 // The month, replayed: the cash in your everyday accounts at the end of each day, as one stepped line across the
 // month's days (planner columns, weekends tinted, today washed). Paydays step it up and bills step it down; they're
@@ -18,7 +19,6 @@ const monthName = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', {
 const dayName = (d) => new Date(`${d}T00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 const shortDay = (d) => new Date(`${d}T00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 const shift = (m, n) => { const d = new Date(`${m}-01T00:00`); d.setMonth(d.getMonth() + n); return d.toLocaleDateString('en-CA').slice(0, 7); };
-const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const clip = (s, n) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
 // The chart's value range (padded, its top capped when a few days sit far above the rest: replayScale.js), shared by
 // the chart and the legend's "big move" threshold.
@@ -215,7 +215,7 @@ export default function MonthReplay({ month: wanted }) {
 
   const play = (n) => {
     cancelAnimationFrame(raf.current);
-    if (reduced()) { setP(n); setPlaying(false); return; }
+    if (reducedMotion()) { setP(n); setPlaying(false); return; }
     const start = performance.now();
     setHover(null); setPlaying(true);
     const step = (t) => {

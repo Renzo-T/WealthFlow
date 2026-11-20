@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { usd, shortDate } from './format.js';
 import { Hover, TipList, Trend, Standing, Stand } from './ui.jsx';
 import { api } from './api.js';
+import { duration, easeOut, reducedMotion } from './motion.js';
 
 // "Changed since your last visit": each figure remembers what it was when you last looked (this browser only). When it
 // has changed, the number counts to its new value once and a note says by how much. The baseline is the previous
@@ -30,17 +31,16 @@ export const sinceDay = (at) => {
   const days = Math.round((Date.now() - at) / 864e5);
   return days < 1 ? 'earlier today' : `since ${new Date(at).toLocaleDateString('en-US', days < 6 ? { weekday: 'short' } : { month: 'short', day: 'numeric' })}`;
 };
-const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 // A figure that counts from its last-seen value to now, once (exponential ease-out); otherwise just the value.
 function Counter({ value, from }) {
-  const [shown, setShown] = useState(from != null && Math.abs(from - value) >= 1 && !reduced() ? from : value);
+  const [shown, setShown] = useState(from != null && Math.abs(from - value) >= 1 && !reducedMotion() ? from : value);
   const raf = useRef(0);
   useEffect(() => {
     if (shown === value) return undefined;
-    const start = performance.now(), a = shown, d = 700;
+    const start = performance.now(), a = shown, d = duration('--t-arrive') || 1;
     const step = (t) => {
-      const p = Math.min(1, (t - start) / d), e = p === 1 ? 1 : 1 - 2 ** (-10 * p);
+      const p = Math.min(1, (t - start) / d), e = easeOut(p);
       setShown(a + (value - a) * e);
       if (p < 1) raf.current = requestAnimationFrame(step);
     };

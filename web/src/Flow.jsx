@@ -5,6 +5,7 @@ import AccountFlow from './AccountFlow.jsx';
 import MonthReplay from './MonthReplay.jsx';
 import Tip, { useTip } from './Tip.jsx';
 import { Panel, PageHeader, Skeleton, askText, Chevron } from './ui.jsx';
+import { duration, easeOut, reducedMotion } from './motion.js';
 
 const VIEW_KEY = 'wealthflow.flowView';
 const savedView = () => { try { return localStorage.getItem(VIEW_KEY) || 'groups'; } catch { return 'groups'; } };
@@ -39,26 +40,24 @@ const lastDay = (to) => new Date(Date.parse(to + 'T00:00') - 864e5).toLocaleDate
 
 // Changing the period morphs the chart instead of redrawing it: each stream grows, shrinks or slides to its new size,
 // a new one grows from nothing and a gone one shrinks away, so what changed is what moves. Nothing animates on arrival.
-const MORPH = 480, GEO = ['y', 'hgt', 'hy', 'hh', 'mid'];
-const ease = (t) => 1 - (1 - t) ** 3;
+const GEO = ['y', 'hgt', 'hy', 'hh', 'mid'];
 const lerp = (a, b, t) => a + (b - a) * t;
-const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 function useMorph(layout) {
   const [shown, setShown] = useState(layout);
   const cur = useRef(layout), raf = useRef(0);
   useEffect(() => {
     const from = cur.current;
     cancelAnimationFrame(raf.current);
-    if (from === layout || reduced()) { cur.current = layout; setShown(layout); return undefined; }
+    if (from === layout || reducedMotion()) { cur.current = layout; setShown(layout); return undefined; }
     const prev = new Map(from.nodes.filter((x) => !x.exiting).map((x) => [x.id, x]));
     const next = new Set(layout.nodes.map((x) => x.id));
     const pairs = [
       ...layout.nodes.map((x) => [prev.get(x.id) ?? { ...x, hgt: 0, hh: 0, entering: true }, x]),
       ...[...prev.values()].filter((x) => !next.has(x.id)).map((x) => [x, { ...x, hgt: 0, hh: 0, exiting: true }]),
     ];
-    const t0 = performance.now();
+    const t0 = performance.now(), span = duration('--t-arrive') || 1; // the app's timing and curve (motion.js)
     const frame = (now) => {
-      const k = Math.min(1, (now - t0) / MORPH), e = ease(k);
+      const k = Math.min(1, (now - t0) / span), e = easeOut(k);
       const nodes = pairs.filter(([, b]) => !(b.exiting && k === 1)).map(([a, b]) => {
         const o = { ...b, fade: b.exiting ? 1 - e : a.entering ? e : 1 };
         for (const g of GEO) o[g] = lerp(a[g], b[g], e);

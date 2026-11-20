@@ -1,6 +1,7 @@
 // Shared building blocks, so every page's cards and headers look and space the same.
 import { useState, useRef, useEffect, useContext, createContext, Component } from 'react';
 import { createPortal } from 'react-dom';
+import { useLeaving } from './motion.js';
 
 // The Mizo Money seal: a round ink stamp with an M, like a hanko pressed on a planner page. The logo only; vermillion
 // is never used for meaning (red stays "bad / money out").
@@ -232,12 +233,13 @@ const closeToast = () => { clearTimeout(toastTimer); dlg.toast = null; emit(); }
 export function DialogHost() {
   const [, bump] = useState(0);
   useEffect(() => { const f = () => bump((n) => n + 1); dlg.subs.add(f); return () => dlg.subs.delete(f); }, []);
-  const d = dlg.state, t = dlg.toast;
+  // Each stays a moment after it's answered or times out, fading out (.leaving; motion.js useLeaving).
+  const [d, dLeaving] = useLeaving(dlg.state), [t, tLeaving] = useLeaving(dlg.toast);
   return (
     <>
-      {d && <DialogSheet key={d.id} d={d} />}
+      {d && <DialogSheet key={d.id} d={d} leaving={dLeaving} />}
       {t && (
-        <div className="toast" role="status" key={t.id}>
+        <div className={`toast${tLeaving ? ' leaving' : ''}`} role="status" key={t.id}>
           <span>{t.message}</span>
           {t.undo && <button type="button" className="toast-undo" onClick={async () => { closeToast(); await t.undo(); }}>Undo</button>}
         </div>
@@ -246,14 +248,14 @@ export function DialogHost() {
   );
 }
 
-function DialogSheet({ d }) {
+function DialogSheet({ d, leaving }) {
   const ref = useRef(null), [text, setText] = useState(d.value ?? '');
   useEffect(() => { const el = ref.current; if (el && !el.open) el.showModal(); }, []);
   const cancelled = d.kind === 'confirm' ? false : null;
   const ok = () => d.done(d.kind === 'confirm' ? true : d.kind === 'text' ? text : undefined);
   const paras = d.body ? String(d.body).split('\n\n') : [];
   return (
-    <dialog ref={ref} className="dlg" aria-labelledby="dlg-title"
+    <dialog ref={ref} className={`dlg${leaving ? ' leaving' : ''}`} aria-labelledby="dlg-title"
       onCancel={(e) => { e.preventDefault(); d.done(cancelled); }}
       onClick={(e) => { if (e.target === ref.current) d.done(cancelled); }}>
       <form onSubmit={(e) => { e.preventDefault(); ok(); }}>

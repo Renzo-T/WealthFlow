@@ -63,12 +63,12 @@ function MonthShape({ d, cols }) {
       <div className="legend rshape-key">{top.map((g, k) => <span key={g.name}><i className="dot" style={{ background: SERIES[k] }} />{g.name}</span>)}
         {rest.length > 0 && <span><i className="dot" style={{ background: NEUTRAL }} />Everything else</span>}
         {avg != null && <span><i className="rshape-avgkey" />Average</span>}</div>
-      <svg className="chart" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Spending by month, by group">
+      <svg className="chart" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Spending by month, by group" style={{ '--base': `${y(0)}px` }}>
         {ticks.map((v) => <g key={v}><line className="grid" x1={L} x2={W} y1={y(v)} y2={y(v)} /><text x={L - 8} y={y(v) + 4} textAnchor="end">{usdCompact(v, 1)}</text></g>)}
         {stacks.map((s, k) => {
           let base = 0;
           return (
-            <g key={s.m} className={`rshape-col${s.partial ? ' partial' : ''}${s.current ? ' current' : ''}`}>
+            <g key={s.m} className={`rshape-col${s.partial ? ' partial' : ''}${s.current ? ' current' : ''}`} style={{ '--i': k }}>
               {s.parts.filter((p) => p.v > 0).map((p) => {
                 const y0 = y(base + p.v), h = y(base) - y0; base += p.v;
                 return <rect key={p.name} x={cx(k) - bw / 2} y={y0} width={bw} height={Math.max(0, h - 1)} fill={p.color} stroke={s.current ? p.color : undefined}><title>{`${p.name}: ${usd(p.v)}`}</title></rect>;
