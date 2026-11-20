@@ -125,7 +125,8 @@ function Sankey({ f, rename, label }) {
       setHl(`${side}:${x.name}`);
       show(e, side === 'l' ? <>
         <b>{x.name}</b><div>{usd2(x.value)}</div>
-        <div className="muted">{x.pay ? 'Taken from your paycheck before it was deposited (may include an employer match)' : x.saved ? "Money you already had: spent or put into savings beyond this period's income" : x.credit ? "Refunds beyond this group's spending: money in, but not income" : `${pctOf(x.value, income)} of income`}</div>
+        <div className="muted">{x.pay ? 'Taken from your paycheck before it was deposited (may include an employer match)' : x.saved ? "Money you already had: spent or put into savings beyond this period's income" : x.credit ? "Refunds beyond what was spent in their group this period: money in, but not income" : `${pctOf(x.value, income)} of income`}</div>
+        {x.parts?.length > 0 && <ul>{x.parts.map((p) => <li key={p.name}><span>{p.name}</span><span>{usd2(p.value)}</span></li>)}</ul>}
       </> : <>
         <b>{x.name}</b><div>{usd2(x.value)} <span className="muted">· {pctOf(x.value, income)} of income</span></div>
         {x.fromPay > 0 && <div className="muted">{usd2(x.fromPay)} of it straight from your pay</div>}
@@ -219,7 +220,7 @@ export default function Flow() {
           <>
             <div className="flowstats">
               <span>Income <b className="good">{usd2(f.income)}</b></span>
-              <span>Spending <b>{usd2(f.spending)}</b></span>
+              <span title={f.refunds > 0 ? `Refunds lower spending in their own group, never below zero; ${usd2(f.refunds)} beyond that is shown as Refunds.` : undefined}>Spending <b>{usd2(f.spending)}</b></span>
               <span title="Income minus spending. Money moved into savings and investments isn't spending.">{net >= 0 ? 'Left after spending' : 'Spent beyond income'} <b className={net >= 0 ? 'good' : 'bad'}>{usd2(Math.abs(net))}</b></span>
               {f.fromPay > 0 && <span title="Taken from your paycheck into a 401(k) or similar before the rest was deposited, so it isn't in Income.">Put in from your pay <b className="good">{usd2(f.fromPay)}</b></span>}
               {f.moved > 0 && <span>Moved between your accounts <b className="muted">{usd2(f.moved)}</b></span>}

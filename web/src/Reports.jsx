@@ -20,12 +20,14 @@ function Figure({ partial, current, tip, children }) {
   const fig = why ? <Est why={why}>{children}</Est> : children;
   return tip ? <Hover className="quiet" tip={tip}>{fig}</Hover> : fig;
 }
-function Cell({ v, max, partial, current, behind, avg, title, month, focus }) {
+// `refunded`: refunds beyond the month's spending in this group (or, on the total, all groups), left out of spending.
+function Cell({ v, max, partial, current, behind, avg, title, month, focus, refunded = 0 }) {
   const share = max > 0 ? Math.max(0, v) / max : 0;
-  const empty = Math.abs(v) < 0.5;
-  const tip = !empty && behind?.count ? <TipList title={`${title}, ${monYear(month)}`}
-    rows={behind.top.map((t) => [t.name, `${t.amount < 0 ? '−' : ''}${usd2(Math.abs(t.amount))}`, shortDate(t.date)])}
-    note={[behind.count > behind.top.length ? `${behind.count} transactions; the largest ${behind.top.length} shown.` : null,
+  const refund = refunded >= 0.5 ? `${usd(refunded)} in refunds beyond spending, left out.` : null;
+  const empty = Math.abs(v) < 0.5 && !refund;
+  const tip = !empty && (behind?.count || refund) ? <TipList title={`${title}, ${monYear(month)}`}
+    rows={(behind?.top ?? []).map((t) => [t.name, `${t.amount < 0 ? '−' : ''}${usd2(Math.abs(t.amount))}`, shortDate(t.date)])}
+    note={[refund, behind?.count > behind?.top.length ? `${behind.count} transactions; the largest ${behind.top.length} shown.` : null,
       avg ? `${v >= avg ? '+' : '−'}${usd(Math.abs(v - avg))} vs the average${current ? ' (month not over yet)' : ''}.` : null,
       partial ? 'Missing history from at least one bank.' : null].filter(Boolean).join(' ') || null} /> : null;
   return (
@@ -59,7 +61,7 @@ function MonthTable({ focus }) {
       <tr key={opts.key ?? r.name} className={opts.cls}>
         <td>{opts.label ?? r.name}</td>
         {cols.map((i) => <Cell key={d.months[i]} v={r.values[i]} max={max} partial={d.partial[i]} current={d.months[i] === d.current}
-          behind={r.behind?.[i]} avg={r.avg} title={typeof opts.label === 'string' ? opts.label : r.name} month={d.months[i]} focus={d.months[i] === focus} />)}
+          behind={r.behind?.[i]} refunded={r.refunded?.[i]} avg={r.avg} title={typeof opts.label === 'string' ? opts.label : r.name} month={d.months[i]} focus={d.months[i] === focus} />)}
         <td className="r amt ravg">{r.avg == null ? '—' : <Hover className="quiet" tip={<TipList title="Average" rows={d.averaged.map((m) => [monYear(m), usd(r.values[d.months.indexOf(m)])])}
           note="Finished months with history from every bank." />}>{usd(r.avg)}</Hover>}</td>
       </tr>

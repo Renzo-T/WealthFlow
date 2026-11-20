@@ -1,6 +1,6 @@
 import db from './db.js';
 import { payContributions, activitySince } from './contributions.js';
-import { GROUPS, NOT_SPENDING, SPEND_SQL, historyStart } from './categories.js';
+import { GROUPS, NOT_SPENDING, SPEND_SQL, historyStart, spendingBetween } from './categories.js';
 import { bills } from './recurring.js';
 import { coverageStart } from './insights.js';
 import { daySpending, step } from './spread.js';
@@ -48,12 +48,18 @@ export function monthByMonth(n = 12, today = new Date().toLocaleDateString('en-C
   const groups = Object.keys(GROUPS).filter((g) => g !== 'Transfer' && cell[g]).map((g) => {
     const cats = Object.entries(cell[g]).map(([c, vals]) => ({ ...line(c, vals), behind: behind(g, c) })).filter((c) => c.values.some((v) => Math.abs(v) >= 0.5))
       .sort((a, b) => b.values.reduce((s, v) => s + v, 0) - a.values.reduce((s, v) => s + v, 0));
-    return { ...line(g, sumVals(Object.values(cell[g]))), behind: behind(g), group: g, income: g === 'Income', spending: !NOT_SPENDING.includes(g), categories: cats };
+    // A refund lowers its own group's spending, never below zero (spendingBetween, the same rule as the dashboard and
+    // Budget): a spending group whose refunds beat its spending in a month shows 0 there, and the rest is `refunded`.
+    const raw = sumVals(Object.values(cell[g])), spending = !NOT_SPENDING.includes(g) && g !== 'Income';
+    const vals = spending ? Object.fromEntries(months.map((m) => [m, Math.max(0, raw[m] ?? 0)])) : raw;
+    const refunded = spending ? months.map((m) => Math.max(0, -(raw[m] ?? 0))) : null;
+    return { ...line(g, vals), refunded, behind: behind(g), group: g, income: g === 'Income', spending, categories: cats };
   }).filter((g) => g.categories.length);
   const spend = sumVals(groups.filter((g) => g.spending).map((g) => Object.fromEntries(months.map((m, i) => [m, g.values[i]]))));
+  const refunds = months.map((_, i) => groups.filter((g) => g.spending).reduce((s, g) => s + g.refunded[i], 0));
   const income = groups.find((g) => g.income);
   return { months, partial: months.map(isPartial), missing, averaged: full, current: today.slice(0, 7), groups,
-    totals: { spending: line('Spending', spend), income: income ? { ...income, categories: undefined } : line('Income', {}) } };
+    totals: { spending: { ...line('Spending', spend), refunded: refunds }, income: income ? { ...income, categories: undefined } : line('Income', {}) } };
 }
 
 // A bill's cost per month and per year, whatever its schedule.
@@ -80,9 +86,12 @@ export function yearInReview(year = new Date().getFullYear(), today = new Date()
   const from = `${year}-01-01`, to = `${year}-12-31`;
   const q = (sql, ...a) => db.prepare(sql).get(...a);
   const income = -q(`SELECT COALESCE(SUM(amount), 0) v FROM transactions WHERE grp = 'Income' AND date BETWEEN ? AND ?`, from, to).v;
-  const spending = q(`SELECT COALESCE(SUM(amount), 0) v FROM transactions WHERE ${SPEND_SQL} AND date BETWEEN ? AND ?`, from, to).v;
+  // A refund lowers its own group's spending, never below zero (spendingBetween, the same rule as the dashboard).
+  const spending = spendingBetween(from, to).spent;
   const groups = db.prepare(`SELECT grp name, SUM(amount) v FROM transactions WHERE ${SPEND_SQL} AND date BETWEEN ? AND ? GROUP BY grp HAVING v > 0.5 ORDER BY v DESC`).all(from, to);
-  const months = db.prepare(`SELECT substr(date, 1, 7) m, SUM(amount) v FROM transactions WHERE ${SPEND_SQL} AND date BETWEEN ? AND ? GROUP BY m ORDER BY v DESC`).all(from, to);
+  // Each month's spending by the same rule (per group, never below zero), biggest first.
+  const months = db.prepare(`SELECT m, SUM(MAX(v, 0)) v FROM (SELECT substr(date, 1, 7) m, COALESCE(grp, 'Misc') g, SUM(amount) v FROM transactions
+    WHERE ${SPEND_SQL} AND date BETWEEN ? AND ? GROUP BY m, g) GROUP BY m HAVING v > 0 ORDER BY v DESC`).all(from, to);
   const cats = {};
   for (const r of db.prepare(`SELECT grp, category, SUM(amount) v FROM transactions WHERE ${SPEND_SQL} AND date BETWEEN ? AND ? GROUP BY grp, category HAVING v > 0.5 ORDER BY v DESC`).all(from, to))
     (cats[r.grp] ??= []).push({ name: r.category, v: r.v });

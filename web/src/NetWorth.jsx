@@ -301,12 +301,14 @@ function AccountRow({ a, act, open, setOpen, saved }) {
 // What moved your net worth: what you earned minus what you spent (income − spending), money moved to accounts that aren't tracked, and
 // everything else, mostly the market.
 const PERIODS = [['month', 'This month'], ['30d', 'Last 30 days'], ['all', 'Since tracking']];
+const dayAfter = (d) => { const x = new Date(`${d}T00:00`); x.setDate(x.getDate() + 1); return x.toLocaleDateString('en-CA'); };
 const signedUsd = (v) => `${v < 0 ? '−' : '+'}${usd(Math.abs(v))}`;
 // `stamp` changes whenever the page reloads its data (a new value or a linked transfer), so this refetches too.
 function WhatMoved({ stamp }) {
   const [period, setPeriod] = useState('30d');
   const [b, setB] = useState(null);
-  useEffect(() => { api(`/networth/breakdown?period=${period}`).then(setB); }, [period, stamp]);
+  // Only the latest request lands, so switching periods quickly never leaves the other period's figures showing.
+  useEffect(() => { let on = true; api(`/networth/breakdown?period=${period}`).then((r) => on && setB(r)); return () => { on = false; }; }, [period, stamp]);
   if (!b) return null;
   const head = <div className="ranges">{PERIODS.map(([k, l]) => <button key={k} className={period === k ? 'on' : ''} onClick={() => setPeriod(k)}>{l}</button>)}</div>;
   if (!b.available) return (
@@ -331,7 +333,8 @@ function WhatMoved({ stamp }) {
   return (
     <Panel className="mt" title="What moved your net worth" actions={head}>
       <div className={`wm rows${2 + showMoved + showValued + showPay}`}>
-        <div className="wmtotal"><span className="small muted">{shortDate(b.from)} → {shortDate(b.to)}</span>
+        {/* `from` is the baseline (the end of the day before), so the first day counted is the day after it. */}
+        <div className="wmtotal"><span className="small muted">{shortDate(dayAfter(b.from))} – {shortDate(b.to)}</span>
           <b className={`amt big ${b.change < 0 ? 'bad' : 'good'}`}>{signedUsd(b.change)}</b></div>
         <div className="wmrow"><Hover className="quiet" tip={<TipList title="Earned minus spent" rows={[['Income', usd(b.income)], ['Spending', `−${usd(b.spending)}`]]}
           note="Income minus spending, from your transactions. Transfers between your own accounts don't count, so this is not what you put into savings." />}>Earned minus spent</Hover>{bar(b.saved, 'saved')}<b className="amt">{signedUsd(b.saved)}</b></div>

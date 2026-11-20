@@ -81,10 +81,14 @@ export function flow(from, to) {
   const net = db.prepare(`SELECT COALESCE(grp,'Misc') name, SUM(amount) value, ${SPEND_SQL} spend FROM transactions
     WHERE COALESCE(grp,'Misc') NOT IN ('Income','Transfer','Split') AND date >= ? AND date < ? GROUP BY 1 ORDER BY spend DESC, value DESC`).all(from, to);
   const cats = net.filter((c) => c.value > 0.005);
-  // A group whose refunds beat its spending this period (a trip refunded) is money in, but not income: named as refunds.
-  const credits = net.filter((c) => c.value < -0.005).map((c) => ({ name: `${c.name} refunds`, value: -c.value, credit: true }));
+  // A refund lowers its own group's spending, never below zero (spendingBetween, the same rule as the dashboard): a group
+  // whose refunds beat its spending this period (a trip refunded) adds the rest to one "Refunds" source, money in but not
+  // income, with each group in `parts` for the hover.
+  const over = net.filter((c) => c.value < -0.005);
+  const credits = over.length ? [{ name: 'Refunds', value: -over.reduce((s, c) => s + c.value, 0), credit: true,
+    parts: over.map((c) => ({ name: c.name, value: -c.value })) }] : [];
   const income = sources.reduce((s, x) => s + x.value, 0);
-  const spending = net.filter((c) => c.spend).reduce((s, x) => s + x.value, 0); // net, same as the dashboard
+  const spending = net.filter((c) => c.spend && c.value > 0).reduce((s, x) => s + x.value, 0);
   const allocated = net.reduce((s, x) => s + x.value, 0); // spending + savings + debt repayment
   const moved = db.prepare(`SELECT COALESCE(SUM(ABS(amount)), 0) v FROM transactions
     WHERE ((transfer_pair IS NOT NULL AND amount > 0) OR (transfer_pair IS NULL AND transfer_account IS NOT NULL))
@@ -107,7 +111,7 @@ export function flow(from, to) {
     const sv = right.find((c) => c.name === 'Savings & investments');
     if (sv) { sv.value += add; sv.fromPay = add; } else right.push({ name: 'Savings & investments', value: add, fromPay: add, subs: [] });
   }
-  return { from, to, income, spending, moved, fromPay: pay.reduce((s, p) => s + p.value, 0), sources: left, categories: right };
+  return { from, to, income, spending, refunds: credits[0]?.value ?? 0, moved, fromPay: pay.reduce((s, p) => s + p.value, 0), sources: left, categories: right };
 }
 
 // Contributions from your pay over [from, to), summed per account (largest first).
