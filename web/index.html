@@ -3,6 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    // The saved theme and journal go on <html> before the first paint (App.jsx and journal.js keep them in localStorage as
+    // plain strings), so a forced dark or a chosen journal never shows a light or indigo frame first.
+    try {
+      var d = document.documentElement, t = localStorage.getItem('wealthflow.theme'), j = localStorage.getItem('wealthflow.journal');
+      if (t === 'light' || t === 'dark') d.dataset.theme = t;
+      if (j && /^[a-z]+$/.test(j)) d.dataset.journal = j;
+    } catch (e) { /* storage unavailable */ }
+  </script>
   <title>Mizo Money</title>
   <meta name="theme-color" content="#1e2a47" />
   <meta name="description" content="Your personal finance dashboard, running on this computer." />

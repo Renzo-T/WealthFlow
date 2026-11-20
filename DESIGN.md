@@ -13,7 +13,7 @@ colors:
   sheet-tint: "#f8f6f0"
   highlighter: "#ffe27a"
   rule: "#e1e3df"
-  rule-strong: "#c8ccd2"
+  rule-strong: "#c5c9cf"
   ink: "#1b2030"
   ink-muted: "#555c6e"
   pencil: "#475066"
@@ -37,10 +37,10 @@ colors:
   night-indigo-ink: "#9db2ea"
   night-indigo-wash: "#222a40"
   night-paper: "#11141c"
-  night-dot-grid: "#191e23"
+  night-dot-grid: "#22272c"
   night-sheet: "#181c27"
   night-sheet-tint: "#1d2230"
-  night-highlighter: "#836400"
+  night-highlighter: "#eac758"
   night-rule: "#282e3d"
   night-rule-strong: "#454e66"
   night-ink: "#e7e9ef"
@@ -51,10 +51,10 @@ colors:
   night-money-in: "#5cc193"
   night-money-out: "#ee806e"
   night-caution-amber: "#e0a84a"
-  night-series-1: "#6a86d4"
-  night-series-2: "#b4e2f8"
-  night-series-3: "#38c0b8"
-  night-series-4: "#e6a6e0"
+  night-series-1: "#7694e9"
+  night-series-2: "#73bbe1"
+  night-series-3: "#31b4ac"
+  night-series-4: "#c88ccb"
   shade-1: "rgba(0, 0, 0, .1)"
   shade-3: "rgba(0, 0, 0, .3)"
   scrim: "rgba(15, 20, 40, .42)"
@@ -249,7 +249,7 @@ An ink-and-indigo planner palette on warm paper: nearly all of every screen is n
 - **Cover Fold** (cover-fold): the active navigation item; a lighter fold of the same cloth.
 - **Indigo Ink** (indigo-ink): links, focus rings, the selected tab, today's edge in the month calendar, the ink of paid stamps, and budget meters. The pen colour of interaction.
 - **Indigo Wash** (indigo-wash): selected-row and today tint, tag and chip fills, empty-state icon wells.
-- **Highlighter** (highlighter; night: night-highlighter): two forms, never confused. The swipe is attention only: behind each page's lead-figure label in its standing line, a marker swipe behind the "Needs you" heading while something waits to be sorted, and behind the page header's "banks need attention" chip (from 60% to 90% of the line height), and nowhere else. The swipe has uneven ends (an SVG mask), ends a touch deeper where the marker pooled (toward ink by day, toward black at night, `--hi-pool`, so the ends never turn grey), is tilted about -1° and is multiply-blended in daylight; its colour comes from the journal. Text keeps well over 4.5:1 on it in both themes. The stroke is a short 6px underline under a day's spending figure in the month calendar, its length on the spending ramp (see Month Calendar); nothing else uses it.
+- **Highlighter** (highlighter; night: night-highlighter): two forms, never confused. The swipe is attention only: behind each page's lead-figure label in its standing line, a marker swipe behind the "Needs you" heading while something waits to be sorted, and behind the page header's "banks need attention" chip (from 60% to 90% of the line height), and nowhere else. The swipe has uneven ends (an SVG mask), ends a touch deeper where the marker pooled (toward ink by day, toward black at night, `--hi-pool`, so the ends never turn grey), is tilted about -1° and is multiply-blended in daylight; its colour comes from the journal. At night it is a bright marker laid over the dark paper (normal blend), the way fluorescent ink glows under a lamp, never a darkened smudge: the swipe covers the whole label, the words on it are the daylight ink (`--hi-ink`), and the banks chip becomes the marker itself. The text on it keeps well over 4.5:1 in both themes (tested). The stroke is a short 6px underline under a day's spending figure in the month calendar, its length on the spending ramp (see Month Calendar), at 82% strength at night so a month of strokes stays calm; nothing else uses it.
 
 ### Secondary
 - **Seal Vermillion** (seal-vermillion, on seal-ink): the round "M" hanko logo and nothing else. It never marks meaning.
@@ -261,7 +261,7 @@ An ink-and-indigo planner palette on warm paper: nearly all of every screen is n
 - **Chart Series** (series-1 to series-4, then series-rest grey): four hues checked for colour-blind separation in each theme, with night steps of their own. A fifth series is grey.
 
 ### Neutral
-- **Page Paper** (page-paper) with **Dot Grid** (dot-grid): the warm page, ruled every 22px (dots, a square grid or lines, by journal), with a fine noise grain over it (dark warm specks at about 9% in light, pale blue specks at about 5% at night). The ruling shows through the panels' faint wash, and it is the layout grid: everything lines up with it (see Grid Unit). It never shows as the gaps of a card grid inside one subject (see The One Sheet Rule).
+- **Page Paper** (page-paper) with **Dot Grid** (dot-grid): the warm page, ruled every 22px (dots, a square grid or lines, by journal), with a fine noise grain over it (dark warm specks at about 9% in light, neutral pale specks at about 9% at night, so they suit every journal). The ruling shows through the panels' faint wash, and it is the layout grid: everything lines up with it (see Grid Unit). It never shows as the gaps of a card grid inside one subject (see The One Sheet Rule).
 - **Sheet** (sheet) and **Sheet Tint** (sheet-tint): the sheet colour is washed at 35% behind every panel (`--sheet`, derived from the journal's sheet colour in both themes; `--sheet-head` is the same look made opaque, for sticky table heads), and stays solid behind things that float (dialogs, hover tips, menus) and controls; the tint marks day and group rows in tables and hover rows.
 - **Rule** (rule) and **Strong Rule** (rule-strong): on the page every rule is the strong one (`.main` maps rule to rule-strong), since the faint rule disappears once the dots show through: panel lines, section rules, row rules, the calendar's lines. Outside the page (dialogs, tips) the faint rule stays.
 - **Ink** (ink): all text and figures, and the page header's double rule.
@@ -273,13 +273,13 @@ An ink-and-indigo planner palette on warm paper: nearly all of every screen is n
 Five journal presets, picked in Settings › Journal and remembered per browser like the theme. The colour names above and in the front-matter are the Indigo journal's values.
 - **Indigo** (default): today's colours, yellow highlighter, dot grid.
 - **Plum:** aubergine cloth, cream paper, pink highlighter, dot grid.
-- **Charcoal:** black cover, bright white grid paper, orange highlighter.
-- **Saddle:** tan leather, kraft-tinted paper, apricot highlighter, dot grid.
+- **Charcoal:** black cover, bright white grid paper, graphite greys, cobalt ink, orange highlighter.
+- **Saddle:** tan leather, kraft-tinted paper, sand greys, Prussian-blue ink, a cream wash, apricot highlighter, dot grid.
 - **Slate:** blue-grey cloth, cool white ruled-line paper, lavender highlighter.
 
-Each journal sets its cover (rail, fold, rail ink, primary button), its paper (page, sheet, tint and ruling: dot grid, square grid or ruled lines), its ink accent (links, meters, paid stamps, tags), its highlighter, three washi tapes, a doodle, and its own night steps, including the colour the cover's fold is lifted toward at night (`--cloth-lift`). Fixed in every journal: ink and muted text, green and red, amber, chart series 1 to 4, and the vermillion seal. No cover is red (it would clash with money out and the seal) or green (money in).
+Each journal is a complete ink set, not a new spine on the same notebook. It sets its cover (rail, fold, rail ink, primary button), its paper (page, sheet, tint and ruling: dot grid, square grid or ruled lines), its own neutrals (ink, muted text, pencil and rules, tinted toward the cover hue at low chroma, as Radix pairs a grey scale with each accent: sand for Saddle, mauve for Plum, graphite for Charcoal, slate for Slate; shadows and scrims take the journal's ink), its ink accent and wash (links, meters, paid stamps, tags, today; no two journals share one), its highlighter and the ink written on it, three washi tapes, a doodle, and its own night steps, including the colour the cover's fold is lifted toward at night (`--cloth-lift`). Fixed in every journal: green and red, amber, chart series 1 to 4, and the vermillion seal. No cover is red (it would clash with money out and the seal) or green (money in).
 
-The single source of the journal tokens is `web/src/journals.js`, which `journal.js` injects after `styles.css` as `:root[data-journal]` blocks. `tests/journals.test.js` checks every journal's contrast in both themes: text at 4.5:1 on paper, sheet, tint, highlighter and cover; white on cover, fold and buttons; the cover's green and red.
+The single source of the journal tokens is `web/src/journals.js`, which `journal.js` injects after `styles.css` as `:root[data-journal]` blocks. Each colour is written once per journal as `light-dark(day, night)`; `styles.css` sets `color-scheme` on `<html>` (system, or the theme you chose) and carries the Indigo values for the first paint, and an inline script in `index.html` puts the saved theme and journal on `<html>` before anything paints. `tests/journals.test.js` and `tests/contrast.test.js` check every journal in both themes: its own ink, muted text, pencil and accent at 4.5:1 on paper, sheet, tint and wash; the ink on its highlighter; white on cover, fold and buttons; a panel's pencil line at 1.4:1 on the paper; the ruling's visibility (dots 1.18 to 1.4 against the paper, square grid and lines 1.1 to 1.2, quieter because they run through figures); that the night highlighter is a bright marker; and that `styles.css`'s first-paint values match Indigo.
 
 ### Named Rules
 **The Meaning-Only Rule.** Green and red mean money in/out or good/bad, nothing else. Category icons take their group's chart hue (series-1 to series-4) on a 15% well of the same hue with a faint inner ring; neutral groups are muted grey, and only income and saving are green. Red is never a category colour. The label beside an icon carries identity; the hue is a secondary cue.
@@ -290,7 +290,7 @@ The single source of the journal tokens is `web/src/journals.js`, which `journal
 
 **The Seal Rule.** Vermillion is the logo. If it appears anywhere but the seal, it is a mistake.
 
-**The Four-Hue Rule.** Charts use series-1 to series-4 in order (indigo, sky, teal, orchid: no amber, green or red, which are statuses); they are told apart by lightness as well as hue, checked under protanopia, deuteranopia and tritanopia simulation in both themes (the closest pair stays at least 7 ΔE apart); anything beyond four is grey. The tint is a secondary cue; a label always carries identity. Spending is the planner's indigo ink wherever it's drawn (cash flow, Money flow, top spending); money in is green. Two keys shown side by side never share hues: Investments' "by holding type" uses the series (ETFs, index funds, employer plan funds, stocks, then grey), "by account type" uses one ink at three strengths (retirement darkest).
+**The Four-Hue Rule.** Charts use series-1 to series-4 in order (indigo, sky, teal, orchid: no amber, green or red, which are statuses); they are told apart by lightness as well as hue, checked under protanopia, deuteranopia and tritanopia simulation in both themes (the closest pair stays at least 7 ΔE apart); at night the four sit in one lightness band (within 12 L*), so no series, such as a debt bar, glows brighter than the rest (both in `tests/journals.test.js`); anything beyond four is grey. The tint is a secondary cue; a label always carries identity. Spending is the planner's indigo ink wherever it's drawn (cash flow, Money flow, top spending); money in is green. Two keys shown side by side never share hues: Investments' "by holding type" uses the series (ETFs, index funds, employer plan funds, stocks, then grey), "by account type" uses one ink at three strengths (retirement darkest).
 
 ## Typography
 
@@ -324,7 +324,7 @@ The scale has twelve steps and nothing sits between them (styles.css is checked 
 
 ## Layout
 
-A fixed 220px cover rail on the left (64px, icons only, below 1100px; it never disappears) and a main page padded one grid unit at the top, two at the left and three at the foot (the right takes whatever makes the page a whole number of units wide). Every page opens with a three-unit header (a two-unit title over a one-unit line) whose bottom is a double rule: 2px ink, then a 1px ink line at 30% opacity 6px below it, drawn just under the header in the unit before the content. The title row carries the page's own actions at its right, then the app's notices (`HeaderTools` in `ui.jsx`, set by App.jsx): the "banks need attention" chip, what a Refresh just found, and, while Hide amounts is on, an "Amounts hidden" chip that shows them again in one click (a screen reader hears the change too). The theme toggle, Hide amounts and the update notice live at the rail's foot and in Ctrl+K. There is no row above the title.
+A fixed 220px cover rail on the left (64px, icons only, below 1100px; it never disappears) and a main page padded one grid unit at the top, two at the left and three at the foot (the right takes whatever makes the page a whole number of units wide). Every page opens with a three-unit header (a two-unit title over a one-unit line) whose bottom is a double rule: 2px ink, then a 1px ink line at 30% opacity 6px below it, drawn just under the header in the unit before the content. The title row carries the page's own actions at its right, then the app's notices (`HeaderTools` in `ui.jsx`, set by App.jsx): the "banks need attention" chip, what a Refresh just found, and, while Hide amounts is on, an "Amounts hidden" chip that shows them again in one click (a screen reader hears the change too). The theme toggle, Hide amounts and the update notice live at the rail's foot and in Ctrl+K; Settings › Journal also has Appearance (System, Light, Dark), the one place to go back to following the system. There is no row above the title.
 
 The dashboard's page header is the date over a since-last-visit digest ("Since Sun: 7 new transactions, 2 bills paid. Acme Corp pays Fri.", from `GET /api/since`; the plain greeting on a first visit or a visit earlier the same day), with Customize dashboard (and, while customizing, its controls) at the header's right. It opens with where you stand written on the page (net worth, then free to spend, spent this month and bills still due, separated by space and hairlines, no panel; bills still due is the same list Free to spend takes off, so the month calendar below drops its own "Bills still due" chip for the current month), then runs lead panels full width (This month: the calendar with Needs you and Coming up beside it and Budget under both; then the "what changed" line), then a packed board of the panels you keep (recent transactions in one-line rows like Coming up, cash flow two columns wide, watchlist, goals beside a one-item watchlist (folded to name, saved and meter when one column wide; active ones only; when all are reached, one line pointing to Plan), and the optional ones under Customize, the net worth chart among them: it leads the Net worth page, so the dashboard doesn't repeat it; an empty watchlist is one muted line over its chips; no Upcoming, Free to spend or projection panel: Coming up continues in Bills, the standing strip's hover gives the free-to-spend breakdown, and the projection lives on Plan). The board is a three-column grid of one-unit rows with no row gap: each panel spans the whole units its content needs plus one empty row of dots under it, never stretched to a neighbour (neighbours that start on the same line within four rows of each other's height end on the same line). At 1440px and wider a 15-unit (330px) side column appears and the board beside it uses two wider columns. Other pages pair a main column with a 14-unit (308px) side panel that drops below at 1099px.
 
@@ -401,7 +401,7 @@ Plain controls in the world's ink.
 - **Icons only, open on hover:** the rail rests at 64px of icons (group headings drawn as stitches). Hovering it (after a 120ms pause, so a passing pointer doesn't flash it) or tabbing into it opens it to 220px over the page with a soft shadow; the page underneath never moves, so the grid snapping never reflows. Moving the pointer off it (or tabbing out) closes it; choosing a page keeps it open while the pointer is still on it.
 - **States:** hover is a 6% white wash and white text; the active item is white 700 text on the fold below. Focus outline is white on the rail.
 - **Active fold:** one piece of cloth (the cover cloth over a light-to-fold gradient, an inset white top edge and a small shadow) sits under the active item, inside the rail, and slides to the page you pick (`--t-base`, `.navfold` placed by App.jsx) instead of each item drawing its own and the highlight jumping. It is placed without sliding on first load and when the window resizes. In windows shorter than 760px the rail scrolls and the fold scrolls with it.
-- **Sync status:** at the rail's foot, one quiet line above the stitch and Settings: the refresh icon and "Synced 14 min ago" (0.8rem, rail ink), one button that checks Plaid now; while a sync runs the text reads "Checking for new data…" and only the icon spins. Its title explains how often Mizo Money checks. What a Refresh found ("3 new transactions", "Up to date…", banks needing attention) appears for a few seconds on the page header's title row, beside the "banks need attention" chip. Under the sync line sit the update notice (when there is one), the theme toggle and Hide amounts, each an icon with its words when the rail is open.
+- **Sync status:** at the rail's foot, one quiet line above the stitch and Settings: the refresh icon and "Synced 14 min ago" (0.8rem, rail ink), one button that checks Plaid now; while a sync runs the text reads "Checking for new data…" and only the icon spins. Its title explains how often Mizo Money checks. What a Refresh found ("3 new transactions", "Up to date…", banks needing attention) appears for a few seconds on the page header's title row, beside the "banks need attention" chip. Under the sync line sit the update notice (when there is one), the theme toggle (a moon by day, a sun at night; its name says what a click does and whether it follows the system) and Hide amounts, each an icon with its words when the rail is open. Settings is a toothed cog, never a sun, so it can't be mistaken for the theme toggle beside it. In Settings › Journal each journal is a small page tile drawn in the current theme: its paper and ruling, its cover down the edge, its highlighter behind a word in its ink, a line in its accent.
 - **Narrow windows:** 64px rail, seal and icons only (the sync line shrinks to its icon, the time in its title); the fold sits around the active icon. Opening and closing the rail use the same curve: the cloth widens over `--t-base` and the words fade in just after it starts; closing fades them over `--t-quick`.
 - **Groups:** every rail group starts with the stitch (the same dashed line as above Plan and Settings), its heading under it; in the narrow rail the heading is the stitch itself.
 

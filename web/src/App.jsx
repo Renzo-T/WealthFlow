@@ -140,11 +140,22 @@ export default function App() {
     return () => window.removeEventListener('scroll', f);
   }, []);
   // The new theme goes on <html> inside the cross-fade (not only in the effect above), so the fade lands on it.
-  const toggleTheme = () => crossfade(() => {
-    const next = dark ? 'light' : 'dark', t = (next === 'dark') === systemDark() ? null : next;
-    if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
-    setTheme(t);
+  const chooseTheme = (t) => { // 'light' | 'dark' | null (follow the system); the rail, Settings and Jump all come here
+    if (t === theme) return;
+    crossfade(() => {
+      if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+      setTheme(t);
+    });
+  };
+  const toggleTheme = () => { const next = dark ? 'light' : 'dark'; chooseTheme((next === 'dark') === systemDark() ? null : next); };
+  const themeTip = `Switch to ${dark ? 'light' : 'dark'} mode (now ${dark ? 'dark' : 'light'}${theme ? '' : ', following your system'})`;
+  // Settings › Journal › Appearance asks for a theme through this event (like mizo:jump) and hears the current one.
+  useEffect(() => {
+    const on = (e) => chooseTheme(e.detail);
+    window.addEventListener('mizo:theme', on);
+    return () => window.removeEventListener('mizo:theme', on);
   });
+  useEffect(() => { window.dispatchEvent(new CustomEvent('mizo:themed', { detail: theme })); }, [theme]);
 
   // Every page needs the banks (the rail's sync line, the banners); only the dashboard needs its own 13 requests. Fetching
   // those on every page would queue them on the server ahead of that page's own data and slow it down.
@@ -219,7 +230,7 @@ export default function App() {
               {update?.available && <a className="railtool update" href="#/settings" title={`Version ${update.latest} is available (you have ${update.version}). See Settings › Updates.`}>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>
                 <span className="synclabel">Version {update.latest} is available</span></a>}
-              <button className="railtool" onClick={toggleTheme} title={`Switch to ${dark ? 'light' : 'dark'} mode${theme ? '' : ' (now following your system setting)'}`} aria-label="Toggle dark mode">
+              <button className="railtool" onClick={toggleTheme} title={themeTip} aria-label={themeTip}>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   {dark ? <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>
                     : <path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" />}</svg>

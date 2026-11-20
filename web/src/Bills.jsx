@@ -286,7 +286,7 @@ export default function Bills() {
   // A card paid from its running balance with nothing on it owes nothing: it goes last, written quietly.
   const outgoing = [...active.filter((b) => b.direction !== 'in' && !owesNothing(b)), ...active.filter((b) => b.direction !== 'in' && owesNothing(b))];
   const incoming = active.filter((b) => b.direction === 'in');
-  const head = (label) => <thead><tr><th>{label}</th><th>Schedule</th><th>Next</th><th className="r">Amount</th></tr></thead>;
+  const head = (label, note) => <thead><tr><th>{label}{note}</th><th>Schedule</th><th>Next</th><th className="r">Amount</th></tr></thead>;
 
   return (
     <>
@@ -297,11 +297,10 @@ export default function Bills() {
       {adding && <Panel className="mt" title="Add a bill or recurring income">
         <AddBill addManual={add} onAdded={() => { setAdding(false); load(); }} onCancel={() => setAdding(false)} /></Panel>}
       <PaycheckPrompt onDone={load} />
-      <p className="small muted billcount" title="Click a bill to change its schedule or amount. Schedules account for weekends and bank holidays; your edits always win.">{active.length} active · <b className="amt">{usd(monthOut)}</b> going out in the next 30 days</p>
       <section className="card scroll sticky-head mt-sm">
         <table className="t billtable">
           <BillCols />
-          {head('Bills')}
+          {head('Bills', <span className="billnote" title="Click a bill to change its schedule or amount. Schedules account for weekends and bank holidays; your edits always win.">{active.length} active · <b className="amt">{usd(monthOut)}</b> going out in the next 30 days</span>)}
           <tbody>{outgoing.map(row)}</tbody>
           {incoming.length > 0 && <>{head('Money in')}<tbody>{incoming.map(row)}</tbody></>}
         </table>

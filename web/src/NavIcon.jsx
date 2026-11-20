@@ -10,7 +10,7 @@ const P = {
   trips: <path d="M10.5 13L4 11l1-2 7 .5 4-5a1.5 1.5 0 012.5 1.5l-3 5.5 1 7-2 1-2.5-6-2.5 2.5v2.5l-1.5 1-1-3.5-3.5-1 1-1.5h2.5L10.5 13z" />,
   reports: <><path d="M4 20V10" /><path d="M10 20V4" /><path d="M16 20v-7" /><path d="M3 20h18" /></>,
   plan: <><path d="M3 20h18" /><path d="M4 16l4-4 3 2" /><path d="M11 14l3.5-3.5" strokeDasharray="2 2.6" /><circle cx="17.5" cy="7.5" r="3.5" /><circle cx="17.5" cy="7.5" r=".9" fill="currentColor" /></>, // solid past, dashed projection, a target at the end
-  settings: <><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1" /></>,
+  settings: <><path d="M10.22 4.82L10.59 2.1h2.82l.37 2.72 2.04.84L18 4l2 2-1.66 2.18.84 2.04 2.72.37v2.82l-2.72.37-.84 2.04L20 18l-2 2-2.18-1.66-2.04.84-.37 2.72h-2.82l-.37-2.72-2.04-.84L6 20l-2-2 1.66-2.18-.84-2.04-2.72-.37v-2.82l2.72-.37.84-2.04L4 6l2-2 2.18 1.66z" /><circle cx="12" cy="12" r="3" /></>, // a cog: eight teeth round a hole
 };
 
 export default function NavIcon({ id }) {

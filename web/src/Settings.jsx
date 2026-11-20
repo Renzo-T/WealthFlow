@@ -2,23 +2,66 @@ import { useEffect, useState } from 'react';
 import { api } from './api.js';
 import { Panel, PageHeader, Hover, confirmDialog } from './ui.jsx';
 import { PlaidKeys } from './PlaidSetup.jsx';
-import { JOURNALS, RULING_NAME, tapeBackground } from './journals.js';
+import { JOURNALS, RULING_NAME, rulingAt } from './journals.js';
 import { currentJournal, setJournal, decorationOn, setDecoration } from './journal.js';
 import { crossfade } from './motion.js';
+
+// Appearance: light, dark, or follow the system. App.jsx owns the theme (the rail's toggle and Ctrl+K share it); this asks
+// for a change with mizo:theme and hears the current one on mizo:themed.
+const THEME_KEY = 'wealthflow.theme';
+const savedTheme = () => { try { const t = localStorage.getItem(THEME_KEY); return t === 'light' || t === 'dark' ? t : null; } catch { return null; } };
+const systemDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+const APPEARANCE = [[null, 'System'], ['light', 'Light'], ['dark', 'Dark']];
+function Appearance() {
+  const [theme, setTheme] = useState(savedTheme);
+  useEffect(() => {
+    const on = (e) => setTheme(e.detail ?? null);
+    window.addEventListener('mizo:themed', on);
+    return () => window.removeEventListener('mizo:themed', on);
+  }, []);
+  return (
+    <div className="appearance">
+      <span className="small" id="appearance-label">Appearance</span>
+      <span className="ranges" role="radiogroup" aria-labelledby="appearance-label">
+        {APPEARANCE.map(([v, label]) => (
+          <button key={label} type="button" role="radio" aria-checked={theme === v} className={theme === v ? 'on' : ''}
+            onClick={() => window.dispatchEvent(new CustomEvent('mizo:theme', { detail: v }))}>{label}</button>))}
+      </span>
+      <span className="small muted">{theme ? `Always ${theme}.` : `Following your system, which is ${systemDark() ? 'dark' : 'light'} now.`}</span>
+    </div>
+  );
+}
+
+// One journal's page in the current theme: its paper and ruling, its cover down the left edge, a swipe of its highlighter
+// behind a word, and a line and dot in its ink accent.
+function JournalTile({ j, dark }) {
+  const c = dark ? j.dark : j.light;
+  return (
+    <span className="jprev" aria-hidden="true" style={{ '--pb': c.bg, '--pr': c.rail, '--ph': c.hi, '--pa': c.accent, '--pk': c.card, '--pi': c.hiInk, background: `${rulingAt(j.ruling, c.dot)}, ${c.bg}` }}>
+      <i className="jcover" /><i className="jsheet" /><span className="jword"><i />Rent</span><i className="jline" /><i className="jdot" /></span>
+  );
+}
 
 // The journal: cover, paper, ink, highlighter and tapes (journals.js), and whether the tape and doodles show.
 // Remembered in this browser, like the light/dark choice.
 function JournalSetting() {
   const [id, setId] = useState(currentJournal);
   const [deco, setDeco] = useState(decorationOn);
+  const [dark, setDark] = useState(() => document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : systemDark());
+  useEffect(() => { // the theme changed (rail, Ctrl+K or the choice above) or the system's did
+    const read = () => setDark(document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : systemDark());
+    const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
+    window.addEventListener('mizo:themed', read); mq?.addEventListener?.('change', read);
+    return () => { window.removeEventListener('mizo:themed', read); mq?.removeEventListener?.('change', read); };
+  }, []);
   const pick = (k) => { if (k !== id) crossfade(() => { setJournal(k); setId(k); }); };
   return (
     <Panel className="mt" title="Journal">
-      <div className="jpicker" role="group" aria-label="Journal">
+      <Appearance />
+      <div className="jpicker" role="radiogroup" aria-label="Journal">
         {Object.entries(JOURNALS).map(([k, j]) => (
-          <button key={k} type="button" aria-pressed={id === k} className={`jpick${id === k ? ' on' : ''}`} onClick={() => pick(k)}>
-            <span className="jbook" aria-hidden="true" style={{ '--c': j.light.rail, '--f': j.light.rail2, '--p': j.light.card, '--h': j.light.hi, '--t': tapeBackground(j.tapes[0]) }}>
-              <i className="jpg" /><i className="jtape" /><i className="jhi" /></span>
+          <button key={k} type="button" role="radio" aria-checked={id === k} className={`jpick${id === k ? ' on' : ''}`} onClick={() => pick(k)}>
+            <JournalTile j={j} dark={dark} />
             <span className="jname"><b>{j.name}</b><span className="small muted">{RULING_NAME[j.ruling]}</span></span>
           </button>
         ))}

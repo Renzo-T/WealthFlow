@@ -1,44 +1,40 @@
 /* Theme tokens: the Planner Page world (PRODUCT.md, .impeccable/surfaces). An indigo cloth-bound cover (the rail), a
    quiet ruled page, ink-dark text; green/red only mean in/out or good/bad; vermillion is the logo seal and nothing else.
-   Dark mode follows the system unless the top-bar toggle sets data-theme on <html>; it is the same planner at night,
-   its own validated steps, not an inversion. --blue is the accent (kept as a name so older rules follow the theme). */
+   Dark mode follows the system unless the rail's toggle or Settings sets data-theme on <html>; it is the same planner at
+   night, its own validated steps, not an inversion. Every colour is written once, as light-dark(day, night): <html>'s
+   color-scheme picks the step (set just below), and --night is 1 at night for the few values that aren't colours.
+   --blue is the accent (kept as a name so older rules follow the theme). */
 :root {
-  --shade-1: rgba(0, 0, 0, .1); --shade-3: rgba(0, 0, 0, .3); --scrim: rgba(15, 20, 40, .42); --scrim-soft: rgba(15, 20, 40, .3); --scrim-strong: rgba(15, 20, 40, .55);
-  --bg: #f3f3ef; --card: #ffffff; --line: #e1e3df; --ink: #1b2030; --muted: #4c5365; --muted-2: #636a7d;
-  --blue: #2d4a93; --accent: var(--blue); --soft: #e8ecf5; --green: #24724f; --amber: #9a6410; --red: #b4382a; --purple: #7a4e9c;
-  --surface-2: #f7f7f4; --line-strong: #c8ccd2; --disabled: #8f96a5; --hub: #475066; --pencil: #475066;
-  --alert-bg: #f9ebe8; --note-ink: #2d4a93; --warn-bg: #f7efde; --warn-ink: #74500f; --warn-dot: #b5720f;
-  --shadow: 0 2px 6px rgba(27, 32, 48, .06), 0 14px 34px rgba(27, 32, 48, .12);
-  --rail: #1e2a47; --rail-2: #2b3b63; --rail-ink: #c5ccdd; --rail-ink-2: #a9b2c8; --rail-line: rgba(255, 255, 255, .09); --btn: #1e2a47; --btn-hover: #2b3b63;
-  --seal: #d9482e; --seal-ink: #fff6f2; --dot: #d6d9d3; --ink-dot: #26355c;
-  --s1: #3554a8; --s2: #5aa8dc; --s3: #00838c; --s4: #b866b0; --neutral: #8a90a0; --neutral-light: #c5c9d2; --in: #24724f;
-  color-scheme: light;
+  color-scheme: light; --night: 0;
+  /* Fixed in every journal: meaning colours, statuses, the chart series and the seal. */
+  --green: light-dark(#24724f, #5cc193); --in: var(--green); --amber: light-dark(#9a6410, #e0a84a); --red: light-dark(#b4382a, #ee806e);
+  --alert-bg: light-dark(#f9ebe8, #3a1e1c); --warn-bg: light-dark(#f7efde, #33281a); --warn-ink: light-dark(#74500f, #ebc27d); --warn-dot: light-dark(#b5720f, #e0a84a);
+  --disabled: light-dark(#8f96a5, #5f6779); --seal: light-dark(#d9482e, #e0533d); --seal-ink: light-dark(#fff6f2, #fff3ee);
+  --s1: light-dark(#3554a8, #7694e9); --s2: light-dark(#5aa8dc, #73bbe1); --s3: light-dark(#00838c, #31b4ac); --s4: light-dark(#b866b0, #c88ccb);
+  --neutral: light-dark(#8a90a0, #7d8496); --neutral-light: light-dark(#c5c9d2, #4a5163);
+  --rail-line: light-dark(rgba(255, 255, 255, .09), rgba(255, 255, 255, .07));
+  --shade-1: rgba(0, 0, 0, .1); --shade-3: rgba(0, 0, 0, .3);
+  /* The journal's tokens (web/src/journals.js is their one source and sets them per journal). These are the Indigo
+     journal's, for first paint before journals.js runs; tests/journals.test.js checks they match it. */
+  --rail: light-dark(#1e2a47, #1a2440); --rail-2: light-dark(#2b3b63, #283a66); --rail-ink: light-dark(#c5ccdd, #aab4cc); --rail-ink-2: light-dark(#a9b2c8, #8f9bbb);
+  --btn: light-dark(#1e2a47, #3c58a8); --btn-hover: light-dark(#2b3b63, #4a67b8);
+  --bg: light-dark(#f2f0e9, #11141c); --card: light-dark(#fffefc, #181c27); --surface-2: light-dark(#f8f6f0, #1d2230); --dot: light-dark(#d9d9d0, #22272c);
+  --ink: light-dark(#1b2030, #e7e9ef); --muted: light-dark(#4c5365, #adb3c3); --muted-2: light-dark(#636a7d, #8a92a6);
+  --line: light-dark(#e1e3df, #282e3d); --line-strong: light-dark(#c5c9cf, #454e66); --pencil: light-dark(#475066, #a3abbd);
+  --blue: light-dark(#2d4a93, #9db2ea); --soft: light-dark(#e8ecf5, #222a40); --note-ink: light-dark(#2d4a93, #afc0ee); --ink-dot: light-dark(#26355c, #a9b9e6);
+  --hi: light-dark(#ffe27a, #eac758); --hi-ink: light-dark(#1b2030, #1b2030); --shadow-ink: #1b2030;
+  /* Derived: follow the journal. */
+  --accent: var(--blue); --hub: var(--pencil); --rail-shade: color-mix(in srgb, var(--rail), #000 45%);
+  --scrim-ink: color-mix(in srgb, var(--shadow-ink), #000 35%);
+  --scrim: color-mix(in srgb, var(--scrim-ink) 42%, transparent); --scrim-soft: color-mix(in srgb, var(--scrim-ink) 30%, transparent); --scrim-strong: color-mix(in srgb, var(--scrim-ink) 55%, transparent);
+  --shadow: 0 2px 6px light-dark(color-mix(in srgb, var(--shadow-ink) 6%, transparent), rgba(0, 0, 0, .3)), 0 14px 34px light-dark(color-mix(in srgb, var(--shadow-ink) 12%, transparent), rgba(0, 0, 0, .45));
   font-family: 'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif; color: var(--ink);
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #11141c; --card: #181c27; --line: #282e3d; --ink: #e7e9ef; --muted: #adb3c3; --muted-2: #8a92a6;
-    --blue: #9db2ea; --soft: #222a40; --green: #5cc193; --amber: #e0a84a; --red: #ee806e; --purple: #b48bd6;
-    --surface-2: #1d2230; --line-strong: #454e66; --disabled: #5f6779; --hub: #a3abbd; --pencil: #a3abbd;
-    --alert-bg: #3a1e1c; --note-ink: #afc0ee; --warn-bg: #33281a; --warn-ink: #ebc27d; --warn-dot: #e0a84a;
-    --shadow: 0 2px 6px var(--shade-3), 0 14px 34px rgba(0, 0, 0, .45);
-    --rail: #1a2440; --rail-2: #283a66; --rail-ink: #aab4cc; --rail-ink-2: #8f9bbb; --rail-line: rgba(255, 255, 255, .07); --btn: #3c58a8; --btn-hover: #4a67b8;
-    --seal: #e0533d; --seal-ink: #fff3ee; --dot: #20252f; --ink-dot: #a9b9e6;
-    --s1: #6a86d4; --s2: #b4e2f8; --s3: #38c0b8; --s4: #e6a6e0; --neutral: #7d8496; --neutral-light: #4a5163; --in: #5cc193;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #11141c; --card: #181c27; --line: #282e3d; --ink: #e7e9ef; --muted: #adb3c3; --muted-2: #8a92a6;
-  --blue: #9db2ea; --soft: #222a40; --green: #5cc193; --amber: #e0a84a; --red: #ee806e; --purple: #b48bd6;
-  --surface-2: #1d2230; --line-strong: #454e66; --disabled: #5f6779; --hub: #a3abbd; --pencil: #a3abbd;
-  --alert-bg: #3a1e1c; --note-ink: #afc0ee; --warn-bg: #33281a; --warn-ink: #ebc27d; --warn-dot: #e0a84a;
-  --shadow: 0 2px 6px var(--shade-3), 0 14px 34px rgba(0, 0, 0, .45);
-  --rail: #1a2440; --rail-2: #283a66; --rail-ink: #aab4cc; --rail-ink-2: #8f9bbb; --rail-line: rgba(255, 255, 255, .07); --btn: #3c58a8; --btn-hover: #4a67b8;
-  --seal: #e0533d; --seal-ink: #fff3ee; --dot: #20252f; --ink-dot: #a9b9e6;
-  --s1: #6a86d4; --s2: #b4e2f8; --s3: #38c0b8; --s4: #e6a6e0; --neutral: #7d8496; --neutral-light: #4a5163; --in: #5cc193;
-  color-scheme: dark;
-}
+/* Night: the system's dark mode unless the toggle chose light, or the toggle's dark. Colours need nothing more than
+   color-scheme; the rest are the few values that aren't colours (blend modes, the grain), kept in the night block of
+   "Richer planner: tokens" below. */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --night: 1; } }
+:root[data-theme="dark"] { color-scheme: dark; --night: 1; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); }
 .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
@@ -284,9 +280,10 @@ tr.dim td { opacity: .6; }
 .chip-link:has(+ .chip-link) { margin-right: .5rem; } /* two chips: only the last pushes the buttons right */
 
 /* ---------- Hide amounts (screen sharing) ---------- */
+/* The blur grows with the type (.3em, at least 7px): a fixed 7px left the large lead figures readable. */
 body.privacy .big, body.privacy .tamt, body.privacy td.r, body.privacy .legend2 b, body.privacy .chart text,
 body.privacy .txsum b, body.privacy .tip, body.privacy .donutsvg text, body.privacy .cat .small,
-body.privacy .amt, body.privacy .explain, body.privacy .cards .card .small, body.privacy input[type=number] { filter: blur(7px); }
+body.privacy .amt, body.privacy .explain, body.privacy .cards .card .small, body.privacy input[type=number] { filter: blur(max(7px, .3em)); }
 
 /* ---------- Empty states ---------- */
 .emptycta { display: flex; flex-direction: column; align-items: flex-start; gap: .6rem; padding: .25rem 0; }
@@ -526,13 +523,12 @@ button.insight-line:hover .insight-ic.chev { color: var(--blue); }
 .addbill-how { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; }
 .addbill-foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 @media (max-width: 640px) { .addbill-row { grid-template-columns: 4rem minmax(0, 1fr) 5.5rem; } .addbill-acct { display: none; } }
-.billcount { margin: 1rem 0 .5rem; }
 .txtable td.merch { white-space: normal; max-width: none; min-width: 11rem; }
 .txtable .catsel { max-width: 10.5rem; text-overflow: ellipsis; }
 
 /* Page header: the description shrinks so the action button stays on the right. */
 .top > div:first-child { flex: 1 1 24rem; min-width: 0; }
-.top > :not(:first-child) { flex-shrink: 0; align-self: center; }
+.top > :not(:first-child) { flex-shrink: 0; align-self: flex-start; }
 /* Transactions: a wrapped merchant name stays beside its logo. */
 .merchcell { display: inline-flex; align-items: center; gap: .5rem; }
 /* Budget: neutral until something is budgeted. */
@@ -699,7 +695,7 @@ button.insight-line:hover .insight-ic.chev { color: var(--blue); }
 .rowmenu-btn { display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem; margin: -.3rem -.4rem -.3rem 0; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .rowmenu-btn:hover, .rowmenu-btn[aria-expanded="true"] { background: var(--surface-2); color: var(--ink); }
 .rowmenu-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
-.rowmenu-pop { position: absolute; top: 100%; right: 0; z-index: 20; display: grid; gap: .15rem; min-width: 9.5rem; padding: .35rem; background: var(--card); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: 0 8px 22px -10px rgba(27,32,48,.35); }
+.rowmenu-pop { position: absolute; top: 100%; right: 0; z-index: 20; display: grid; gap: .15rem; min-width: 9.5rem; padding: .35rem; background: var(--card); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: 0 8px 22px -10px color-mix(in srgb, var(--shadow-ink) 35%, transparent); }
 .rowmenu-pop button { padding: .4rem .55rem; border: 0; border-radius: 6px; background: none; color: var(--ink); font: inherit; font-size: .8rem; text-align: left; cursor: pointer; }
 .rowmenu-pop button:hover, .rowmenu-pop button:focus-visible { background: var(--surface-2); outline: none; box-shadow: inset 0 0 0 2px var(--blue); }
 .rowmenu-pop label { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .3rem .55rem; }
@@ -883,10 +879,10 @@ input:hover, select:hover { border-color: var(--hub); }
 .iconbtn { border-radius: 6px; }
 .ranges { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 2px; }
 .ranges button { border-radius: 4px; }
-.ranges button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(27, 32, 48, .12); }
+.ranges button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px color-mix(in srgb, var(--shadow-ink) 12%, transparent); }
 /* A month stepper inside a range control: ‹ Nov 2026 ›, raised as one segment while a month is picked. */
 .rangestep { display: inline-flex; align-items: center; border-radius: 4px; }
-.rangestep.on { background: var(--card); box-shadow: 0 1px 2px rgba(27, 32, 48, .12); }
+.rangestep.on { background: var(--card); box-shadow: 0 1px 2px color-mix(in srgb, var(--shadow-ink) 12%, transparent); }
 .rangestep.on button.rangemonth { color: var(--ink); font-weight: 700; }
 .rangestep button:not(.rangemonth) { padding-left: .35rem; padding-right: .35rem; display: inline-flex; align-items: center; }
 .rangestep button:disabled { opacity: .35; cursor: default; }
@@ -1065,50 +1061,34 @@ input:hover, select:hover { border-color: var(--hub); }
 
 /* ---------- Richer planner: tokens ---------- */
 :root {
-  --bg: #f2f0e9; --card: #fffefc; --dot: #d9d9d0; --surface-2: #f8f6f0;
-  --hi: #ffe27a;
   /* Journal tokens (journals.js sets them per journal; these are Indigo's, for the moment before it loads). */
   --ruling: radial-gradient(circle, var(--dot) 1px, transparent 1.3px) calc(var(--u) / -2) calc(var(--u) / -2) / var(--u) var(--u); --doodle: none;
   --tape1: #c9d5f0; --tape2: #f6df98; --tape3: #ece7da;
-  --tape-blend: multiply; --tape-opacity: .85; --tape-filter: none; --hi-blend: multiply;
-  --paper-shadow: 0 1px 0 rgba(27,32,48,.03), 0 1px 2px rgba(27,32,48,.06), 0 12px 28px -16px rgba(27,32,48,.28);
-  --paper-shadow-up: 0 1px 0 rgba(27,32,48,.03), 0 2px 4px rgba(27,32,48,.07), 0 20px 36px -16px rgba(27,32,48,.34);
+  /* Tape is quieter at night: thinner and darker. */
+  --tape-blend: multiply; --tape-opacity: calc(.85 - .3 * var(--night));
+  --tape-filter: brightness(calc(1 - .38 * var(--night))) saturate(calc(1 + .05 * var(--night)));
+  /* The highlighter is multiplied into the paper by day; at night it is a bright marker laid over it (normal blend),
+     with the daylight ink written on it (--hi-ink). Its ends pool darker: toward ink by day, toward black at night. */
+  --hi-blend: multiply; --hi-pool: light-dark(var(--ink), #000);
+  --paper-shadow: 0 1px 0 color-mix(in srgb, var(--shadow-ink) 3%, transparent), 0 1px 2px color-mix(in srgb, var(--shadow-ink) 6%, transparent), 0 12px 28px -16px color-mix(in srgb, var(--shadow-ink) 28%, transparent);
+  --paper-shadow-up: 0 1px 0 color-mix(in srgb, var(--shadow-ink) 3%, transparent), 0 2px 4px color-mix(in srgb, var(--shadow-ink) 7%, transparent), 0 20px 36px -16px color-mix(in srgb, var(--shadow-ink) 34%, transparent);
   --cloth: repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, var(--shade-1) 0 1px, transparent 1px 3px);
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .24 0 0 0 0 .2 0 0 0 0 .14 .18 0 0 0 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
   --ease: cubic-bezier(.16, 1, .3, 1);
   /* Four durations, all on --ease: quick (hover, colour), base (fades, dialogs, the rail), arrive (stamps, strokes),
      draw (meters filling, chart lines drawing). */
   --t-quick: .12s; --t-base: .2s; --t-arrive: .6s; --t-draw: .9s;
-  --hi-pool: var(--ink); /* where the marker pooled: darker ink by day, deeper colour at night */
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #11141c; --card: #181c27; --dot: #191e23; --surface-2: #1d2230;
-    --hi: #836400;
-    --tape-blend: normal; --tape-opacity: .55; --tape-filter: brightness(.62) saturate(1.05); --hi-blend: normal; --hi-pool: #000;
-    --paper-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 1px 2px rgba(0,0,0,.4), 0 14px 30px -16px rgba(0,0,0,.75);
-    --paper-shadow-up: 0 1px 0 rgba(255,255,255,.04) inset, 0 2px 4px rgba(0,0,0,.45), 0 22px 38px -16px rgba(0,0,0,.85);
-    --cloth: repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, var(--shade-1) 0 1px, transparent 1px 3px);
-    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .66 0 0 0 0 .74 0 0 0 0 1 .1 0 0 0 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
-    --ease: cubic-bezier(.16, 1, .3, 1);
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #11141c; --card: #181c27; --dot: #191e23; --surface-2: #1d2230;
-  --hi: #836400;
-  --tape-blend: normal; --tape-opacity: .55; --tape-filter: brightness(.62) saturate(1.05); --hi-blend: normal; --hi-pool: #000;
-  --paper-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 1px 2px rgba(0,0,0,.4), 0 14px 30px -16px rgba(0,0,0,.75);
-  --paper-shadow-up: 0 1px 0 rgba(255,255,255,.04) inset, 0 2px 4px rgba(0,0,0,.45), 0 22px 38px -16px rgba(0,0,0,.85);
-  --cloth: repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, var(--shade-1) 0 1px, transparent 1px 3px);
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .66 0 0 0 0 .74 0 0 0 0 1 .1 0 0 0 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
-  --ease: cubic-bezier(.16, 1, .3, 1);
-}
+/* Night's values that aren't colours (the colours switch on color-scheme, at the top of this file): blend modes, the
+   paper shadow's lit top edge, and a neutral pale grain, so it suits every journal's paper. */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --tape-blend: normal; --hi-blend: normal; --paper-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 1px 2px rgba(0,0,0,.4), 0 14px 30px -16px rgba(0,0,0,.75); --paper-shadow-up: 0 1px 0 rgba(255,255,255,.04) inset, 0 2px 4px rgba(0,0,0,.45), 0 22px 38px -16px rgba(0,0,0,.85); --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .86 0 0 0 0 .86 0 0 0 0 .86 .09 0 0 0 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"); } }
+:root[data-theme="dark"] { --tape-blend: normal; --hi-blend: normal; --paper-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 1px 2px rgba(0,0,0,.4), 0 14px 30px -16px rgba(0,0,0,.75); --paper-shadow-up: 0 1px 0 rgba(255,255,255,.04) inset, 0 2px 4px rgba(0,0,0,.45), 0 22px 38px -16px rgba(0,0,0,.85); --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .86 0 0 0 0 .86 0 0 0 0 .86 .09 0 0 0 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"); }
 
 /* ---------- Richer planner: the cover rail and the seal ---------- */
 .side {
   background: var(--cloth),
     linear-gradient(180deg, color-mix(in srgb, var(--rail-2) 50%, var(--rail)) 0%, var(--rail) 38%, color-mix(in srgb, var(--rail) 82%, black) 100%);
-  box-shadow: 6px 0 22px -8px rgba(12, 17, 34, .55);
+  box-shadow: 6px 0 22px -8px color-mix(in srgb, var(--rail-shade) 55%, transparent);
   z-index: 4;
 }
 .side::after { content: ''; position: absolute; top: 0; bottom: 0; right: 5px; border-right: 1.5px dashed rgba(255, 255, 255, .17); pointer-events: none; }
@@ -1117,12 +1097,12 @@ input:hover, select:hover { border-color: var(--hub); }
 /* ---------- Richer planner: paper and sheets ---------- */
 .main { background: var(--grain), var(--ruling), var(--bg); }
 .hovtip, .tip { box-shadow: var(--shadow); }
-.iconbtn { box-shadow: 0 1px 1px rgba(27, 32, 48, .05); }
+.iconbtn { box-shadow: 0 1px 1px color-mix(in srgb, var(--shadow-ink) 5%, transparent); }
 :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not(.nick):not(.tripname-in), select:not(.catsel)) {
-  box-shadow: inset 0 1px 2px rgba(27, 32, 48, .05);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--shadow-ink) 5%, transparent);
 }
 :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not(.nick):not(.tripname-in), select:not(.catsel)):focus {
-  box-shadow: inset 0 1px 2px rgba(27, 32, 48, .05), 0 0 0 3px color-mix(in srgb, var(--blue) 18%, transparent);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--shadow-ink) 5%, transparent), 0 0 0 3px color-mix(in srgb, var(--blue) 18%, transparent);
 }
 
 /* ---------- Richer planner: page header ---------- */
@@ -1151,9 +1131,9 @@ h1 {
 .stand.lead { position: relative; }
 .stand.lead + .stand { border-left: 0; }
 .stand .sfig.big { font-size: 2.1rem; }
-.stand.lead .slabel { position: relative; isolation: isolate; align-self: flex-start; padding: 0 .3em; margin-left: -.3em; color: var(--ink); font-size: .8rem; }
+.stand.lead .slabel { position: relative; isolation: isolate; align-self: flex-start; padding: 0 .3em; margin-left: -.3em; color: var(--hi-ink); font-size: .8rem; }
 .stand.lead .slabel::before {
-  content: ""; position: absolute; z-index: -1; left: -.1em; right: -.3em; top: 18%; bottom: -14%; pointer-events: none;
+  content: ""; position: absolute; z-index: -1; left: -.1em; right: -.3em; top: calc(18% - 22% * var(--night)); bottom: -14%; pointer-events: none;
   background: linear-gradient(90deg, color-mix(in srgb, var(--hi), var(--hi-pool) 9%) 0 3%, var(--hi) 12% 90%, color-mix(in srgb, var(--hi), var(--hi-pool) 7%) 99%);
   -webkit-mask: var(--hi-swipe) 0 0 / 100% 100% no-repeat; mask: var(--hi-swipe) 0 0 / 100% 100% no-repeat;
   mix-blend-mode: var(--hi-blend); rotate: -1.5deg;
@@ -1195,7 +1175,7 @@ h1 {
 /* Cash flow: bars rise from the baseline */
 .chart .cf-bar { transform-box: fill-box; transform-origin: center bottom; animation: rise var(--t-draw) var(--ease) calc(var(--i, 0) * 45ms) both; }
 /* Asset allocation: thicker ring, swept in */
-.donutsvg { width: 164px; height: 164px; filter: drop-shadow(0 3px 5px rgba(27, 32, 48, .18)); }
+.donutsvg { width: 164px; height: 164px; filter: drop-shadow(0 3px 5px color-mix(in srgb, var(--shadow-ink) 18%, transparent)); }
 .donutsvg .seg { animation: sweep var(--t-draw) var(--ease) both; }
 /* Coming back to a page (App.jsx sets data-quiet on .main) is a plain cut: its arrival doesn't play again. A value that
    changes while you're on it still moves (meters slide to the new width). */
@@ -1312,9 +1292,9 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 /* The highlighter is for attention only: the "Needs you" heading while something waits, and the top bar's banks chip. */
 /* A marker swipe: uneven ends (an SVG mask), a touch darker where the marker pooled at each end, tilted a little,
    multiplied into the paper in daylight. Its colour is the journal's highlighter. */
-.head.needs h2 { position: relative; isolation: isolate; padding: 0 .3em; margin-left: -.3em; }
+.head.needs h2 { position: relative; isolation: isolate; padding: 0 .3em; margin-left: -.3em; color: var(--hi-ink); }
 .head.needs h2::before {
-  content: ""; position: absolute; z-index: -1; left: -.1em; right: -.25em; top: 38%; bottom: -12%; pointer-events: none;
+  content: ""; position: absolute; z-index: -1; left: -.1em; right: -.25em; top: calc(38% - 42% * var(--night)); bottom: -12%; pointer-events: none;
   background: linear-gradient(90deg, color-mix(in srgb, var(--hi), var(--hi-pool) 9%) 0 3%, var(--hi) 12% 90%, color-mix(in srgb, var(--hi), var(--hi-pool) 7%) 99%);
   -webkit-mask: var(--hi-swipe) 0 0 / 100% 100% no-repeat; mask: var(--hi-swipe) 0 0 / 100% 100% no-repeat;
   mix-blend-mode: var(--hi-blend); rotate: -1.2deg; animation: hiswipe var(--t-draw) var(--ease) .2s both;
@@ -1323,9 +1303,13 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 :root {
   --hi-swipe: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M7 9C40 5 110 4 193 7L197 11 193 15 199 20 194 25 198 30 192 34C130 36 60 37 9 34L4 30 8 25 2 20 7 15 3 11Z'/%3E%3C/svg%3E");
 }
+/* By day the swipe sits under the lower half of the words; at night the whole chip is the bright marker, its words and
+   dot in the daylight ink, since a marker only glows in the dark when it carries dark ink. */
 .chip-link[href="#/networth"] {
-  background: linear-gradient(transparent 55%, var(--hi) 55%, var(--hi) 92%, transparent 92%), var(--warn-bg);
+  background: linear-gradient(transparent calc(55% - 55% * var(--night)), var(--hi) calc(55% - 55% * var(--night)), var(--hi) calc(92% + 8% * var(--night)), transparent calc(92% + 8% * var(--night))), var(--warn-bg);
+  color: light-dark(var(--warn-ink), var(--hi-ink));
 }
+.chip-link[href="#/networth"]::before { background: light-dark(var(--warn-dot), var(--hi-ink)); }
 
 /* ---------- Feature check: Ink and pencil ---------- */
 .est-fig { color: var(--muted); text-decoration: underline dashed; text-decoration-thickness: 1px; text-underline-offset: .22em; cursor: help; }
@@ -1439,12 +1423,6 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 .yg-head { display: flex; align-items: baseline; justify-content: space-between; gap: .4rem; padding-bottom: .3rem; border-bottom: 1px solid var(--ink); }
 .yg-head b { font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .yg-head .small { color: var(--muted); white-space: nowrap; }
-/* Hovering a figure (or its month in the chart) washes its month's column and its row, darker where they cross, so the
-   eye keeps its place; the whole cell is the hover target, not just the number. */
-.rtable :is(th, td).rhot, .rtable tbody tr:not(.rsep):hover > td { background-color: color-mix(in srgb, var(--soft) 50%, transparent); }
-.rtable tbody tr:not(.rsep):hover > td.rhot { background-color: var(--soft); }
-.rtable th.rhot { color: var(--ink); }
-.rtable td.rcell > .hov { display: flex; align-items: center; justify-content: flex-end; height: calc(2 * var(--u)); margin: -3px -.5rem; padding: 0 .5rem; }
 .yg-month.future .yg-head b { color: var(--muted); }
 .yg-month.future .yg-head { border-bottom-color: var(--line-strong); }
 .yg-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
@@ -1461,6 +1439,12 @@ dialog.jump .jhint { margin: 0; padding: .45rem 1rem; border-top: 1px solid var(
 /* The month picked there is marked in Month by month. */
 .rtable td.rfocus { box-shadow: inset 1px 0 0 var(--blue), inset -1px 0 0 var(--blue); } /* keeps the cell's own shading */
 .rtable th.rfocus { color: var(--blue); background-color: var(--soft); box-shadow: inset 0 2px 0 var(--blue), inset 1px 0 0 var(--blue), inset -1px 0 0 var(--blue); }
+/* Hovering a figure (or its month in the chart) washes its month's column and its row, darker where they cross, so the
+   eye keeps its place; the whole cell is the hover target, not just the number. */
+.rtable :is(th, td).rhot, .rtable tbody tr:not(.rsep):hover > td { background-color: color-mix(in srgb, var(--soft) 50%, transparent); }
+.rtable tbody tr:not(.rsep):hover > td.rhot { background-color: var(--soft); }
+.rtable th.rhot { color: var(--ink); }
+.rtable td.rcell > .hov { display: flex; align-items: center; justify-content: flex-end; height: calc(2 * var(--u)); margin: -3px -.5rem; padding: 0 .5rem; }
 
 
 /* ---------- Margin notes ----------
@@ -1685,21 +1669,6 @@ dialog.jump[open]::backdrop { opacity: 1; transition-duration: var(--t-base); }
 :root[data-decoration="off"] .estate::after,
 :root[data-decoration="off"] :is(.dmain, .drail) .panel > .head > h2::after { display: none; }
 :root[data-decoration="off"] .mcal-in > .head h2 .mlabel { padding: 0; margin-left: 0; }
-
-/* Settings › Journal: each journal as a small book (cover, page edge, a strip of its tape, its highlighter). */
-.jpicker { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .6rem; margin: .2rem 0 .7rem; }
-.jpick { display: flex; align-items: center; gap: .6rem; padding: .45rem .55rem; border: 1px solid var(--line-strong); border-radius: 6px;
-  background: var(--card); color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: border-color var(--t-quick) var(--ease), box-shadow var(--t-quick) var(--ease); min-width: 0; }
-.jpick:hover { border-color: var(--pencil); }
-.jpick.on { border-color: var(--blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--blue) 30%, transparent); }
-.jname { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
-.jbook { position: relative; flex: none; width: 34px; height: 44px; border-radius: 2px 4px 4px 2px; overflow: hidden;
-  background: var(--cloth), linear-gradient(160deg, var(--f), var(--c)); box-shadow: 0 1px 3px var(--shade-3); }
-.jbook::before { content: ""; position: absolute; inset: 0 auto 0 4px; border-left: 1px dashed rgba(255, 255, 255, .22); }
-.jbook i { position: absolute; display: block; }
-.jbook .jpg { right: 0; top: 3px; bottom: 3px; width: 4px; background: var(--p); border-radius: 0 2px 2px 0; }
-.jbook .jtape { left: 7px; right: -3px; top: 10px; height: 7px; background: var(--t); opacity: .9; rotate: -6deg; }
-.jbook .jhi { left: 9px; width: 16px; bottom: 9px; height: 5px; background: var(--h); border-radius: 2px; rotate: -2deg; }
 
 /* ---------- Pencil borders: panels drawn on the paper ----------
    A panel is a pencil-grey border on the page with a faint wash of the sheet colour behind it, not a white sheet with a
@@ -1935,7 +1904,7 @@ button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
    icon, the seal and the stitches stay exactly where they are, and opening only widens the cloth (animated) and fades
    the words in. Hidden words are visibility: hidden, so they can't catch clicks over the page. */
 .shell .side { width: 64px; padding: 1rem .5rem; transition: width var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease); }
-.railopen .side { width: 220px; box-shadow: 12px 0 32px -14px rgba(12, 17, 34, .6); }
+.railopen .side { width: 220px; box-shadow: 12px 0 32px -14px color-mix(in srgb, var(--rail-shade) 60%, transparent); }
 .side .logo { flex-direction: row; justify-content: flex-start; gap: .7rem; padding: 0 0 1.2rem 9px; } /* the seal's centre on the icons' axis */
 .side .nav { justify-content: flex-start; gap: .75rem; padding: .55rem 0 .55rem 15px; } /* 8px rail padding + 15px: an 18px icon centred in 64px */
 .side .syncfoot { justify-content: flex-start; gap: .75rem; padding: .45rem 0 .45rem 15px; }
@@ -1948,7 +1917,7 @@ button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 /* ---------- Page header: the app's tools on the title row ----------
    The notice chips, the theme toggle and Hide amounts sit at the right of each page's title row, after the page's own
    actions (HeaderTools in ui.jsx), so every page's title starts at the top of the page. */
-.topact { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; }
+.topact { display: flex; align-items: center; min-height: calc(2 * var(--u)); justify-content: flex-end; flex-wrap: wrap; gap: .5rem; }
 .hdtools { display: inline-flex; align-items: center; gap: .5rem; }
 .hdtools:empty { display: none; }
 .hdtools button.chip-link { border: 0; font: inherit; font-size: .8rem; line-height: inherit; cursor: pointer; }
@@ -2011,7 +1980,7 @@ button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
    with Hide amounts; the stroke stays. It draws in once, left to right. */
 .cspent { position: absolute; left: 5px; bottom: 10px; font-size: .7rem; font-weight: 700; line-height: 1; color: var(--ink); white-space: nowrap; }
 .cstroke { position: absolute; left: 4px; bottom: 4px; height: 6px; width: calc(10px + (var(--s) - 1) * (min(100%, 3 * var(--u)) - 18px) / 6);
-  background: var(--hi); mix-blend-mode: var(--hi-blend); border-radius: 2px 4px 3px 4px; rotate: -1.2deg; pointer-events: none;
+  background: var(--hi); mix-blend-mode: var(--hi-blend); opacity: calc(1 - .18 * var(--night)); border-radius: 2px 4px 3px 4px; rotate: -1.2deg; pointer-events: none;
   animation: hiswipe var(--t-arrive) var(--ease) both; animation-delay: calc(var(--i) * 18ms); }
 
 /* ---------- Bills: the bills written into the calendar ----------
@@ -2187,3 +2156,25 @@ dialog.jump .jkeys > div { display: flex; align-items: center; gap: .4rem; }
 dialog.jump .jkeys dd { margin: 0; }
 dialog.jump .jkeys kbd { margin-right: .2rem; padding: 0 .35rem; border: 1px solid color-mix(in srgb, currentColor 35%, transparent); border-radius: 4px;
   font: inherit; font-size: .7rem; line-height: 1.5; opacity: .8; }
+
+/* Appearance control and journal tiles (Settings) */
+.appearance { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem var(--u); margin-bottom: var(--u); }
+.jpicker { display: grid; grid-template-columns: repeat(auto-fill, calc(8 * var(--u))); gap: var(--u); margin: 0 0 var(--u); }
+.jpick { position: relative; display: flex; flex-direction: column; width: calc(8 * var(--u)); height: calc(6 * var(--u)); padding: 0; border: 0; border-radius: 3px;
+  background: var(--sheet); outline: 1px solid var(--line-strong); outline-offset: -1px; color: var(--ink); font: inherit; text-align: left; cursor: pointer; overflow: hidden; }
+.jpick:hover { outline-color: var(--pencil); }
+.jpick.on { outline: 2px solid var(--blue); outline-offset: -2px; }
+.jpick:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.jprev { position: relative; display: block; flex: none; height: calc(4 * var(--u)); overflow: hidden; }
+.jprev i { position: absolute; display: block; }
+.jprev .jcover { inset: 0 auto 0 0; width: calc(var(--u) / 2); background: var(--pr); }
+.jprev .jsheet { inset: calc(var(--u) / 2) calc(var(--u) / 2) calc(var(--u) / 2) var(--u); background: var(--pk); opacity: .6; border-radius: 2px; }
+.jprev .jword { position: absolute; left: calc(1.5 * var(--u)); top: calc(var(--u) / 2); height: calc(1.5 * var(--u)); display: flex; align-items: center; padding: 0 .25rem;
+  font-size: .75rem; font-weight: 700; color: var(--pi); line-height: 1; }
+.jprev .jword i { inset: 14% 0 8% 0; background: var(--ph); border-radius: 2px; z-index: -1; rotate: -1.5deg; }
+.jprev .jword { isolation: isolate; }
+.jprev .jline { left: calc(1.5 * var(--u)); width: calc(3.5 * var(--u)); top: calc(2.75 * var(--u)); height: 2px; background: var(--pa); border-radius: 1px; }
+.jprev .jdot { right: var(--u); top: calc(2.5 * var(--u)); width: 6px; height: 6px; border-radius: 50%; background: var(--pa); }
+.jname { display: flex; flex-direction: column; justify-content: center; min-width: 0; height: calc(2 * var(--u)); padding: 0 calc(var(--u) / 2); line-height: 1.2; }
+.jname > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.billnote { margin-left: .75rem; font-size: .8rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
