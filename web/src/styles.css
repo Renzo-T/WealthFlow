@@ -1636,14 +1636,15 @@ p.small.foot { margin-top: .9rem; }
 /* The month's name written on a strip of tape, like a bullet journal's monthly header (the note beside it stays on paper). */
 .mcal-in > .head h2 .mlabel { position: relative; isolation: isolate; display: inline-block; padding: .12rem .55rem; margin-left: -.35rem; }
 .mcal-in > .head h2 .mlabel::before { z-index: -1; inset: 0; background: var(--tape1); clip-path: var(--tape-edge-2); rotate: -.8deg; }
-/* Goal and trip cards taped to the page, tapes taken in turn. */
+/* Goal and trip cards taped to the page by a corner, tapes taken in turn: a strip across the card's top corner, mostly
+   over the card, so it reads as holding it down rather than floating in the gap between panels. */
 .goalgrid > .card.goal.view, .tripgrid > .tripcard { position: relative; }
 .goalgrid > .card.goal.view::before, .tripgrid > .tripcard::before {
-  z-index: 2; top: -10px; left: calc(50% - 38px); width: 76px; height: 20px;
-  background: var(--tape1); clip-path: var(--tape-edge-1); rotate: -3deg;
+  z-index: 2; top: 4px; left: -14px; width: 64px; height: 18px;
+  background: var(--tape1); clip-path: var(--tape-edge-1); rotate: -38deg;
 }
-:is(.goalgrid > .card.goal.view, .tripgrid > .tripcard):nth-child(3n + 2)::before { background: var(--tape2); clip-path: var(--tape-edge-2); rotate: 2.5deg; left: calc(50% - 30px); }
-:is(.goalgrid > .card.goal.view, .tripgrid > .tripcard):nth-child(3n)::before { background: var(--tape3); clip-path: var(--tape-edge-3); rotate: -1.5deg; left: calc(50% - 44px); }
+:is(.goalgrid > .card.goal.view, .tripgrid > .tripcard):nth-child(3n + 2)::before { background: var(--tape2); clip-path: var(--tape-edge-2); rotate: 36deg; left: auto; right: -14px; }
+:is(.goalgrid > .card.goal.view, .tripgrid > .tripcard):nth-child(3n)::before { background: var(--tape3); clip-path: var(--tape-edge-3); rotate: -40deg; }
 /* The journal's pencil doodle lives on empty states, sketched in the margin of the "nothing here yet" note: never beside
    a page title, where a star or a moon reads as a favourite or pin button. Purely decorative: no pointer events. */
 .estate { position: relative; padding-right: calc(2 * var(--u)); }

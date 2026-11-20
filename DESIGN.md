@@ -387,7 +387,7 @@ Next to them, decoration is allowed, under a budget:
 - It can be turned off: Settings › Journal › "Show washi tape and margin doodles" sets `data-decoration="off"` on `<html>`.
 
 **Decoration in use** (the complete list; nothing else):
-- **Washi tape:** behind the month calendar's month label (tape 1, the bullet-journal monthly header) and across the top edge of goal and trip cards (tapes 1 to 3 in turn). Page titles carry none. Translucent, multiply-blended in daylight, with jagged torn ends and a small fixed tilt per position.
+- **Washi tape:** behind the month calendar's month label (tape 1, the bullet-journal monthly header) and diagonally across a top corner of goal and trip cards (tapes 1 to 3 in turn, mostly over the card, never floating in the gap between panels). Page titles carry none. Translucent, multiply-blended in daylight, with jagged torn ends and a small fixed tilt per position.
 - **Margin doodle:** a small faint pencil sketch in the bottom-right corner of empty states ("nothing here yet"), never beside a page title, where it would read as a favourite or pin button; each journal has its own (star, moon, paper plane, sprig, cloud).
 - **Pen underline:** a short hand-drawn line in the ink colour at about 50%, under dashboard board panel titles only.
 
