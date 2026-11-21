@@ -2,10 +2,11 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { api } from './api.js';
 import Progress from './Progress.jsx';
 import { usd, label, usd2 } from './format.js';
-import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, amountsHidden, Chevron, Migrate, Close, confirmDialog, Standing, Stand } from './ui.jsx';
+import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, amountsHidden, Chevron, Migrate, Close, confirmDialog, Standing, Stand, meterFill } from './ui.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 import CloseMonth from './CloseMonth.jsx';
 import { incomeSplit } from './incomeSplit.js';
+import useStuck from './useStuck.js';
 
 export function BudgetsPanel({ items, suggestions }) {
   const top = [...items].sort((a, b) => b.spent / b.amount - a.spent / a.amount).slice(0, 4);
@@ -80,14 +81,16 @@ function BudgetInput({ c, save }) {
 
 // Actual against budget, the same colours as the dashboard: ink on track, amber a flexible category ahead of an even pace
 // for today (or a few dollars over), red well over. Money in (income, saving) fills green.
-// The tick marks the even pace (flexible spending only).
+// The tick marks the even pace (flexible spending only). Past the budget the track stretches to the actual, so how far
+// over (or, for money in, how much extra) has a length: ink to a notch at the budget, the rest in the state's colour.
 function Meter({ actual, budget, income, pace, saving }) {
   if (!budget || Math.abs(actual) < 0.5) return <div className="meter blank" />; // nothing yet: the $0 already says so
   const p = Math.min(100, (Math.max(0, actual) / budget) * 100);
   const state = income || saving ? 'in' : bigOver(actual - budget, budget) ? 'over' : actual > budget + 0.5 ? 'ahead' : pace != null && pace < 1 && p > pace * 100 + 10 ? 'ahead' : 'ok';
+  const fill = meterFill(actual, budget);
   return (
-    <div className="meter"><i className={state} style={{ width: `${p}%` }} />
-      {pace != null && pace > 0 && pace < 1 && <b style={{ left: `${pace * 100}%` }} title="An even pace for today" />}</div>
+    <div className="meter"><i className={`${state}${fill.split ? ' split' : ''}`} style={fill.style} />
+      {pace != null && pace > 0 && pace < 1 && <b style={{ left: `${pace * fill.scale * 100}%` }} title="An even pace for today" />}</div>
   );
 }
 
@@ -313,6 +316,7 @@ export default function Budget() {
   const [scope, setScope] = useState('all'); // edits apply to every month, or only this one
   const [closing, setClosing] = useState(false); // the close-out sheet is open
   const [showIdle, setShowIdle] = useState(false); // the unbudgeted groups are expanded
+  const sideRef = useStuck(); // the side column is held at the top of the window while the ledger scrolls
   const load = useCallback(async () => setB(await api(`/budget?month=${month}`)), [month]);
   useEffect(() => { load(); }, [load]);
   useEffect(() => setClosing(false), [month]);
@@ -409,7 +413,7 @@ export default function Budget() {
           {(b.totals.saving.budget > 0 || b.totals.saving.actual > 0.5) &&
             <Total title="Total saving" budget={b.totals.saving.budget} actual={b.totals.saving.actual} extra={b.totals.saving.extra} />}
         </section>
-        <aside className="bside ledger">
+        <aside className="bside ledger" ref={sideRef}>
           <SidePanel b={b} />
           <div className="bopts">
           <label className="check small btrips"><input type="checkbox" checked={b.trips.counted} onChange={async (e) => {

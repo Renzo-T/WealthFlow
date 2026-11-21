@@ -40,7 +40,7 @@ function DayLines({ marks }) {
     <span className="clist">
       {shown.map((x, k) => (
         <span key={k} className={`cbill${x.direction === 'in' ? ' in' : ''}${x.done ? ' done' : ''}`}>
-          <Stamp kind={x.direction === 'in' ? 'in' : 'out'} done={x.done} icon={x.done ? markIcon(x) : undefined} className="tiny" />
+          <Stamp kind={x.direction === 'in' ? 'in' : 'out'} done={x.done} icon={markIcon(x)} className="tiny" />
           <span className="cbname">{x.name}</span>
           <span className="cbamt amt">{x.direction === 'in' ? '+' : '−'}{usd(x.amount)}</span>
         </span>))}

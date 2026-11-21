@@ -32,6 +32,7 @@ export const Check = ({ size }) => ico(<path d="M2.8 7.6c.9.7 1.8 1.6 2.7 2.6C7 
 // Migrated (bullet-journal ">"): money carried forward into the next month.
 export const Migrate = ({ size = 12 }) => ico(<path d="M5 3.3c1.5 1.2 3 2.4 4.4 3.8C8 8.3 6.5 9.5 5.1 10.8" />, size);
 export const Close = ({ size = 12 }) => ico(<path d="M3.5 3.5l7 7M10.5 3.5l-7 7" />, size);
+export const Plus = ({ size = 12 }) => ico(<path d="M7 3v8M3 7h8" />, size);
 export const Repeat = ({ size = 12 }) => ico(<><path d="M3 6.2A4 4 0 0110.4 4.6M11 3v2.2H8.8" /><path d="M11 7.8A4 4 0 013.6 9.4M3 11V8.8h2.2" /></>, size);
 
 // A card with a header row: title on the left, actions (links, toggles, legends) on the right.
@@ -83,6 +84,17 @@ export const Amt = ({ children, className = '' }) => <span className={`amt ${cla
 // Ink and pencil: a known figure is ink, an estimated one is pencil (muted, dashed underline). `why` says what makes it an
 // estimate, in words only (no dollar amounts). Put it inside an element Hide amounts blurs (.amt, .tamt, td.r, <Amt>).
 export const Est = ({ why, children, className = '' }) => <span className={`est-fig ${className}`.trim()} title={why}>{children}</span>;
+
+// A budget meter's fill. Up to the budget it fills its track; past it, the track stretches to what was spent, so the fill
+// is the whole track, ink to a small notch at the budget (--at) and the overspend after it in the state's colour
+// (`.meter i.split`). `scale` is where the budget now sits, for placing the pace tick.
+export function meterFill(actual, budget) {
+  const a = Math.max(0, actual);
+  if (!budget || budget <= 0) return { split: false, scale: 1, style: { width: '0%' } };
+  if (a <= budget + 0.5) return { split: false, scale: 1, style: { width: `${Math.min(100, (a / budget) * 100)}%` } };
+  const scale = budget / a;
+  return { split: true, scale, style: { width: '100%', '--at': `${(scale * 100).toFixed(2)}%` } };
+}
 
 // ---- Loading placeholders: grey shapes in the real layout, so nothing jumps when data arrives.
 export const Skeleton = ({ h = 14, w = '100%', r = 8, className = '' }) => (

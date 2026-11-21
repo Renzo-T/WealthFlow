@@ -210,7 +210,7 @@ export default function App() {
     <div className={`shell${railOpen ? ' railopen' : ' slim'}`}>
       <InkDefs />
       <DialogHost />
-      <Jump pages={NAV} commands={[{ label: dark ? 'Switch to light mode' : 'Switch to dark mode', run: toggleTheme }, { label: hide ? 'Show amounts' : 'Hide amounts', run: () => setHide(!hide) }]} />
+      <Jump pages={NAV} commands={[{ label: dark ? 'Switch to light mode' : 'Switch to dark mode', icon: dark ? 'sun' : 'moon', run: toggleTheme }, { label: hide ? 'Show amounts' : 'Hide amounts', icon: hide ? 'eye' : 'eyeoff', run: () => setHide(!hide) }]} />
       <aside className="side" ref={railRef} onMouseEnter={() => railTo(true, 120)} onMouseLeave={() => railTo(false, 200)}
         onFocus={() => railTo(true, 0)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) railTo(false, 0); }}>
         {fold && <span className={`navfold${fold.slide ? "" : " still"}`} aria-hidden="true" style={{ translate: `0 ${fold.top}px`, height: fold.height }} />}

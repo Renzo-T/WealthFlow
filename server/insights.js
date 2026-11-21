@@ -65,7 +65,13 @@ export function incomeSources(from, to) {
   }
   return { list: [...by.values()].filter((x) => x.value > 0).sort((a, b) => b.value - a.value), names };
 }
-export const incomeName = (key, kind, names) => names[key] ?? tidy(key) + (KIND[kind] ?? '');
+// The kind is added only when the name doesn't already say it ("Interest Payment" stays as it is, never
+// "Interest Payment interest"; "Northwind Dividend" never gets "dividends" too).
+const withKind = (name, kind) => {
+  const k = KIND[kind];
+  return !k || new RegExp(`\\b${k.trim().replace(/s$/, '')}`, 'i').test(name) ? name : name + k;
+};
+export const incomeName = (key, kind, names) => names[key] ?? withKind(tidy(key), kind);
 
 // Where money came from and went over [from, to): income sources on the left; budget groups, savings,
 // debt repayment and what's left over on the right. A group that netted negative (refunds, cash back,

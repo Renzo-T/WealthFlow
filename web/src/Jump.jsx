@@ -1,8 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { api } from './api.js';
 import { Amt } from './ui.jsx';
-import { signed } from './format.js';
+import { signed, shortDate } from './format.js';
 import { duration } from './motion.js';
+import NavIcon from './NavIcon.jsx';
+
+// Results come in groups, each under one heading, with the rail's icon on every row (a page's own, a bill's the Bills
+// calendar, and so on), so a row never needs to say what kind of thing it is.
+const GROUP = { page: 'Pages', cmd: 'Commands', place: 'Bills, goals and accounts', tx: 'Transactions' };
+const PLACE_ICON = { Bill: 'bills', Goal: 'plan', Account: 'networth' };
+// The arrow keys, drawn (never text glyphs as icons).
+const Arrow = ({ up = false }) => (
+  <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d={up ? 'M5 8.5V1.5M2 4.5l3-3 3 3' : 'M5 1.5v7M2 5.5l3 3 3-3'} /></svg>
+);
 
 // Ctrl+K, or / when focus isn't in a field: one small dialog to go to a page or find a transaction.
 const typing = (el) => !!el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
@@ -65,8 +76,9 @@ export default function Jump({ pages, commands = [] }) {
   const found = term.length >= 2 ? places.filter((x) => x.name.toLowerCase().includes(low)).slice(0, 5) : [];
   const items = [...hits.map((p) => ({ kind: 'page', key: `p-${p.id}`, page: p })), ...cmds.map((c) => ({ kind: 'cmd', key: `c-${c.label}`, cmd: c })), ...found.map((x) => ({ kind: 'place', key: `l-${x.kind}-${x.id}`, place: x })), ...txs.map((t) => ({ kind: 'tx', key: `t-${t.id}`, tx: t }))];
   const cur = Math.min(at, Math.max(items.length - 1, 0));
-  // Keyboard help: with nothing typed, or when "keys" / "shortcuts" is.
-  const showKeys = !low || (low.length >= 2 && ['keyboard', 'keys', 'shortcuts'].some((w) => w.startsWith(low)));
+  // The full list of shortcuts shows when "keys" / "shortcuts" is typed; the footer says so, and always carries the three
+  // keys the dialog itself uses.
+  const showKeys = low.length >= 2 && ['keyboard', 'keys', 'shortcuts'].some((w) => w.startsWith(low));
 
   const close = () => dlg.current?.close();
   const go = (item) => {
@@ -87,20 +99,24 @@ export default function Jump({ pages, commands = [] }) {
       onClose={() => { /* the list stays while it fades out (styles.css), unless it was opened again */ setTimeout(() => { if (!dlg.current?.open) setOpen(false); }, duration('--t-quick')); const el = from.current; from.current = null; if (el?.isConnected) el.focus(); }}
       onClick={(e) => { if (e.target === dlg.current) close(); }}>
       {open && <>
-        <input ref={input} autoFocus type="text" role="combobox" aria-expanded="true" aria-controls="jump-list" aria-autocomplete="list"
-          aria-activedescendant={items.length ? `jump-${cur}` : undefined} placeholder="Go to a page, or search transactions"
-          aria-label="Go to a page or search transactions" value={text} onChange={(e) => { setText(e.target.value); setAt(0); }} onKeyDown={onInputKey} />
+        <div className="jfield"><NavIcon id="search" />
+          <input ref={input} className="jumpin" autoFocus type="text" role="combobox" aria-expanded="true" aria-controls="jump-list" aria-autocomplete="list"
+            aria-activedescendant={items.length ? `jump-${cur}` : undefined} placeholder="Go to a page, or search transactions"
+            aria-label="Go to a page or search transactions" value={text} onChange={(e) => { setText(e.target.value); setAt(0); }} onKeyDown={onInputKey} /></div>
         <ul id="jump-list" role="listbox" aria-label="Results">
           {items.map((it, i) => (
-            <li key={it.key} id={`jump-${i}`} role="option" aria-selected={i === cur} className={i === cur ? 'on' : ''}
-              onMouseMove={() => setAt(i)} onClick={() => go(it)}>
-              {it.kind === 'page'
-                ? <><span>{it.page.label}</span><span className="muted small">Page</span></>
-                : it.kind === 'cmd' ? <><span>{it.cmd.label}</span><span className="muted small">Command</span></>
-                : it.kind === 'place' ? <><span>{it.place.name}</span><span className="muted small">{it.place.kind}</span></>
-                : <><span className="jtx"><b>{it.tx.merchant || it.tx.name}</b> <span className="muted small">{it.tx.date}</span></span>
-                  <Amt>{signed(-it.tx.amount)}</Amt></>}
-            </li>))}
+            <Fragment key={it.key}>
+              {(i === 0 || items[i - 1].kind !== it.kind) && <li className="jgroup" role="presentation">{GROUP[it.kind]}</li>}
+              <li id={`jump-${i}`} role="option" aria-selected={i === cur} className={i === cur ? 'on' : ''}
+                onMouseMove={() => setAt(i)} onClick={() => go(it)}>
+                <span className="jico"><NavIcon id={it.kind === 'page' ? it.page.id : it.kind === 'cmd' ? it.cmd.icon : it.kind === 'place' ? PLACE_ICON[it.place.kind] : 'transactions'} /></span>
+                {it.kind === 'page' ? <span className="jtext">{it.page.label}</span>
+                  : it.kind === 'cmd' ? <span className="jtext">{it.cmd.label}</span>
+                  : it.kind === 'place' ? <><span className="jtext">{it.place.name}</span><span className="muted small">{it.place.kind}</span></>
+                  : <><span className="jtext jtx">{it.tx.merchant || it.tx.name} <span className="muted small">{shortDate(it.tx.date)}</span></span>
+                    <Amt>{signed(-it.tx.amount)}</Amt></>}
+              </li>
+            </Fragment>))}
           {!items.length && <li className="jnone muted" role="presentation">{term.length < 2 ? 'No page matches.' : 'Nothing found.'}</li>}
         </ul>
         {showKeys && (
@@ -109,7 +125,10 @@ export default function Jump({ pages, commands = [] }) {
             {KEYS.map(([keys, what]) => <div key={what}><dd>{keys.map((k) => <kbd key={k}>{k}</kbd>)}</dd><dd className="muted">{what}</dd></div>)}
           </dl>
         )}
-        <p className="small muted jhint">↑ ↓ to move · Enter to open · Esc to close</p>
+        <p className="small muted jhint">
+          <span><kbd aria-label="Up"><Arrow up /></kbd><kbd aria-label="Down"><Arrow /></kbd> move</span>
+          <span><kbd>Enter</kbd> open</span><span><kbd>Esc</kbd> close</span>
+          {!showKeys && <span className="jmore">Type <q>keys</q> for every shortcut</span>}</p>
       </>}
     </dialog>
   );

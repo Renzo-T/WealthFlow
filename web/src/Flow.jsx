@@ -15,9 +15,50 @@ const W = 760, BAR = 8, LX = 190, RX = W - 190 - BAR, HW = 12, HX = W / 2 - HW /
 // spending is the planner's indigo ink, debt payments are grey, refunds teal. Every bar is labelled, so colour never has
 // to tell one group from another on its own. Figures here are totals, so they're whole dollars (format.js's rule).
 const GREEN = INCOME, AMBER = SERIES[1], TEAL = SERIES[2], INK = 'var(--ink-dot)';
+// Spending's bars are the ink; its streams, drawn at a third strength, take the indigo pen colour, since the near-black
+// ink at that strength reads as a grey "nothing here" beside the green.
+const RIBBON_INK = 'var(--blue)';
 const SMALL = 0.02; // spending groups under 2% of the total fold into "Everything else" (listed on hover)
 const monthName = (m) => new Date(m + '-01T00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-const short = (s) => (s.length > 24 ? s.slice(0, 23) + '…' : s);
+// Labels are cut by the room each side really has, in the chart's own units: from the node out to the edge of the panel's
+// content (the svg draws outside its viewBox there), measured with the labels' own font. Until measured, a safe 182.
+const LABEL_GAP = 8, NEAR = LX - LABEL_GAP; // a label ends 8 units from its bar; the viewBox gives it 182 units
+let measureCtx = null;
+const textWidth = (s, font) => {
+  measureCtx ??= document.createElement('canvas').getContext('2d');
+  measureCtx.font = font;
+  return measureCtx.measureText(s).width;
+};
+const fit = (s, room, font) => {
+  if (!font || textWidth(s, font) <= room) return s;
+  let lo = 0, hi = s.length - 1; // longest prefix that fits with the ellipsis
+  while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); if (textWidth(s.slice(0, mid).trimEnd() + '…', font) <= room) lo = mid; else hi = mid - 1; }
+  return lo > 0 ? s.slice(0, lo).trimEnd() + '…' : '…';
+};
+// Room on each side (viewBox units) and the labels' font, re-measured when the panel is resized.
+function useRoom(svgRef) {
+  const [room, setRoom] = useState({ l: NEAR, r: NEAR, font: null });
+  useEffect(() => {
+    const svg = svgRef.current, box = svg?.closest('.panel');
+    if (!svg || !box) return undefined;
+    const measure = () => {
+      const s = svg.getBoundingClientRect(), b = box.getBoundingClientRect(), cs = getComputedStyle(box);
+      const scale = s.width / W || 1;
+      const sample = svg.querySelector('text.fl:not(.hubname)'), fs = getComputedStyle(sample ?? svg);
+      const font = sample ? `${fs.fontWeight} ${fs.fontSize} ${fs.fontFamily}` : null;
+      const lead = Math.max(0, s.left - (b.left + parseFloat(cs.paddingLeft || 0))) / scale;
+      const trail = Math.max(0, b.right - parseFloat(cs.paddingRight || 0) - s.right) / scale;
+      const l = Math.floor(NEAR + lead), r = Math.floor(NEAR + trail);
+      setRoom((p) => (p.l === l && p.r === r && p.font === font ? p : { l, r, font }));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(box);
+    document.fonts?.ready.then(measure);
+    return () => ro.disconnect();
+  }, [svgRef]);
+  return room;
+}
 const band = (x0, a0, b0, x1, a1, b1) => {
   const m = (x0 + x1) / 2;
   return `M${x0},${a0} C${m},${a0} ${m},${a1} ${x1},${a1} L${x1},${b1} C${m},${b1} ${m},${b0} ${x0},${b0} Z`;
@@ -103,10 +144,13 @@ function layoutOf(f) {
   // A thin bar sits at the top of its slot so the band stays attached; the label is centred in the slot.
   const slots = (nodes) => nodes.reduce((s, x) => s + Math.max(SLOT, x.value * k) + GAP, -GAP);
   const body = Math.max(hub, slots(left), slots(right)) + 4;
-  const H = body + TOP; // room above for the hub's label
-  const hubTop = TOP + (body - hub) / 2;
+  // Room above for the hub's label, only what the centred hub doesn't already leave (a tall column of groups puts the hub
+  // well down, and a fixed band would sit empty over the chart).
+  const top = Math.max(0, TOP - (body - hub) / 2);
+  const H = body + top;
+  const hubTop = top + (body - hub) / 2;
   const stack = (nodes, side) => {
-    let y = TOP + (body - slots(nodes)) / 2, h = hubTop;
+    let y = top + (body - slots(nodes)) / 2, h = hubTop;
     return nodes.map((x) => {
       const hgt = Math.max(2, x.value * k), slot = Math.max(SLOT, hgt);
       const r = { ...x, id: `${side}:${x.name}`, side, y, hgt, hy: h, hh: x.value * k, mid: y + slot / 2 };
@@ -121,6 +165,7 @@ function Sankey({ f, layout, rename, label }) {
   const [hl, setHl] = useState(null); // 'l:<name>' or 'r:<name>'
   const [tip, show, hide] = useTip();
   const shown = useMorph(layout);
+  const svgRef = useRef(null), room = useRoom(svgRef);
   const { total, income, H, hub, hubTop, nodes } = shown;
   const moving = shown !== layout; // mid-morph: the hover fade must not trail the per-frame opacity
   const L = nodes.filter((x) => x.side === 'l'), R = nodes.filter((x) => x.side === 'r');
@@ -149,10 +194,10 @@ function Sankey({ f, layout, rename, label }) {
   });
   return (
     <>
-    <svg className={`chart sankey${moving ? ' moving' : ''}`} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Where your money came from and where it went">
+    <svg ref={svgRef} style={{ overflow: 'visible' }} className={`chart sankey${moving ? ' moving' : ''}`} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Where your money came from and where it went">
       <g>
         {L.map((x) => <path key={'l' + x.name} className="ribbon" d={band(LX + BAR, x.y, x.y + x.hgt, HX, x.hy, x.hy + x.hh)} fill={x.color} opacity={op(`l:${x.name}`) * (x.fade ?? 1)} {...on('l', x)} />)}
-        {R.map((x) => <path key={'r' + x.name} className="ribbon" d={band(HX + HW, x.hy, x.hy + x.hh, RX, x.y, x.y + x.hgt)} fill={x.color} opacity={op(`r:${x.name}`) * (x.fade ?? 1)} {...on('r', x)} />)}
+        {R.map((x) => <path key={'r' + x.name} className="ribbon" d={band(HX + HW, x.hy, x.hy + x.hh, RX, x.y, x.y + x.hgt)} fill={x.color === INK ? RIBBON_INK : x.color} opacity={op(`r:${x.name}`) * (x.fade ?? 1)} {...on('r', x)} />)}
       </g>
       <rect x={HX} y={hubTop} width={HW} height={hub} rx={HW / 2} style={{ fill: 'var(--ink-dot)' }} />
       <text x={W / 2} y={hubTop - 18} textAnchor="middle" className="fl hubname">{label ?? 'This period'}</text>
@@ -161,14 +206,14 @@ function Sankey({ f, layout, rename, label }) {
         <g key={'ln' + x.name} style={fade(x)}>
           <rect x={LX} y={x.y} width={BAR} height={x.hgt} rx={Math.min(BAR / 2, x.hgt / 2)} fill={x.color} {...on('l', x)} />
           <text x={LX - 8} y={x.mid - 2} textAnchor="end" className={`fl${x.key ? ' click' : ''}`}
-            onClick={x.key ? () => rename(x.key, x.name) : undefined}><title>{x.key ? 'Click to rename' : x.name}</title>{short(x.name)}</text>
+            onClick={x.key ? () => rename(x.key, x.name) : undefined}><title>{x.key ? `${x.name}. Click to rename` : x.name}</title>{fit(x.name, room.l, room.font)}</text>
           <text x={LX - 8} y={x.mid + 11} textAnchor="end">{usd(x.shown)}</text>
         </g>
       ))}
       {R.map((x) => (
         <g key={'rn' + x.name} style={fade(x)}>
           <rect x={RX} y={x.y} width={BAR} height={x.hgt} rx={Math.min(BAR / 2, x.hgt / 2)} fill={x.color} {...on('r', x)} />
-          <text x={RX + BAR + 8} y={x.mid - 2} className="fl" {...on('r', x)}>{short(x.name)}</text>
+          <text x={RX + BAR + 8} y={x.mid - 2} className="fl" {...on('r', x)}>{fit(x.name, room.r, room.font)}</text>
           <text x={RX + BAR + 8} y={x.mid + 11}>{usd(x.shown)} · {pctOf(x.value, total)}</text>
         </g>
       ))}

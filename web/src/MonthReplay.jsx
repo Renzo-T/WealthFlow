@@ -66,8 +66,9 @@ function Chart({ r, p, hover, setHover, playing }) {
   const steps = r.days.map((d, i) => ({ ...d, i })).filter((d) => d.change != null && Math.abs(d.change) >= big)
     .sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
   // Stamps sit beside the line at their day's step: money in above it, bills and moves to savings below it, stacked
-  // outward. Each is a box so the labels and the "Lowest" note can keep clear of them.
-  const sz = Math.min(15, colw - 4), gap = 3, hits = (a, b) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
+  // outward. Each is a box so the labels and the "Lowest" note can keep clear of them. Never smaller than a stamp can
+  // be drawn (the first frame, before the width is measured, can be very narrow).
+  const sz = Math.max(4, Math.min(15, colw - 4)), gap = 3, hits = (a, b) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
   const stamps = [];
   r.days.forEach((d, i) => {
     if (d.cash == null) return;

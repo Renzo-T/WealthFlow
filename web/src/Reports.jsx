@@ -109,7 +109,7 @@ function MonthShape({ d, cols, hot, onHot, mark, onPick }) {
   const avg = d.totals.spending.avg;
   const { ticks, hi } = niceTicks(0, Math.max(1, ...stacks.map((s) => s.total), avg ?? 0), 4);
   const y = (v) => T + ((hi - v) * (H - T - B)) / hi;
-  const band = (W - L) / Math.max(1, stacks.length), bw = Math.min(56, band * 0.56);
+  const band = (W - L) / Math.max(1, stacks.length), bw = Math.min(88, band * 0.46); // the bars, not the gaps, carry the shape
   const cx = (k) => L + band * (k + 0.5);
   // The card sits beside the bar (right of it; left of it in the right half), level with the top of the plot.
   const enter = (k) => {
@@ -274,17 +274,18 @@ function YearGlance({ glance, byMonth, onOpen }) {
           const why = g.partial ? 'Incomplete: missing history from at least one bank.' : g.m === today.slice(0, 7) ? "This month isn't over yet" : null;
           const total = spent[g.m] ?? 0;
           return (
-            <button key={g.m} type="button" className={`yg-month${g.partial ? ' partial' : ''}${g.future ? ' future' : ''}`} disabled={g.future}
+            <button key={g.m} type="button" className={`yg-month${g.partial ? ' partial' : ''}${g.nodata ? ' nodata' : ''}${g.future ? ' future' : ''}`} disabled={g.future}
               onClick={() => onOpen(g.m)} aria-label={`${monYear(g.m)}: open in Month by month`}>
               <span className="yg-head"><b>{mon(g.m)}</b>
-                {!g.future && <span className="small amt">{why ? <Est why={why}>{usd(total)}</Est> : usd(total)}</span>}</span>
+                {g.nodata ? <span className="small muted yg-nodata" title="No history yet: your banks don't reach back this far.">—</span>
+                  : !g.future && <span className="small amt">{why ? <Est why={why}>{usd(total)}</Est> : usd(total)}</span>}</span>
               <span className="yg-grid" aria-hidden="true">
                 {WEEK.map((w, i) => <span key={i} className="yg-wd">{w}</span>)}
                 {Array.from({ length: lead }, (_, i) => <span key={`l${i}`} />)}
                 {g.steps.map((st, i) => {
                   const date = `${g.m}-${String(i + 1).padStart(2, '0')}`, wd = (lead + i) % 7, size = st ? Math.round(SIZES[st] * GLANCE_SCALE) : 0;
                   return <span key={date} className={`yg-day${wd === 0 || wd === 6 ? ' weekend' : ''}${date === today ? ' today' : ''}`}>
-                    {size > 0 ? <i className="amt" style={{ width: size, height: size }} /> : st === 0 ? <i className="none" /> : null}</span>;
+                    {size > 0 ? <i className="amt" style={{ width: size, height: size }} /> : st === 0 && !g.nodata ? <i className="none" /> : null}</span>;
                 })}
               </span>
             </button>

@@ -460,6 +460,7 @@ test('year at a glance: every month of the year, each day on the month spread\'s
   const today = new Date().toLocaleDateString('en-CA'), year = +today.slice(0, 4), month = today.slice(0, 7);
   tx('chk', today, 42.5, 'GROCER', { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_GROCERIES' });
   tx('chk', today, -500, 'TRANSFER IN', { primary: 'TRANSFER_IN' }); // not spending
+  tx('chk', `${month}-01`, -20, 'TRANSFER IN', { primary: 'TRANSFER_IN' }); // history covers the whole month (not spending)
   classify();
   const y = (await get(`/reports/year?year=${year}`)).body;
   assert.deepEqual(y.glance.map((g) => g.m), Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`));
@@ -469,6 +470,11 @@ test('year at a glance: every month of the year, each day on the month spread\'s
   assert.deepEqual(g.steps, spread.days.map((d) => d.step)); // the same scale and days as the dashboard's spread
   assert.equal(g.steps[+today.slice(8) - 1], 3);
   for (const later of y.glance.filter((x) => x.m > month)) { assert.equal(later.future, true); assert.ok(later.steps.every((s) => s === null)); }
+  assert.equal(g.nodata, false); // this month has a transaction
+  // A year entirely before any bank's history is "no data", not partial and not "nothing spent".
+  const old = (await get('/reports/year?year=1990')).body;
+  assert.ok(old.glance.every((x) => x.nodata === true && x.partial === false));
+  assert.ok(old.glance.every((x) => x.steps.every((s) => s === null))); // no "nothing spent" points before history
 });
 
 test('a bank with only investment accounts does not make spending months incomplete', async () => {
@@ -566,6 +572,21 @@ test('estimated balances join up with the earliest real snapshot, not today\'s b
   assert.equal(on(2), 0); // from yesterday's real 0, not today's 13
   assert.equal(on(11), 5); // before the purchase, rewound from 0
   db.prepare('DELETE FROM balance_snapshots').run();
+});
+
+test('net worth: each account\'s sparkline says which days are estimated, so its real stretch is drawn solid', async () => {
+  const d = (n) => new Date(Date.now() - n * 864e5).toLocaleDateString('en-CA');
+  for (const n of [0, 1, 2]) db.prepare('INSERT OR REPLACE INTO balance_snapshots (date, account_id, balance) VALUES (?, ?, ?)').run(d(n), 'chk', 100);
+  tx('chk', d(20), 5, 'OLD PURCHASE', { primary: 'GENERAL_MERCHANDISE' }); // history reaches back before the snapshots
+  try {
+    const a = (await get('/networth')).body.accounts.find((x) => x.id === 'chk');
+    assert.equal(a.spark_est.length, a.spark.length);
+    assert.deepEqual(a.spark_est.slice(-3), [false, false, false]); // the three days with a real balance
+    assert.equal(a.spark_est[0], true); // before them, worked out backwards from transactions
+    assert.equal(a.estimated, true); // the whole-account flag still says some of it is estimated (the hover note)
+  } finally {
+    db.prepare('DELETE FROM balance_snapshots').run();
+  }
 });
 
 test('charts and reports start 3 months before the first connection unless you turn that off', async () => {

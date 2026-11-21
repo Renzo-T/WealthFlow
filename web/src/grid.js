@@ -85,6 +85,10 @@ export function startGrid(main) {
   const run = () => {
     queued = 0;
     const els = snap(main), now = new Set(els);
+    // Each box's own children too: a box held at its min-height doesn't change size when what's inside it shrinks
+    // without a DOM change (the dashboard's board re-packing its panels once the font arrives), so watching the box
+    // alone would leave it rows taller than its content until something else moved.
+    for (const el of els) for (const kid of el.children) now.add(kid);
     for (const el of watched) if (!now.has(el)) ro.unobserve(el);
     for (const el of now) if (!watched.has(el)) ro.observe(el);
     watched = now;

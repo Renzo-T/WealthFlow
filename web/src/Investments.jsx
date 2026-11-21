@@ -197,12 +197,12 @@ export default function Investments() {
 
         {pay?.accounts.length > 0 && <FromPay pay={pay} />}
 
-        <Panel className="mt scroll" title="Holdings" actions={<>
+        <Panel className="mt scroll" title="Holdings" actions={<span className="btnrow hact">
           {asOf && <span className="small muted">Prices as of {day(asOf)}</span>}
           <div className="ranges">
             <button className={view === 'position' ? 'on' : ''} onClick={() => setView('position')}>By position</button>
             <button className={view === 'account' ? 'on' : ''} onClick={() => setView('account')}>By account</button>
-          </div></>}>
+          </div></span>}>
           <table className="t holdings">
             <thead><tr><th>Security</th><th className="r">Last price<div className="small muted">change</div></th><th className="r">Today<div className="small muted">gain/loss</div></th>
               <th className="r">Total gain/loss</th><th className="r">Value<div className="small muted">{view === 'position' ? '% of total' : '% of account'}</div></th>

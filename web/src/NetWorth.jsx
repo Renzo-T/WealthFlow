@@ -3,6 +3,7 @@ import { api } from './api.js';
 import { usd, usd2, signed, label, SERIES, NEUTRAL, shortDate, tint } from './format.js';
 import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, tipText, Trend, Est, confirmDialog, Standing, Stand } from './ui.jsx';
 import NetWorthChart from './NetWorthChart.jsx';
+import { estRuns } from './estRuns.js';
 import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
 
 // Net worth page: the net worth chart and summary, every account by type (click one for this month's activity
@@ -194,19 +195,27 @@ const Change = ({ v, debt, suffix = '', since, neutral }) => {
 };
 
 // 30-day trend, coloured by what the change means for net worth (a debt going up is bad). A flat line
-// says nothing, so it's left out; estimated history stays dashed.
-function Spark({ data, estimated, debt }) {
+// says nothing, so it's left out. Like the net worth chart (estRuns.js): the real stretch is solid with a faint wash,
+// estimated days are dashed with none, and a lone missed sync between real days is bridged.
+function Spark({ data, est, debt }) {
   if (!data || data.length < 2 || Math.abs(data.at(-1) - data[0]) < 0.5 && Math.max(...data) - Math.min(...data) < 0.5) return <span className="aspark" />;
-  const lo = Math.min(...data), hi = Math.max(...data), span = hi - lo || 1;
-  const xy = data.map((v, i) => [(i / (data.length - 1)) * 92 + 2, 25 - ((v - lo) / span) * 21]);
-  const pts = xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const { real, runs } = estRuns(est?.length === data.length ? est : data.map(() => false));
+  const vs = data.map((v, i) => (est?.[i] && real[i] ? (data[i - 1] + data[i + 1]) / 2 : v));
+  const lo = Math.min(...vs), hi = Math.max(...vs), span = hi - lo || 1;
+  const xy = vs.map((v, i) => [(i / (vs.length - 1)) * 92 + 2, 25 - ((v - lo) / span) * 21]);
+  const pts = (r) => xy.slice(r.from, r.to + 1).map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
   const d = data.at(-1) - data[0];
   const color = Math.abs(d) < 0.5 ? 'var(--muted)' : (debt ? d < 0 : d > 0) ? 'var(--green)' : 'var(--red)';
   const [ex, ey] = xy.at(-1);
   return (
     <svg className="aspark" viewBox="0 0 96 28" aria-hidden="true">
-      <polygon points={`2,27 ${pts} 94,27`} style={{ fill: color }} opacity=".1" />
-      <polyline points={pts} fill="none" style={{ stroke: color }} strokeWidth="1.75" strokeDasharray={estimated ? '3 2.5' : undefined} strokeLinejoin="round" strokeLinecap="round" />
+      {runs.filter((r) => !r.est).map((r) => (
+        <polygon key={`w${r.from}`} points={`${xy[r.from][0].toFixed(1)},27 ${pts(r)} ${xy[r.to][0].toFixed(1)},27`} style={{ fill: color }} opacity=".1" />
+      ))}
+      {runs.map((r) => (
+        <polyline key={`l${r.from}`} points={pts(r)} fill="none" style={{ stroke: color }} strokeWidth="1.75"
+          strokeDasharray={r.est ? '3 2.5' : undefined} strokeLinejoin="round" strokeLinecap="round" />
+      ))}
       <circle cx={ex} cy={ey} r="2.5" style={{ fill: color }} />
     </svg>
   );
@@ -251,7 +260,7 @@ function Banks({ meta, accounts, saved }) {
       })}
       {meta.items.length === 0 && <p className="small muted mt-0">No banks yet.</p>}
       <p className="small muted foot">{meta.items.length} of {meta.max} Plaid connections used; on the Trial plan, removing one doesn't free its slot.
-        Updated from Plaid when the app starts and every {meta.autoSyncHours} hours while it's running{meta.lastSync ? ` (last: ${new Date(meta.lastSync).toLocaleString()})` : ''}.
+        Updated from Plaid when the app starts and every {meta.autoSyncHours} hours while it's running{meta.lastSync ? ` (last: ${new Date(meta.lastSync).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })})` : ''}.
         Plaid gets new data from each bank on its own schedule, usually a few times a day for transactions and about once a day for investments.</p>
     </Panel>
   );
@@ -270,16 +279,30 @@ function Activity({ a, act }) {
   );
 }
 
+// The row's middle: this month's money in and out (the same figures as in the opened row), one line each.
+// Totals, so whole dollars; nothing at all is the "—" data mark, not a green $0.
+function MonthFlow({ act }) {
+  if (!act || !act.n) return <span className="aflow" />;
+  const fig = (v, cls = '') => (v >= 0.5 ? <b className={`amt ${cls}`.trim()}>{usd(v)}</b> : <b className="muted">—</b>);
+  return (
+    <span className="aflow small">
+      <span className="muted">{monthName} in</span>{fig(act.month_in, 'good')}
+      <span className="muted">{monthName} out</span>{fig(act.month_out)}
+    </span>
+  );
+}
+
 function AccountRow({ a, act, open, setOpen, saved }) {
   const toggle = async () => { await api(`/accounts/${a.id}`, { method: 'PATCH', body: JSON.stringify({ in_networth: !a.in_networth }) }); saved(); };
   return (
     <>
-      <div className={`arow${a.in_networth ? '' : ' dim'}`} onClick={() => setOpen(open ? null : a.id)} role="button" tabIndex={0}
+      <div className={`arow acct${a.in_networth ? '' : ' dim'}`} onClick={() => setOpen(open ? null : a.id)} role="button" tabIndex={0}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setOpen(open ? null : a.id)} aria-expanded={open}>
         <span className="rowicon"><Avatar name={a.institution} />
           <span className="tmain"><b>{a.name}</b><span className="small muted">{cap(label(a.subtype || a.type))} · {a.institution}{a.mask ? ` ••${a.mask}` : ''}{a.in_networth ? '' : ' · not in net worth'}</span>
           {a.interest_month != null && <span className="small muted">{a.apr}% APR · about <Est why="Estimate: balance × APR ÷ 12. Your bank charges on the daily balance."><b className="amt">{usd(a.interest_month)}</b></Est> a month in interest</span>}</span></span>
-        <Spark data={a.spark} estimated={a.estimated} debt={isDebt(a)} />
+        <MonthFlow act={act} />
+        <Spark data={a.spark} est={a.spark_est} debt={isDebt(a)} />
         <span className="r"><b className="amt">{isDebt(a) && a.balance >= 0.005 ? '−' : ''}{usd2(a.balance)}</b><div>{a.spark?.length > 1 && a.change != null && Math.abs(a.change) >= 0.5
           ? <Hover className="quiet" tip={<TipList title={`${a.name}, last 30 days`} rows={[['30 days ago', usd2(a.spark[0])], ['Today', usd2(a.spark.at(-1))],
             ['Lowest', usd2(Math.min(...a.spark))], ['Highest', usd2(Math.max(...a.spark))]]} note={a.estimated ? 'Estimated from transactions where the bank has no balance history.' : null} />}>

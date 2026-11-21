@@ -3,7 +3,7 @@ import { api } from './api.js';
 import Progress from './Progress.jsx';
 import { usd } from './format.js';
 import AccountOptions from './AccountOptions.jsx';
-import { Panel, PageHeader, EmptyState, PageSkeleton, Hover, TipList, confirmDialog, Standing, Stand } from './ui.jsx';
+import { Panel, PageHeader, EmptyState, PageSkeleton, Hover, TipList, confirmDialog, Standing, Stand, Plus } from './ui.jsx';
 import { TextStamp } from './Stamp.jsx';
 import { statusText } from './goalStatus.js';
 
@@ -229,7 +229,7 @@ function Ideas({ ideas, goals, start }) {
       {list.map(([name, target, why], i) => (
         <button key={i} className="idea" onClick={() => start({ name: name === 'Something else' ? '' : name, target: target ?? '' })}>
           <span><b>{name}</b>{why && <span className="small muted">{why}</span>}</span>
-          <span className="amt">{target ? usd(target) : '+'}</span>
+          {target ? <span className="amt">{usd(target)}</span> : <span className="ideaplus"><Plus size={13} /></span>}
         </button>))}
     </Panel>
   );

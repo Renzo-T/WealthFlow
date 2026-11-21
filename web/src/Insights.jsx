@@ -1,7 +1,7 @@
 import { Fragment, useId, useState } from 'react';
 import { api } from './api.js';
 import { usd, usd2, signed, allocColor } from './format.js';
-import { Panel, EmptyState, Hover, TipList, tipText, Chevron, Close } from './ui.jsx';
+import { Panel, EmptyState, Hover, TipList, tipText, Chevron, Close, Plus } from './ui.jsx';
 const Clock = () => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="6" cy="6" r="4.8" /><path d="M6 3.4V6l1.8 1.2" /></svg>;
 const monthName = (m) => new Date(`${m}-01T00:00`).toLocaleDateString('en-US', { month: 'long' });
 import CategoryIcon from './CategoryIcon.jsx';
@@ -129,7 +129,7 @@ export function WatchlistPanel({ data, reload }) {
   };
   const remove = async (id) => { await api(`/watchlist/${id}`, { method: 'DELETE' }); reload(); };
   return (
-    <Panel title="Watchlist" actions={<button className="linkbtn" onClick={() => setAdding(!adding)}>{adding ? 'Cancel' : '+ Watch something'}</button>}>
+    <Panel title="Watchlist" actions={<button className="linkbtn" onClick={() => setAdding(!adding)}>{adding ? 'Cancel' : <><Plus size={11} /> Watch something</>}</button>}>
       {adding && (
         <form className="form" onSubmit={add}>
           <label className="lbl">Category or shop
@@ -147,7 +147,7 @@ export function WatchlistPanel({ data, reload }) {
       {data.items.length === 0 && !adding && (
         <div className="wempty"><p className="small muted">Pick a shop or category to follow its average, this month so far and where it's headed.</p>
           <div className="estate-actions">{[...data.merchants.slice(0, 4).map((m) => ['merchant', m.merchant]), ['category', 'Restaurants'], ['category', 'Groceries']].map(([kind, value]) => (
-            <button key={value} className="chipbtn" onClick={async () => { await api('/watchlist', { method: 'POST', body: JSON.stringify({ kind, value }) }); reload(); }}>+ {value}</button>))}
+            <button key={value} className="chipbtn" onClick={async () => { await api('/watchlist', { method: 'POST', body: JSON.stringify({ kind, value }) }); reload(); }}><Plus size={11} /> {value}</button>))}
             <button className="chipbtn" onClick={() => setAdding(true)}>Something else…</button></div></div>)}
       {data.items.length > 0 && (
         <div className="rl rl-watch" role="table" aria-label="Watched items">

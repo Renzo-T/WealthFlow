@@ -109,17 +109,23 @@ export function yearInReview(year = new Date().getFullYear(), today = new Date()
   const startYear = historyStart()?.slice(0, 4);
   const years = db.prepare("SELECT DISTINCT substr(date, 1, 4) y FROM transactions ORDER BY y DESC").all().map((r) => +r.y)
     .filter((y) => !startYear || y >= +startYear);
-  // The year at a glance: each month's days on the month spread's dot scale (`step`, null for days still ahead), and
-  // whether the month is missing history from a bank (`partial`).
+  // The year at a glance: each month's days on the month spread's dot scale (`step`; null for days still ahead and for
+  // days before any history, which have nothing to show), and whether the month is missing history from a bank
+  // (`partial`).
   const daily = daySpending(from, to);
+  // `nodata`: the month ended before any bank's history begins (the earliest first date among everyday accounts), so
+  // its zero is "no data", not "nothing spent".
+  const earliest = db.prepare(`SELECT MIN(t.date) d FROM transactions t JOIN accounts a ON a.id = t.account_id
+    WHERE a.type IN ('depository', 'credit')`).get().d;
   const glance = Array.from({ length: 12 }, (_, i) => {
     const m = `${year}-${String(i + 1).padStart(2, '0')}`;
     const n = new Date(year, i + 1, 0).getDate();
     const steps = Array.from({ length: n }, (_, d) => {
       const date = `${m}-${String(d + 1).padStart(2, '0')}`;
-      return date > today ? null : step(Math.max(0, Math.round((daily[date] ?? 0) * 100) / 100));
+      return date > today || (earliest && date < earliest) ? null : step(Math.max(0, Math.round((daily[date] ?? 0) * 100) / 100));
     });
-    return { m, steps, future: `${m}-01` > today, partial: `${m}-01` <= today && isPartial(m) };
+    const nodata = !!earliest && `${m}-${String(n).padStart(2, '0')}` < earliest;
+    return { m, steps, future: `${m}-01` > today, partial: `${m}-01` <= today && isPartial(m) && !nodata, nodata };
   });
   // Contributions taken from your pay (a 401(k) and the like) are saving too, out of pay you never saw deposited: they
   // count in what you saved and in the rate, over income plus them. `fromPaySince` is set when the providers' activity

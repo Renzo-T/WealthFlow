@@ -1,7 +1,7 @@
 import { usd, usd2, shortDate } from './format.js';
-import { tipText, Est } from './ui.jsx';
+import { tipText, Est, meterFill } from './ui.jsx';
 import { billAmount } from './Bills.jsx';
-import { Stamp, RowStamp, useStampedExit } from './Stamp.jsx';
+import { Stamp, RowStamp, useStampedExit, markIcon } from './Stamp.jsx';
 
 // The dashboard's "This month" panel holds the calendar (MonthSpread.jsx) with these beside and under it: what needs
 // you and what's coming up beside it, whether you're on budget under it. Each links to its page for the detail.
@@ -31,7 +31,7 @@ export function GlanceSide({ todo = [], upcoming = [] }) {
         {upcoming.length === 0 ? <p className="gquiet small">Nothing due in the next 30 days.</p> : <div className="glist">
           {upcoming.slice(0, comingCount(rows)).map((r, i) => (
             <div className="grow gbill" key={r.key + r.next_date}>
-              <Stamp kind={r.direction === 'in' ? 'in' : 'out'} ink={i} />
+              <Stamp kind={r.direction === 'in' ? 'in' : 'out'} icon={markIcon(r)} ink={i} />
               <span className="gname" title={r.name}>{r.name}</span>
               <span className="small muted gwhen">{inDays(r.next_date)}</span>
               <span className={`tamt${r.direction === 'in' ? ' good' : ''}`}>{r.estimate ? <Est why="Estimate: the amount varies">{billAmount(r)}</Est> : billAmount(r)}</span>
@@ -62,11 +62,12 @@ export function GlanceBudget({ budgets }) {
           {watch.map((b) => {
             const p = b.amount ? (b.spent / b.amount) * 100 : 0;
             const pace = b.kind === 'flexible' && b.pace > 0 && b.pace < 1 ? b.pace : null; // same rule as the Budget page
+            const fill = meterFill(b.spent, b.amount); // past the budget the track stretches, so the overspend has a length
             return (
               <div className="gbud" key={b.category} title={tipText(`${b.category}: ${usd2(b.spent)} of ${usd2(b.amount)}`)}>
                 <span className="gname">{b.category}</span><span className="small muted amt">{usd(b.spent)} of {usd(b.amount)}</span>
-                <span className="meter"><i className={bigOver(b) ? 'over' : p > 100 ? 'ahead' : ''}style={{ width: `${Math.min(100, p)}%` }} />
-                  {pace != null && <b style={{ left: `${pace * 100}%` }} title="An even pace for today" />}</span>
+                <span className="meter"><i className={`${bigOver(b) ? 'over' : p > 100 ? 'ahead' : ''}${fill.split ? ' split' : ''}`} style={fill.style} />
+                  {pace != null && <b style={{ left: `${pace * fill.scale * 100}%` }} title="An even pace for today" />}</span>
               </div>
             );
           })}

@@ -5,7 +5,7 @@ import Select from './Select.jsx';
 import CategoryIcon from './CategoryIcon.jsx';
 import { RowStamp, useStampedExit } from './Stamp.jsx';
 import { RepeatPick } from './Bills.jsx';
-import { Panel, PageHeader, Skeleton, Hover, TipList, Repeat, Close, tipText, askText, toast } from './ui.jsx';
+import { Panel, PageHeader, Skeleton, Hover, TipList, Repeat, Close, tipText, askText, toast, Plus } from './ui.jsx';
 
 const txIcon = (t) => (t.to_account ? { group: t.shown_grp === 'Transfer' ? 'Transfer' : t.shown_grp, kind: t.shown_grp === 'Transfer' ? 'swap' : undefined }
   : { group: t.shown_grp ?? t.grp, sub: t.shown ?? t.category });
@@ -196,7 +196,7 @@ function SplitEditor({ t, cats, reload, onClose }) {
         </div>
       ))}
       <div className="btnrow">
-        <button className="linkbtn" onClick={() => setParts([...parts, { amount: left > 0 ? left.toFixed(2) : '', category: '' }])}>+ Add a part</button>
+        <button className="linkbtn" onClick={() => setParts([...parts, { amount: left > 0 ? left.toFixed(2) : '', category: '' }])}><Plus size={11} /> Add a part</button>
         <span className={`small ${Math.abs(left) < 0.005 ? 'good' : 'muted'}`}>{Math.abs(left) < 0.005 ? 'Adds up' : `${usd2(Math.abs(left))} ${left > 0 ? 'left to split' : 'too much'}`}</span>
         {left > 0.005 && <button className="linkbtn" onClick={() => set(parts.length - 1, 'amount', ((Number(parts.at(-1).amount) || 0) + left).toFixed(2))}>Put the rest in the last part</button>}
       </div>

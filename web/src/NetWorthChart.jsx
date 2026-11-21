@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { usd } from './Cards.jsx';
 import useWidth from './useWidth.js';
 import { Panel, Hover } from './ui.jsx';
+import { estRuns } from './estRuns.js';
 
 // Drawn at its real width (useWidth), so text stays the same size at any window size.
 const H = 230, L = 58, R = 14, T = 12, B = 26;
@@ -30,14 +31,9 @@ export default function NetWorthChart({ history }) {
     const nice = niceTicks(lo - pad, hi + pad, 5); lo = nice.lo; hi = nice.hi;
     const x = (i) => L + (i * (W - L - R)) / (data.length - 1);
     const y = (v) => T + ((hi - v) * (H - T - B)) / (hi - lo);
-    const line = data.map((d, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(d.value).toFixed(1)}`).join(' ');
-    // Split into runs of estimated vs. real days; neighbouring runs share their boundary point so the line is unbroken.
-    const runs = [];
-    data.forEach((d, i) => {
-      const last = runs.at(-1);
-      if (last && last.est === !!d.est) last.to = i; else runs.push({ est: !!d.est, from: Math.max(0, i - 1), to: i });
-    });
-    const path = (r) => data.slice(r.from, r.to + 1).map((d, k) => `${k ? 'L' : 'M'}${x(r.from + k).toFixed(1)},${y(d.value).toFixed(1)}`).join(' ');
+    const { real, runs } = estRuns(data.map((d) => d.est));
+    const vs = data.map((d, i) => (d.est && real[i] ? (data[i - 1].value + data[i + 1].value) / 2 : d.value));
+    const path = (r) => vs.slice(r.from, r.to + 1).map((v, k) => `${k ? 'L' : 'M'}${x(r.from + k).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
     const h = hover == null ? null : data[hover];
     const move = (e) => {
       const r = e.currentTarget.getBoundingClientRect();

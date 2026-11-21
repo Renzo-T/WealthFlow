@@ -42,6 +42,8 @@ export function InkDefs() {
 // letter (the payee's initial, in the hover) in place of the icon.
 export function StampArt({ s, kind, done, icon, count = 1, ink = 0, label }) {
   const c = s / 2, w = 0.9;
+  const k = s * (kind === 'in' ? 0.56 : 0.64), sc = k / 24;
+  const art = kind === 'save' ? TRAY : I[icon];
   const shape = kind === 'in' ? <circle cx={c} cy={c} r={c - w} /> : <rect x={w} y={w} width={s - 2 * w} height={s - 2 * w} rx={s * 0.16} />;
   const text = count > 1 ? String(count) : label;
   const fig = text != null && s >= 11 && <text x={c} y={c} dy=".36em" textAnchor="middle" style={{ fontSize: s * (text.length > 1 ? 0.5 : 0.58) }}>{text}</text>;
@@ -49,10 +51,12 @@ export function StampArt({ s, kind, done, icon, count = 1, ink = 0, label }) {
     // Still to come: a pencil outline drawn by hand (its own wobble per stamp), waiting for the ink.
     const seed = 11 + ink * 7 + s + (text ? text.charCodeAt(0) : 0) + (kind === 'in' ? 3 : 0);
     const d = kind === 'in' ? handCircle(c, c, c - w - 0.3, seed) : handRect(w + 0.4, w + 0.4, s - 2 * w - 0.8, s - 2 * w - 0.8, seed);
-    return <g className="st-due"><path d={d} />{(count > 1 || label) && fig}</g>;
+    // The icon it will carry shows faintly in pencil, so a waiting stamp never reads as an empty checkbox.
+    const ghost = !fig && art && s >= 11 && (
+      <svg className="st-ghost" x={(s - k) / 2} y={(s - k) / 2} width={k} height={k} viewBox="0 0 24 24" strokeWidth={Math.min(3, 1.15 / sc)}>{art}</svg>
+    );
+    return <g className="st-due"><path d={d} />{(count > 1 || label) ? fig : ghost}</g>;
   }
-  const k = s * (kind === 'in' ? 0.56 : 0.64), sc = k / 24;
-  const art = kind === 'save' ? TRAY : I[icon];
   return (
     <g className="st-ink" filter={`url(#ink-${ink % 3})`}>
       {shape}

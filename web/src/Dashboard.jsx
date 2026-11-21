@@ -104,9 +104,18 @@ function usePacked(ref, deps) {
       }
     };
     fit();
+    // Watch what's inside each panel, not only the panel: the min-height written above holds the panel's own box, so
+    // content that gets shorter (a chart drawn for one frame at its old width, then redrawn at its real one) never
+    // resized it, and the panel kept the taller height. Panels' children come and go as data arrives, so watch again then.
     const ro = new ResizeObserver(fit);
-    for (const cell of grid.children) for (const c of cell.children) ro.observe(c);
-    return () => ro.disconnect();
+    const watch = () => {
+      ro.disconnect();
+      for (const cell of grid.children) for (const c of cell.children) { ro.observe(c); for (const k of c.children) ro.observe(k); }
+    };
+    watch();
+    const mo = new MutationObserver((muts) => { if (muts.some((m) => m.target === grid || m.target.parentElement === grid || m.target.parentElement?.parentElement === grid)) watch(); });
+    mo.observe(grid, { childList: true, subtree: true });
+    return () => { ro.disconnect(); mo.disconnect(); };
   }, deps); // eslint-disable-line react-hooks/exhaustive-deps
 }
 

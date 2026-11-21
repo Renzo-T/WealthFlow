@@ -5,7 +5,9 @@ import { SERIES, NEUTRAL, INCOME, tint } from './format.js';
 // Icons take their group's colour from GROUP below: one of the four chart hues, grey for neutral groups, green only
 // for money in (income, saving). The text label beside the icon carries identity; the colour is a secondary cue.
 // Neutral grey is read from the muted text colour so the glyph keeps 3:1 against its well in both themes.
-const ink = (c) => (c === NEUTRAL ? 'var(--muted)' : c);
+// The icon takes its group's hue pulled a quarter of the way toward the ink, so the lighter series (sky) still reads at
+// row size in both themes; the well keeps the same hue at 15%.
+const ink = (c) => (c === NEUTRAL ? 'var(--muted)' : `color-mix(in srgb, ${c} 75%, var(--ink))`);
 
 export const I = {
   check: <path d="M5 12.5l4.5 4.5L19 7" />,
@@ -48,7 +50,7 @@ export default function CategoryIcon({ group, sub, kind, size = 30 }) {
   const icon = iconKey({ group, sub, kind });
   return (
     <span className="caticon" style={{ width: size, height: size, color: ink(color), background: tint(ink(color), 15) }} aria-hidden="true">
-      <svg viewBox="0 0 24 24" width={size * 0.55} height={size * 0.55} fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{I[icon]}</svg>
+      <svg viewBox="0 0 24 24" width={size * (size < 28 ? 0.6 : 0.55)} height={size * (size < 28 ? 0.6 : 0.55)} fill="none" stroke="currentColor" strokeWidth={size < 28 ? 2.1 : 1.9} strokeLinecap="round" strokeLinejoin="round">{I[icon]}</svg>
     </span>
   );
 }

@@ -198,7 +198,7 @@ function DayList({ days, day, onClear }) {
       {days && items.length === 0 ? <p className="gquiet small">Nothing due that day.</p> : <div className="glist">
         {items.map((m, i) => (
           <div className="grow gbill" key={m.key}>
-            <Stamp kind={m.direction === 'in' ? 'in' : 'out'} done={m.done} icon={m.done ? markIcon(m) : undefined} ink={i} />
+            <Stamp kind={m.direction === 'in' ? 'in' : 'out'} done={m.done} icon={markIcon(m)} ink={i} />
             <span className="gname" title={m.name}>{m.name}</span>
             <span className="small muted gwhen">{m.done ? (m.direction === 'in' ? 'Received' : 'Paid') : 'Due'}</span>
             <span className={`tamt${m.direction === 'in' ? ' good' : ''}`}>{m.estimate ? <Est why="Estimate: the amount varies">{`${m.direction === 'in' ? '+' : '−'}${usd2(m.amount)}`}</Est> : `${m.direction === 'in' ? '+' : '−'}${usd2(m.amount)}`}</span>

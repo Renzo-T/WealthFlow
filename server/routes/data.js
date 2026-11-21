@@ -58,6 +58,8 @@ router.get('/networth', (_req, res) => {
       const realFrom = h.find((p) => !p.est)?.date ?? null;
       const untracked = a.type === 'investment' && (!realFrom || realFrom > h[0]?.date);
       return { ...a, apr: interest[a.id]?.apr ?? null, interest_month: interest[a.id]?.interest_month ?? null, spark: untracked ? h.filter((p) => !p.est).map((p) => p.balance) : h.map((p) => p.balance), estimated: h.some((p) => p.est),
+        // Which of those days are estimated, so the sparkline draws its real stretch solid and only the rest dashed.
+        spark_est: untracked ? h.filter((p) => !p.est).map(() => false) : h.map((p) => !!p.est),
         change: untracked ? null : h.length > 1 ? h.at(-1).balance - h[0].balance : 0, tracking_since: untracked ? realFrom ?? new Date().toLocaleDateString('en-CA') : null };
     }),
     manual: manualAssets(),

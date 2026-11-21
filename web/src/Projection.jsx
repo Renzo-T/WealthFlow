@@ -61,7 +61,7 @@ export function ProjectionChart({ series, years, target = null, real = true }) {
           <text x="10" y="16">{hover === 0 ? 'Today' : `In ${hover} years`}</text>
           {[...series].reverse().map((s, k) => (
             <g key={s.key}><circle cx="14" cy={33 + k * 15} r="3.5" style={{ fill: s.key === 'expected' ? 'var(--blue)' : 'var(--card)', stroke: 'var(--blue)' }} strokeWidth="2" /><text x="24" y={37 + k * 15}>{s.label}</text>
-              <text x="180" y={37 + k * 15} textAnchor="end" style={{ fill: 'var(--ink)', fontWeight: 600 }}>{hover === 0 ? usd(s.values[hover]) : compact.format(s.values[hover])}</text></g>
+              <text x="180" y={37 + k * 15} textAnchor="end" style={{ fill: 'var(--ink)', fontWeight: 700 }}>{hover === 0 ? usd(s.values[hover]) : compact.format(s.values[hover])}</text></g>
           ))}
         </g>
       </g>}

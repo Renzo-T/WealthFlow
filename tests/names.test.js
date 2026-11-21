@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import './helpers.js';
 
 const { describe } = await import('../server/describe.js');
-const { _test: { tidy } } = await import('../server/insights.js');
+const { _test: { tidy }, incomeName } = await import('../server/insights.js');
 
 test('bank descriptions become readable', () => {
   assert.equal(describe('ONLINE/MOBILE PAYMENT CONF#M08104055672'), 'Online/Mobile Payment');
@@ -17,4 +17,12 @@ test('income sources get short names', () => {
   assert.equal(tidy('DIRECT DEPOSIT ACME CORP, INCDIR DEP (Cash)'), 'Acme Corp');
   assert.equal(tidy('Northwind Brokerage'), 'Northwind Brokerage');
   assert.equal(tidy('ACME CORP PAYROLL PPD'), 'Acme');
+});
+
+test("an income source's kind is added only when its name doesn't already say it", () => {
+  assert.equal(incomeName('ACME CORP PAYROLL PPD', 'Salary', {}), 'Acme salary');
+  assert.equal(incomeName('Northwind Brokerage', 'Dividends', {}), 'Northwind Brokerage dividends');
+  assert.equal(incomeName('Interest Payment', 'Interest', {}), 'Interest Payment', 'never "Interest Payment interest"');
+  assert.equal(incomeName('NORTHWIND DIVIDEND', 'Dividends', {}), 'Northwind Dividend');
+  assert.equal(incomeName('Interest Payment', 'Interest', { 'Interest Payment': 'Savings interest' }), 'Savings interest', 'your own name wins');
 });
