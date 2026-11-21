@@ -465,7 +465,7 @@ export default function Transactions() {
         )}
         <section className="card scroll sticky-head">
           <table className="t txtable">
-            <thead><tr><th className="datecol" aria-label="Date" />{editing && <th />}<th>Merchant</th><th>Category</th><th>Account</th><th className="r">Amount</th></tr></thead>
+            <thead><tr><th className="datecol" aria-label="Date" />{editing && <th />}<th className="mcol">Merchant</th><th className="ccol">Category</th><th className="acol">Account</th><th className="r">Amount</th></tr></thead>
             <tbody>
               {days.map((d, di) => {
                 // Each day opens with a date block in the left margin, like a daily log: the day number, the weekday
@@ -511,7 +511,7 @@ export default function Transactions() {
                                 <optgroup key={group} label={group}>{subs.map((c) => <option key={c} value={c}>{c}</option>)}</optgroup>
                               ))}
                             </select><svg className="catchev" width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 5.5l4 4 4-4" /></svg></span></>)}</td>
-                        <td className="acct">{accounts(t)}</td><td className="r">{amount(t)}</td>
+                        <td className="acct" title={accounts(t)}>{accounts(t)}</td><td className="r">{amount(t)}</td>
                       </tr>
                       {t.parts?.map((p) => (
                         <tr className="txpart" key={p.id}>{editing && <td />}

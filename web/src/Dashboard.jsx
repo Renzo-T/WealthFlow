@@ -35,9 +35,11 @@ export const PANELS = [
   { id: 'recent', name: 'Recent transactions', span: 1, render: ({ extra }) => <RecentTransactions items={extra.recent} /> },
   { id: 'cashflow', name: 'Cash flow', span: 2, render: ({ extra }) => <CashFlow data={extra.cashflow} /> },
   { id: 'top', hidden: true, name: 'Top spending', span: 1, rail: true, render: ({ extra }) => <Categories c={extra.categories} changes={extra.insights?.groupChanges} /> },
-  { id: 'watchlist', name: 'Watchlist', span: 2, render: ({ extra, reload }) => <WatchlistPanel data={extra.watchlist} reload={reload} /> },
+  // Empty, it's one line over a row of chips: a short strip across the board, never two-thirds of a row stretched to
+  // its neighbour's height. Goals then run full width under it.
+  { id: 'watchlist', name: 'Watchlist', span: ({ extra }) => ((extra.watchlist?.items.length ?? 0) === 0 ? 3 : 2), render: ({ extra, reload }) => <WatchlistPanel data={extra.watchlist} reload={reload} /> },
   { id: 'frequent', hidden: true, name: 'Frequent spending', span: 1, render: ({ extra }) => <FrequentPanel items={extra.insights?.frequent ?? []} early={extra.insights?.changed?.reason === 'early'} /> },
-  { id: 'goals', name: 'Goals', span: ({ extra }) => ((extra.watchlist?.items.length ?? 0) <= 1 ? 1 : 3), render: ({ extra }) => <GoalsPanel items={extra.goals} /> },
+  { id: 'goals', name: 'Goals', span: ({ extra }) => ((extra.watchlist?.items.length ?? 0) === 1 ? 1 : 3), render: ({ extra }) => <GoalsPanel items={extra.goals} /> },
 ];
 const DEFAULT = defaultLayout(PANELS);
 const merge = (saved) => mergeLayout(saved, PANELS);

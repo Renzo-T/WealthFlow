@@ -555,6 +555,11 @@ button.insight-line:hover .insight-ic.chev { color: var(--blue); }
 .txtable td.merch { min-width: 9.5rem; }
 .txtable .catsel { max-width: 9rem; }
 .txtable td.acct { min-width: 7.5rem; }
+/* The width goes to what you read a row by (merchant, then category); the account is a fixed 18% column, a long
+   transfer route cut to one line with the whole of it on hover (The Fixed Columns Rule). max-width: 0 keeps the cut text
+   from setting the column's minimum, so the amounts never run past the sheet in a narrow window. */
+.txtable thead th.acol { width: 18%; }
+.txtable td.acct { width: 18%; max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Budget: a suggestion is clearly not a budget yet (dashed, italic, "≈"). */
 .binput.sugg { border-style: dashed; background: transparent; }
@@ -1033,6 +1038,12 @@ input:hover, select:hover { border-color: var(--hub); }
 
 /* Money flow: hairline gaps between streams, smooth focus on hover, and the streams drawing in once, left to right. */
 .sankey .ribbon { stroke: var(--card); stroke-width: 1.25; transition: opacity var(--t-base) var(--ease); }
+/* Drawn one unit to a pixel (Flow.jsx), so the labels take the type scale's steps: names at 0.9rem, figures at 0.8rem,
+   the hub's total at 1rem under its tracked label. */
+.chart.sankey text { font-size: .8rem; }
+.chart.sankey text.fl { font-size: .9rem; }
+.chart.sankey text.hubname { font-size: .75rem; }
+.chart.sankey text.amtsvg { font-size: 1rem; }
 .sankey.moving .ribbon { transition: none; } /* the period morph sets opacity every frame; a transition would lag it */
 .flowchart { transition: opacity var(--t-base) var(--ease); }
 .flowchart.stale { opacity: .55; }
@@ -1796,6 +1807,10 @@ html { scrollbar-gutter: stable; }
 .msec > .head, .mcal-in > .head, .mside-in > .head, .gpart > .head { display: flex; justify-content: space-between; align-items: center; gap: .6rem; height: var(--u); margin: 0 0 var(--u); }
 .msec > .head h2, .mcal-in > .head h2, .mside-in > .head h2, .gpart > .head h2 { display: flex; align-items: center; gap: .4rem; margin: 0; white-space: nowrap; }
 .spreadnav { display: flex; gap: .3rem; }
+/* The month arrows sit just before the month they turn (a calendar's page turn), not across the head from it: on Bills
+   the head is the whole page wide. The dashboard's key keeps the right-hand end. */
+.mcal-in > .head .spreadnav { order: -1; margin-right: .2rem; }
+.mcal-in > .head:not(:has(.ckey)) { justify-content: flex-start; }
 .spreadnav .iconbtn { width: var(--u); height: var(--u); }
 
 .cal { --day: calc(3 * var(--u)); display: grid; width: calc(7 * var(--day)); grid-template-columns: repeat(7, var(--day)); box-shadow: inset 0 1.5px 0 var(--ink); }
@@ -1998,6 +2013,9 @@ button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 .card { padding-bottom: calc(var(--u) / 2); }
 :is(.card, .msec) > :last-child { margin-bottom: 0; }
 .panel > .head .btn { padding: 0 .7rem; line-height: 20px; font-size: .8rem; }
+/* Settings is one ledger of settings, so its buttons are all the compact one a section head carries (one unit tall),
+   never three sizes on one page; a form's button keeps its fields' height. */
+.main[data-page="settings"] .panel .btn:not(.form .btn) { padding: 0 .7rem; line-height: 20px; font-size: .8rem; }
 /* Ruled strips of figures: label, figure and note each on the unit. */
 .cards.ruled > .card { padding: calc(var(--u) / 2) var(--u); }
 .cards.ruled > .card h3 { line-height: var(--u); margin: 0; }
@@ -2064,6 +2082,10 @@ button.cday:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px
 .cbill { display: flex; align-items: center; gap: 4px; min-width: 0; font-size: .8rem; line-height: 1.25; color: var(--ink); }
 .cbill .stamp.tiny { width: 11px; height: 11px; flex: none; rotate: none; }
 .cbname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A day with one item has the room: its name wraps to a second line before it's cut ("Transfer to High Yield / Savings"). */
+.clist > .cbill:only-child { align-items: flex-start; }
+.clist > .cbill:only-child .stamp.tiny { margin-top: 2px; }
+.clist > .cbill:only-child .cbname { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .cbamt { flex: none; font-weight: 700; }
 .cbill.in .cbamt { color: var(--green); }
 .cbill.done { color: var(--muted); }

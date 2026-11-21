@@ -22,10 +22,10 @@ function sumBy(rows, key) {
 }
 
 // One part-to-whole bar with a legend underneath. Every segment is labelled in the legend, so colour is never the only cue.
-function Split({ title, parts, total, detail }) {
+function Split({ title, parts, total, detail, head = true }) {
   return (
     <div className="split">
-      <h3>{title}</h3>
+      {head && <h3>{title}</h3>}
       <div className="splitbar" role="img" aria-label={`${title}: ${parts.map((p) => `${p.name} ${pct((p.value / total) * 100, 0)}`).join(', ')}`}>
         {parts.filter((p) => p.value / total >= 0.002).map((p) => (
           <i key={p.name} style={{ width: `${(p.value / total) * 100}%`, background: COLORS[p.name] }} title={tipText(`${p.name}: ${usd0(p.value)} (${pct((p.value / total) * 100)})`)} />
@@ -40,6 +40,9 @@ function Split({ title, parts, total, detail }) {
     </div>
   );
 }
+
+// A column head whose working-out is in its hover (dotted, since the table doesn't explain it beside it).
+const ColHead = ({ note, children }) => <Hover tip={<TipList title={children} note={note} />}>{children}</Hover>;
 
 const Gain = ({ value, cost }) => (cost == null ? <span className="muted" title="Your 401(k) provider doesn't report cost basis">—</span>
   : <span className={value - cost >= 0 ? 'good' : 'bad'}>{signed(value - cost)} <span className="small">{pct(((value - cost) / cost) * 100)}</span></span>);
@@ -184,16 +187,27 @@ export default function Investments() {
           <Stand label="Cash" note={<span className="small muted">{pct((cash / total) * 100)} in money market and sweep</span>}>{usd0(cash)}</Stand>
         </Standing>
 
-        <Panel title="Allocation">
-          <div className={`splits${holdingParts.length > 1 && accountParts.length > 1 ? '' : ' one'}`}>
-            {holdingParts.length > 1 && <Split title="By holding type" parts={holdingParts} total={total} detail={(k) => {
+        {/* Only splits with more than one part say anything. One split names itself in the panel's title (no second
+            label under the first); none, and there's no panel. */}
+        {(() => {
+          const splits = [
+            holdingParts.length > 1 && { title: 'By holding type', parts: holdingParts, detail: (k) => {
               const list = positions.filter((p) => p.kind === k);
               return list.length ? <TipList title={k} rows={list.slice(0, 6).map((p) => [p.ticker ?? p.name, usd0(p.value)])} note={list.length > 6 ? `and ${list.length - 6} more` : null} /> : null;
-            }} />}
-            {accountParts.length > 1 && <Split title="By account type" parts={accountParts} total={total}
-              detail={(k) => <TipList title={k} rows={byAccountAll.filter((g) => g.kind === k).map((g) => [g.name, usd0(g.value), g.institution])} />} />}
-          </div>
-        </Panel>
+            } },
+            accountParts.length > 1 && { title: 'By account type', parts: accountParts,
+              detail: (k) => <TipList title={k} rows={byAccountAll.filter((g) => g.kind === k).map((g) => [g.name, usd0(g.value), g.institution])} /> },
+          ].filter(Boolean);
+          if (!splits.length) return null;
+          const one = splits.length === 1;
+          return (
+            <Panel title={one ? `Allocation ${splits[0].title.toLowerCase()}` : 'Allocation'}>
+              <div className={`splits${one ? ' one' : ''}`}>
+                {splits.map((s) => <Split key={s.title} {...s} total={total} head={!one} />)}
+              </div>
+            </Panel>
+          );
+        })()}
 
         {pay?.accounts.length > 0 && <FromPay pay={pay} />}
 
@@ -204,9 +218,15 @@ export default function Investments() {
             <button className={view === 'account' ? 'on' : ''} onClick={() => setView('account')}>By account</button>
           </div></span>}>
           <table className="t holdings">
-            <thead><tr><th>Security</th><th className="r">Last price<div className="small muted">change</div></th><th className="r">Today<div className="small muted">gain/loss</div></th>
-              <th className="r">Total gain/loss</th><th className="r">Value<div className="small muted">{view === 'position' ? '% of total' : '% of account'}</div></th>
-              <th className="r">Quantity<div className="small muted">average cost</div></th><th className="r">Price range</th></tr></thead>
+            {/* How each column is worked out lives in its head's hover (words the table doesn't explain beside them), not
+                in a paragraph under the table that you'd read again on every visit. */}
+            <thead><tr><th>Security</th>
+              <th className="r"><ColHead note="Prices are as of each provider's last update. The change compares with the previous price recorded: Plaid only sends today's price, so it appears from the second day.">Last price</ColHead><div className="small muted">change</div></th>
+              <th className="r"><ColHead note="The day's gain or loss on what you hold, against the previous price recorded (from the second day).">Today</ColHead><div className="small muted">gain/loss</div></th>
+              <th className="r"><ColHead note="Value minus what you paid, where the provider reports it. 401(k) plans usually don't.">Total gain/loss</ColHead></th>
+              <th className="r"><ColHead note="Cash balances under a dollar are left out.">Value</ColHead><div className="small muted">{view === 'position' ? '% of total' : '% of account'}</div></th>
+              <th className="r">Quantity<div className="small muted">average cost</div></th>
+              <th className="r"><ColHead note="The lowest and highest price recorded over the past year; the mark is today's.">Price range</ColHead></th></tr></thead>
             <tbody>
               {view === 'position' ? positions.map((p) => (
                 <HoldingRow key={p.key} share={(p.value / total) * 100} h={{ ...p, cost: p.allCost ? p.cost : null }}
@@ -226,11 +246,6 @@ export default function Investments() {
               })}
             </tbody>
           </table>
-          <p className="small muted foot">
-            Prices are as of each provider's last update. Price change and today's gain/loss compare with the previous price recorded
-            (Plaid only sends today's price, so they appear from the second day); the price range is what's been recorded over the
-            past year. Gain is value minus what you paid, where the provider reports it (401(k) plans usually don't). Cash balances
-            under a dollar are hidden.</p>
         </Panel>
       </>}
     </>

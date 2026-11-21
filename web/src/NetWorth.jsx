@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from './api.js';
-import { usd, usd2, signed, label, SERIES, NEUTRAL, shortDate, tint } from './format.js';
+import { usd, usd2, signed, label, SERIES, NEUTRAL, shortDate } from './format.js';
 import { Panel, PageHeader, PageSkeleton, EmptyState, Hover, TipList, tipText, Trend, Est, confirmDialog, Standing, Stand } from './ui.jsx';
 import NetWorthChart from './NetWorthChart.jsx';
+import CategoryIcon from './CategoryIcon.jsx';
 import { estRuns } from './estRuns.js';
 import { ConnectBank, UpdateLink, missing } from './Connect.jsx';
 
@@ -221,8 +222,15 @@ function Spark({ data, est, debt }) {
   );
 }
 
-const avatarColor = (s) => SERIES[[...(s ?? '?')].reduce((h, c) => h + c.charCodeAt(0), 0) % SERIES.length];
-export const Avatar = ({ name }) => <span className="avatar" style={{ background: tint(avatarColor(name), 13), color: avatarColor(name) }}>{(name ?? '?')[0]}</span>;
+// An account's mark: a drawn icon for what kind of account it is, in the hue of its line in the Summary key (cash teal,
+// investments indigo, cards sky, loans orchid), so a row and its total read as one. A bank is the neutral columns.
+const ACCOUNT_ICON = (a) => (a.type === 'credit' ? ['card', SERIES[1]]
+  : a.type === 'investment' ? ['trend', SERIES[0]]
+  : a.type === 'loan' ? [/mortgage/.test(a.subtype ?? '') ? 'home' : /auto/.test(a.subtype ?? '') ? 'car' : 'receipt', SERIES[3]]
+  : a.type === 'depository' ? [/sav|money market|cd|hsa/i.test(a.subtype ?? '') ? 'piggy' : 'bank', SERIES[2]]
+  : ['dots', NEUTRAL]);
+const AccountIcon = ({ a }) => { const [kind, color] = ACCOUNT_ICON(a); return <CategoryIcon kind={kind} color={color} size={32} />; };
+const BankIcon = () => <CategoryIcon kind="bank" color={NEUTRAL} size={32} />;
 
 // A bank's connection, in words: working, needs you, failing (tried again on its own), or could share more.
 function BankStatus({ i }) {
@@ -247,7 +255,7 @@ function Banks({ meta, accounts, saved }) {
         const n = accounts.filter((a) => a.item_id === i.id).length;
         return (
           <div className="trow" key={i.id}>
-            <span className="rowicon"><Avatar name={i.institution} />
+            <span className="rowicon"><BankIcon />
               <span className="tmain"><b>{i.institution}</b>
                 <span><BankStatus i={i} /><span className="small muted"> · {n ? `${n} account${n > 1 ? 's' : ''}` : 'no accounts yet; a new connection can take a few minutes to fill in'}</span></span></span></span>
             <span className="btnrow">
@@ -298,7 +306,7 @@ function AccountRow({ a, act, open, setOpen, saved }) {
     <>
       <div className={`arow acct${a.in_networth ? '' : ' dim'}`} onClick={() => setOpen(open ? null : a.id)} role="button" tabIndex={0}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setOpen(open ? null : a.id)} aria-expanded={open}>
-        <span className="rowicon"><Avatar name={a.institution} />
+        <span className="rowicon"><AccountIcon a={a} />
           <span className="tmain"><b>{a.name}</b><span className="small muted">{cap(label(a.subtype || a.type))} · {a.institution}{a.mask ? ` ••${a.mask}` : ''}{a.in_networth ? '' : ' · not in net worth'}</span>
           {a.interest_month != null && <span className="small muted">{a.apr}% APR · about <Est why="Estimate: balance × APR ÷ 12. Your bank charges on the daily balance."><b className="amt">{usd(a.interest_month)}</b></Est> a month in interest</span>}</span></span>
         <MonthFlow act={act} />
@@ -411,7 +419,7 @@ function Summary({ accounts, manual }) {
     return (
       <div className="nwblock">
         <div className="row base"><b>{title}</b><b className="amt">{usd(total)}</b></div>
-        {total > 0 && <div className="splitbar">{rows.map(([n, v, c]) => <i key={n} style={{ width: `${(v / total) * 100}%`, background: c }} title={tipText(`${n}: ${usd(v)}`)} />)}</div>}
+        {rows.length > 1 && <div className="splitbar">{rows.map(([n, v, c]) => <i key={n} style={{ width: `${(v / total) * 100}%`, background: c }} title={tipText(`${n}: ${usd(v)}`)} />)}</div>}
         <ul className="legend2">{rows.map(([n, v, c]) => <li key={n}><span><i className="dot" style={{ background: c }} />
           <Hover className="quiet" tip={behind(n).length ? <TipList title={n} rows={behind(n)} /> : null}>{n}</Hover></span>
           <b className="amt">{pct ? `${((v / total) * 100).toFixed(1)}%` : usd(v)}</b></li>)}</ul>

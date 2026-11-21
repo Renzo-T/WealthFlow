@@ -4,13 +4,18 @@ import { usd, INCOME, SERIES, NEUTRAL } from './format.js';
 import AccountFlow from './AccountFlow.jsx';
 import MonthReplay from './MonthReplay.jsx';
 import Tip, { useTip } from './Tip.jsx';
+import useWidth from './useWidth.js';
 import { Panel, PageHeader, Skeleton, askText, Chevron } from './ui.jsx';
 import { duration, easeOut, reducedMotion } from './motion.js';
 
 const VIEW_KEY = 'wealthflow.flowView';
 const savedView = () => { try { return localStorage.getItem(VIEW_KEY) || 'groups'; } catch { return 'groups'; } };
 
-const W = 760, BAR = 8, LX = 190, RX = W - 190 - BAR, HW = 12, HX = W / 2 - HW / 2, GAP = 12, SLOT = 34, TOP = 34;
+// The Sankey is drawn at its own width (measured, at most the 1000px .flowchart allows), one unit to a pixel, so its
+// labels keep the type scale's sizes instead of growing with a stretched viewBox. LX and the gaps are fixed; the right
+// column and the hub follow the width (`geo`).
+const W0 = 760, BAR = 8, LX = 190, HW = 12, GAP = 12, SLOT = 36, TOP = 36;
+const geo = (W) => ({ W, RX: W - 190 - BAR, HX: W / 2 - HW / 2 });
 // Colour by role, never by rank: money in and money that stays yours (savings & investments, left over) are green,
 // spending is the planner's indigo ink, debt payments are grey, refunds teal. Every bar is labelled, so colour never has
 // to tell one group from another on its own. Figures here are totals, so they're whole dollars (format.js's rule).
@@ -43,7 +48,7 @@ function useRoom(svgRef) {
     if (!svg || !box) return undefined;
     const measure = () => {
       const s = svg.getBoundingClientRect(), b = box.getBoundingClientRect(), cs = getComputedStyle(box);
-      const scale = s.width / W || 1;
+      const scale = s.width / (svg.viewBox?.baseVal?.width || W0) || 1;
       const sample = svg.querySelector('text.fl:not(.hubname)'), fs = getComputedStyle(sample ?? svg);
       const font = sample ? `${fs.fontWeight} ${fs.fontSize} ${fs.fontFamily}` : null;
       const lead = Math.max(0, s.left - (b.left + parseFloat(cs.paddingLeft || 0))) / scale;
@@ -139,7 +144,7 @@ function layoutOf(f) {
   const spend = [...big.filter((c) => !c.saved && role(c) === INK), ...rest];
   const right = withWhole([...spend, ...big.filter((c) => !spend.includes(c))].map((c) => ({ ...c, color: c.rest ? NEUTRAL : role(c), spending: !!c.rest || (!c.saved && role(c) === INK) })));
   const n = Math.max(left.length, right.length);
-  const k = Math.max(180, n * 28) / total; // px per dollar: the hub is at least 180px tall
+  const k = Math.max(280, n * 34) / total; // px per dollar: the hub is at least 280px tall (drawn 1:1, see Sankey)
   const hub = total * k;
   // A thin bar sits at the top of its slot so the band stays attached; the label is centred in the slot.
   const slots = (nodes) => nodes.reduce((s, x) => s + Math.max(SLOT, x.value * k) + GAP, -GAP);
@@ -166,6 +171,8 @@ function Sankey({ f, layout, rename, label }) {
   const [tip, show, hide] = useTip();
   const shown = useMorph(layout);
   const svgRef = useRef(null), room = useRoom(svgRef);
+  const [boxRef, cw] = useWidth(W0);
+  const { W, RX, HX } = geo(Math.max(600, Math.min(1000, cw)));
   const { total, income, H, hub, hubTop, nodes } = shown;
   const moving = shown !== layout; // mid-morph: the hover fade must not trail the per-frame opacity
   const L = nodes.filter((x) => x.side === 'l'), R = nodes.filter((x) => x.side === 'r');
@@ -193,33 +200,33 @@ function Sankey({ f, layout, rename, label }) {
     style: { cursor: side === 'r' && !x.saved && !x.rest ? 'pointer' : 'default' },
   });
   return (
-    <>
+    <div ref={boxRef}>
     <svg ref={svgRef} style={{ overflow: 'visible' }} className={`chart sankey${moving ? ' moving' : ''}`} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Where your money came from and where it went">
       <g>
         {L.map((x) => <path key={'l' + x.name} className="ribbon" d={band(LX + BAR, x.y, x.y + x.hgt, HX, x.hy, x.hy + x.hh)} fill={x.color} opacity={op(`l:${x.name}`) * (x.fade ?? 1)} {...on('l', x)} />)}
         {R.map((x) => <path key={'r' + x.name} className="ribbon" d={band(HX + HW, x.hy, x.hy + x.hh, RX, x.y, x.y + x.hgt)} fill={x.color === INK ? RIBBON_INK : x.color} opacity={op(`r:${x.name}`) * (x.fade ?? 1)} {...on('r', x)} />)}
       </g>
       <rect x={HX} y={hubTop} width={HW} height={hub} rx={HW / 2} style={{ fill: 'var(--ink-dot)' }} />
-      <text x={W / 2} y={hubTop - 18} textAnchor="middle" className="fl hubname">{label ?? 'This period'}</text>
-      <text x={W / 2} y={hubTop - 5} textAnchor="middle" className="amtsvg">{usd(total)} in</text>
+      <text x={W / 2} y={hubTop - 22} textAnchor="middle" className="fl hubname">{label ?? 'This period'}</text>
+      <text x={W / 2} y={hubTop - 6} textAnchor="middle" className="amtsvg">{usd(total)} in</text>
       {L.map((x) => (
         <g key={'ln' + x.name} style={fade(x)}>
           <rect x={LX} y={x.y} width={BAR} height={x.hgt} rx={Math.min(BAR / 2, x.hgt / 2)} fill={x.color} {...on('l', x)} />
-          <text x={LX - 8} y={x.mid - 2} textAnchor="end" className={`fl${x.key ? ' click' : ''}`}
+          <text x={LX - 8} y={x.mid - 3} textAnchor="end" className={`fl${x.key ? ' click' : ''}`}
             onClick={x.key ? () => rename(x.key, x.name) : undefined}><title>{x.key ? `${x.name}. Click to rename` : x.name}</title>{fit(x.name, room.l, room.font)}</text>
-          <text x={LX - 8} y={x.mid + 11} textAnchor="end">{usd(x.shown)}</text>
+          <text x={LX - 8} y={x.mid + 13} textAnchor="end">{usd(x.shown)}</text>
         </g>
       ))}
       {R.map((x) => (
         <g key={'rn' + x.name} style={fade(x)}>
           <rect x={RX} y={x.y} width={BAR} height={x.hgt} rx={Math.min(BAR / 2, x.hgt / 2)} fill={x.color} {...on('r', x)} />
-          <text x={RX + BAR + 8} y={x.mid - 2} className="fl" {...on('r', x)}>{fit(x.name, room.r, room.font)}</text>
-          <text x={RX + BAR + 8} y={x.mid + 11}>{usd(x.shown)} · {pctOf(x.value, total)}</text>
+          <text x={RX + BAR + 8} y={x.mid - 3} className="fl" {...on('r', x)}>{fit(x.name, room.r, room.font)}</text>
+          <text x={RX + BAR + 8} y={x.mid + 13}>{usd(x.shown)} · {pctOf(x.value, total)}</text>
         </g>
       ))}
     </svg>
     <Tip tip={tip} />
-    </>
+    </div>
   );
 }
 

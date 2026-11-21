@@ -7,6 +7,10 @@
 
 # Your financial data and backups (bank tokens are encrypted, but the data itself is private)
 data/
+# Demo households (npm run demo -- demo) and test copies of the download's data folder: each holds its own config.json
+# with an encryption key
+demo/
+mizo-money@*/
 *.db
 *.db-shm
 *.db-wal
@@ -32,5 +36,6 @@ release/
 .impeccable/review/
 .impeccable/build/
 .impeccable/questions/
+.impeccable/critique/
 .impeccable/hook.cache.json
 .playwright-mcp/

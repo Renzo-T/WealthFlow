@@ -12,22 +12,31 @@ A local, single-user finance dashboard on Plaid's free Trial plan: net worth, sp
 <sub>Screenshots use an invented household (`npm run demo`), not real data.</sub>
 
 ## What it does
-- **Dashboard:** net worth, this month's income and spending, what changed vs last month, upcoming bills and income,
-  Free to spend (what's left this month after bills, card balances and a cushion), a watchlist, goals and a projection.
-  A Getting started checklist walks a new setup through the steps below. Panels can be reordered or hidden.
+- **Dashboard:** where you stand in one line (net worth, Free to spend: what's left this month after bills, card
+  balances and a cushion, what you've spent this month and the bills still due), then the month as a wall calendar
+  with each day's spending and its bills and paydays stamped on it, what needs you, what's coming up, and how each
+  budget group is tracking (past its budget, the meter shows by how much). Under that: what changed since last month,
+  recent transactions, cash flow, a watchlist and goals. A Getting started checklist walks a new setup through the
+  steps below. Panels can be reordered or hidden.
+- **Find (Ctrl+K):** go to any page, bill, goal or account, or search your transactions, from the keyboard.
 - **Transactions:** search and filter, fix categories (once or with a rule), split one into several categories,
   and sort what Plaid can't know: transfers to accounts you haven't connected and payments with people (Venmo, Zelle),
   including money friends send you back for a charge.
 - **Budget:** per category or as one amount per group, for every month or a single month; fixed, flexible and
   non-monthly bills; rollover for money that builds up between bills; suggestions from your bills and spending.
 - **Bills:** recurring bills and income detected from your transactions, Plaid and card statements, on schedules that
-  know weekends and bank holidays. One paycheck is enough: it asks how often you're paid.
+  know weekends and bank holidays, written into a month calendar. One paycheck is enough: it asks how often you're
+  paid.
 - **Trips:** suggested from purchases made in person away from home (another state, more than N miles, or abroad;
   several home bases supported), with bookings made beforehand and settle-ups with friends. Trips stay in your
   budget categories (optional) but are left out of month-to-month comparisons.
-- **Money flow, Net worth, Investments, Plan:** where money went, every account's balance and trend (your banks and
-  their connections are on Net worth too), holdings and allocation, and savings goals with target dates followed by a
+- **Money flow, Net worth, Investments, Plan:** where money went (and a replay of the month's cash, day by day), every
+  account's balance, this month's money in and out and its trend, with estimated days marked (your banks and their
+  connections are on Net worth too), holdings and allocation, and savings goals with target dates followed by a
   long-term forecast.
+- **Reports:** spending month by month, subscriptions and their price changes, the year in review, and trips.
+- **Your look:** light and dark, and five journals (Indigo, Plum, Charcoal, Saddle and Slate) in Settings › Journal,
+  each its own set of cover, paper and ink colours.
 
 | | |
 |---|---|
@@ -117,7 +126,7 @@ keys and the key that encrypts your bank connections. **Settings > Backup** down
 copy of `config.json` with it, since without that key every bank has to be connected again (using new slots). To
 restore, stop Mizo Money, put the backup in place of `wealthflow.db`, and start it again.
 
-**Updating:** when a new version is out, Mizo Money says so in the top bar and in **Settings > Updates** (it checks
+**Updating:** when a new version is out, Mizo Money says so at the foot of the sidebar and in **Settings > Updates** (it checks
 GitHub's releases about once a day; you can turn that off there). Stop Mizo Money, then replace the folder with the
 new download (or `git pull` and `npm install`), and start it again. If "Start when I sign in" or "Let the app window
 start Mizo Money" was on and the folder moved, turn it off and on.
@@ -139,7 +148,7 @@ folder, `config.json` or `.env`: your keys would use your 10 slots and put their
   like your other documents; anyone who can read your files can read it.
 - **Your own Plaid account:** your keys let whoever has them connect banks and read data through your Plaid account,
   so keep `config.json` (and `.env`, if you use one) private, and don't share copies set up with your keys.
-- **Hide amounts** (the eye in the top bar) blurs every dollar figure, for screen sharing.
+- **Hide amounts** (the eye at the foot of the sidebar, or Ctrl+K) blurs every dollar figure, for screen sharing.
 
 ## For developers
 - `npm start`: the API (port 4000, restarts on changes) and Vite (port 3000, live reload) together. `npm run app` and

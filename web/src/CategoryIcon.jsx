@@ -29,6 +29,9 @@ export const I = {
   dots: <><circle cx="6" cy="12" r="1.3" /><circle cx="12" cy="12" r="1.3" /><circle cx="18" cy="12" r="1.3" /></>,
   piggy: <><path d="M4 12a7 6 0 0113-3h2v3l2 1v3h-2.5a7 6 0 01-2.5 2v2h-3v-1.5a8 8 0 01-3 0V20H7v-2.5A6 6 0 014 12z" /><circle cx="15" cy="11" r=".8" /></>,
   card: <><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h3" /></>,
+  // Accounts on Net worth: a bank's columns, and the investments line (the rail's own)
+  bank: <><path d="M3 9.5L12 4l9 5.5" /><path d="M5.5 11v6.5M10 11v6.5M14 11v6.5M18.5 11v6.5" /><path d="M3 20h18" /></>,
+  trend: <><path d="M3 17l6-6 4 4 8-8" /><path d="M15 7h6v6" /></>,
   arrowin: <><path d="M12 4v12M7 11l5 5 5-5" /><path d="M5 20h14" /></>,
   swap: <><path d="M4 8h13l-3-3M20 16H7l3 3" /></>,
   receipt: <><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V3z" /><path d="M9 8h6M9 12h6" /></>,
@@ -45,8 +48,9 @@ const SUB = { Restaurants: 'fork', Coffee: 'cup', 'Alcohol & bars': 'cup', Gas: 
 // The drawn icon (a key of I) for a group, subcategory or kind: shared with the month spread's stamps.
 export const iconKey = ({ group, sub, kind }) => kind ?? SUB[sub] ?? (GROUP[group] ?? ['receipt'])[0];
 
-export default function CategoryIcon({ group, sub, kind, size = 30 }) {
-  const color = (GROUP[group] ?? ['receipt', NEUTRAL])[1];
+// `color` overrides the group's hue (Net worth's account icons take their Summary line's hue).
+export default function CategoryIcon({ group, sub, kind, size = 30, color: hue }) {
+  const color = hue ?? (GROUP[group] ?? ['receipt', NEUTRAL])[1];
   const icon = iconKey({ group, sub, kind });
   return (
     <span className="caticon" style={{ width: size, height: size, color: ink(color), background: tint(ink(color), 15) }} aria-hidden="true">
